@@ -1,1 +1,75 @@
-/* You can add global styles to this file, and also import other style files */
+@use '@angular/material' as mat;
+
+@include mat.core();
+
+// Define Custom Dark Theme (Default)
+$custom-dark-theme: mat.define-theme((
+  color: (
+    theme-type: dark,
+    primary: mat.$cyan-palette,
+    tertiary: mat.$magenta-palette,
+    use-system-variables: true,
+  ),
+  typography: (
+    brand-family: '"Outfit", sans-serif',
+    plain-family: '"Inter", sans-serif',
+    use-system-variables: true,
+  ),
+  density: (
+    scale: 0,
+  ),
+));
+
+// Define Custom Light Theme
+$custom-light-theme: mat.define-theme((
+  color: (
+    theme-type: light,
+    primary: mat.$cyan-palette,
+    tertiary: mat.$magenta-palette,
+    use-system-variables: true,
+  ),
+  typography: (
+    brand-family: '"Outfit", sans-serif',
+    plain-family: '"Inter", sans-serif',
+    use-system-variables: true,
+  ),
+  density: (
+    scale: 0,
+  ),
+));
+
+// Apply default theme to HTML root
+html {
+  @include mat.all-component-themes($custom-dark-theme);
+  @include mat.system-level-colors($custom-dark-theme);
+  @include mat.system-level-typography($custom-dark-theme);
+  
+  color-scheme: dark;
+  
+  // Custom scrollbars
+  --color-scrollbar-track: #0f172a;
+  --color-scrollbar-thumb: #334155;
+  scrollbar-color: var(--color-scrollbar-thumb) var(--color-scrollbar-track);
+}
+
+// Apply light theme overrides
+html.light-theme {
+  @include mat.all-component-themes($custom-light-theme);
+  @include mat.system-level-colors($custom-light-theme);
+  @include mat.system-level-typography($custom-light-theme);
+  
+  color-scheme: light;
+  
+  // Custom scrollbars for light theme
+  --color-scrollbar-track: #f1f5f9;
+  --color-scrollbar-thumb: #cbd5e1;
+  scrollbar-color: var(--color-scrollbar-thumb) var(--color-scrollbar-track);
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+  background-color: var(--mat-sys-background);
+  color: var(--mat-sys-on-background);
+}
