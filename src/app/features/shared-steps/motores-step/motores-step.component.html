@@ -1,0 +1,182 @@
+<div class="grid gap-8">
+  <div class="flex flex-col items-center justify-center text-center gap-4 max-w-3/4 mx-auto">
+    <img src="assets/images/isotipo-wila-light.svg" alt="Logo Wila" class="w-16 mx-auto" />
+    <h1>Configuración de motores</h1>
+    <p>
+      Se definen parámetros como cantidad de anillos y características de los carbones.
+    </p>
+  </div>
+
+  @if (loading) {
+    <div class="text-center py-4">
+      <mat-spinner class="mx-auto"></mat-spinner>
+      <p class="mt-2 text-gray-600">Guardando motores...</p>
+    </div>
+  }
+
+  @if (loadingMotores) {
+    <div class="text-center py-8">
+      <mat-spinner class="mx-auto mb-4" diameter="32"></mat-spinner>
+      <p>Cargando configuración de motores...</p>
+    </div>
+  }
+
+  @if (error) {
+    <div class="text-error-20 text-center">
+      {{ error }}
+    </div>
+  }
+
+  @if (!loadingMotores && !loading && !error) {
+    <div class="flex gap-2">
+      <!-- Lista de motores -->
+      <div class="w-1/4">
+        <mat-nav-list class="!p-0">
+          @for (motor of motoresDisponibles; track motor.codigo; let i = $index) {
+            <mat-list-item
+              (click)="selectMotor(i)"
+              [activated]="selectedMotorIndex === i"
+              class="mb-2"
+              [class.motor-incomplete]="!isMotorConfigCompleted(i)"
+              [class.motor-completed]="isMotorConfigCompleted(i)"
+            >
+              <div matListItemTitle>{{ motor.codigo }}</div>
+              <div matListItemLine>{{ motor.modelo || ('Motor ' + (i + 1)) }}</div>
+              <div matListItemMeta>
+                <span class="material-symbols-outlined">
+                  {{ isMotorConfigCompleted(i) ? 'check_circle' : 'warning' }}
+                </span>
+              </div>
+            </mat-list-item>
+          }
+        </mat-nav-list>
+      </div>
+
+      <!-- Formulario de configuración técnica -->
+      <div class="flex-1 bg-surface-container p-4">
+        <h3 class="mb-4">Motor {{ getMotorCodigoByIndex(selectedMotorIndex) }}</h3>
+
+        <form [formGroup]="formConfiguracion">
+          @if (motoresConfiguracion.at(selectedMotorIndex); as motorForm) {
+          <div [formGroup]="$any(motorForm)" class="grid">
+            <h4 class="mb-4">Estructura del motor</h4>
+            <div class="grid grid-cols-2 gap-4">
+              <mat-form-field appearance="outline" floatLabel="always">
+                <mat-label>¿Cuántos anillos tiene este motor?</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  formControlName="num_anillos"
+                  min="1"
+                  max="10"
+                  placeholder="Ingresar un número"
+                />
+              </mat-form-field>
+              <mat-form-field appearance="outline" floatLabel="always">
+                <mat-label>¿Cuántos carbones tiene un aniillo?</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  formControlName="carbones_por_anillo"
+                  min="1"
+                  max="50"
+                  placeholder="Ingresar un número"
+                />
+              </mat-form-field>
+            </div>
+
+            <h4 class="mb-4">Parámetros de los carbones</h4>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="flex flex-col">
+                <mat-form-field appearance="outline" floatLabel="always">
+                  <mat-label>Largo del carbón nuevo</mat-label>
+                  <input
+                    matInput
+                    type="text"
+                    inputmode="numeric"
+                    formControlName="alto_carbon_mm"
+                    maxlength="6"
+                    placeholder="Ingresar medida en milímetros"
+                    (keydown)="onNumericKeydown($event)"
+                    (input)="onNumericInput('alto_carbon_mm', $event)"
+                    (focus)="onFieldFocus('alto_carbon_mm')"
+                    (blur)="onFieldBlur()"
+                  />
+                </mat-form-field>
+                <mat-form-field appearance="outline" floatLabel="always">
+                  <mat-label>Largo de pre alarma</mat-label>
+                  <input
+                    matInput
+                    type="text"
+                    inputmode="numeric"
+                    formControlName="prealarma_mm"
+                    maxlength="6"
+                    placeholder="Ingresar medida en milímetros"
+                    (keydown)="onNumericKeydown($event)"
+                    (input)="onNumericInput('prealarma_mm', $event)"
+                    (focus)="onFieldFocus('prealarma_mm')"
+                    (blur)="onFieldBlur()"
+                  />
+                </mat-form-field>
+                <mat-form-field appearance="outline" floatLabel="always">
+                  <mat-label>Largo mínimo de cambio por pauta</mat-label>
+                  <input
+                    matInput
+                    type="text"
+                    inputmode="numeric"
+                    formControlName="minimo_cambio_mm"
+                    maxlength="6"
+                    placeholder="Ingresar medida en milímetros"
+                    (keydown)="onNumericKeydown($event)"
+                    (input)="onNumericInput('minimo_cambio_mm', $event)"
+                    (focus)="onFieldFocus('minimo_cambio_mm')"
+                    (blur)="onFieldBlur()"
+                  />
+                </mat-form-field>
+              </div>
+              <div class="flex align-items-center justify-center relative bg-white rounded-md">
+                <div [ngClass]="['cota-carbon', getCssClassForField()]">
+                  {{ getValueForField(motorForm) }} mm
+                </div>
+                <img
+                  [src]="getImageForField()"
+                  [alt]="getLabelForField()"
+                  class="max-w-full h-auto"
+                />
+              </div>
+            </div>
+          </div>
+          }
+        </form>
+
+        <div class="flex items-center mt-4" [class.justify-between]="motoresDisponibles.length > 1" [class.justify-center]="motoresDisponibles.length <= 1">
+          @if (motoresDisponibles.length > 1) {
+            <button
+              mat-button
+              (click)="goToPreviousMotor()"
+              [disabled]="!canGoToPreviousMotor()"
+              class="btn-secondary"
+            >
+              <span class="material-symbols-outlined">arrow_back</span>
+              Motor anterior
+            </button>
+          }
+          <span class="text-sm text-on-background">
+            {{ selectedMotorIndex + 1 }} de {{ motoresDisponibles.length }}
+          </span>
+          @if (motoresDisponibles.length > 1) {
+            <button
+              mat-button
+              (click)="goToNextMotor()"
+              [disabled]="!canGoToNextMotor()"
+              class="btn-secondary flex-row-reverse gap-2"
+            >
+              Motor siguiente
+              <span class="material-symbols-outlined">arrow_forward</span>
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>

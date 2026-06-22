@@ -1,0 +1,43 @@
+<header class="bg-surface text-white py-2 px-4 flex flex-col lg:flex-row justify-between items-center gap-4 z-30">
+    <div class="flex items-center gap-4">
+        <img src="../assets/images/logo-wila.svg" alt="Logo Wila" class="h-8 cursor-pointer" />
+    </div>
+
+    <!-- Center controls -->
+    <div class="flex flex-wrap items-center gap-4 text-sm font-semibold">
+        <!-- Sim progress -->
+        <div class="flex items-center gap-2 text-on-background bg-background px-3 py-1.5 rounded-lg border border-white/10">
+            <span class="material-symbols-outlined">timelapse</span>
+            <span>Próx. medición</span>
+            <!-- progress bar container -->
+            <div class="w-16 bg-on-background rounded-full h-1.5 overflow-hidden">
+                <div id="SPF" class="bg-primary h-1.5 rounded-full transition-all duration-300" style="width: 0%">
+                </div>
+            </div>
+            <span id="SCD" class="font-mono text-on-background">--:--</span>
+            <button extended matButton="tonal">
+                <mat-icon fontSet="material-symbols-outlined">pause_circle</mat-icon>
+                Pausar
+            </button>
+        </div>
+    </div>
+
+    <!-- Right action badges & details -->
+    <div class="flex flex-wrap items-center gap-4 text-sm font-semibold">
+        <div id="BTN_ADMIN_WRAP" class="flex items-center">
+            <button matFab extended>
+                <mat-icon fontSet="material-symbols-outlined">build_circle</mat-icon>
+                Admin
+            </button>
+        </div>
+        <div id="BTN_ADMIN_LOGOUT" style="display:none">
+            <button matFab extended>
+                <mat-icon fontSet="material-symbols-outlined">logout</mat-icon> Salir Admin
+            </button>
+        </div>
+    </div>
+</header>
+
+<main class="p-4 w-full h-full overflow-auto">
+    <router-outlet></router-outlet>
+</main>

@@ -1,0 +1,14 @@
+:host ::ng-deep {
+	.mat-mdc-dialog-content{
+		max-height: inherit;
+	}
+
+	h2 {
+		font-family: "Roboto Slab", serif!important;
+		font-weight: 500!important;
+	}
+	
+	img{
+		max-height: 595px;
+	}
+}

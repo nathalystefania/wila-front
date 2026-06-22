@@ -1,0 +1,64 @@
+@use '@angular/material' as mat;
+
+@use "tailwindcss";
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: "Work Sans", sans-serif;
+}
+
+h1 {
+  @apply text-3xl font-semibold;
+}
+
+h2 {
+  @apply text-2xl font-medium;
+}
+
+
+.btn-icon-right {
+  display: inline-flex;
+  flex-direction: row-reverse;
+  gap: 8px;
+
+  &.mat-mdc-unelevated-button>.mat-icon {
+    margin-left: 0;
+    margin-right: 0;
+  }
+}
+
+$icon-sizes: (
+  sm: 16px,
+  md: 24px,
+  lg: 32px,
+  xl: 48px
+);
+
+@each $name, $size in $icon-sizes {
+  .icon-#{$name} {
+    font-size: $size;
+    width: $size !important;
+    height: $size !important;
+    line-height: $size;
+  }
+}
+
+.filled {
+  font-variation-settings:
+    'FILL' 1;
+}
+
+.material-symbols-outlined{
+  vertical-align: middle;
+}
+
+// mat-mdc-input-element mat-mdc-form-field-input-control mdc-text-field__input cdk-text-field-autofill-monitored ng-dirty ng-valid ng-touched
+// mat-mdc-input-element ng-untouched ng-pristine ng-invalid mat-mdc-form-field-input-control mdc-text-field__input cdk-text-field-autofill-monitored
+.mat-mdc-form-field.mat-form-field-animations-enabled .mdc-text-field__input.ng-untouched,
+.mat-mdc-form-field.mat-form-field-animations-enabled .mdc-text-field__input.ng-pristine{
+  opacity: 0.5;
+}
