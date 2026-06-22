@@ -12,6 +12,8 @@
   
   --color-tertiary: var(--mat-sys-tertiary);
   --color-on-tertiary: var(--mat-sys-on-tertiary);
+  --color-tertiary-container: var(--mat-sys-tertiary-container);
+  --color-on-tertiary-container: var(--mat-sys-on-tertiary-container);
   
   --color-surface: var(--mat-sys-surface);
   --color-on-surface: var(--mat-sys-on-surface);
@@ -26,8 +28,26 @@
   
   --color-outline: var(--mat-sys-outline);
   --color-outline-variant: var(--mat-sys-outline-variant);
+
+  --color-state-normal: var(--mat-sys-state-normal);
+  --color-on-state-normal: var(--mat-sys-surface);
+  --color-state-info: var(--mat-sys-state-info);
+  --color-state-warning: var(--mat-sys-state-warning);
+  --color-state-critical: var(--mat-sys-state-critical);
+
+  --color-sys-surface-dim: var(--mat-sys-surface-dim);
+  --color-surface-bright: var(--mat-sys-surface-bright);
+  --color-surface-container-lowest: var(--mat-sys-surface-container-lowest);
+  --color-surface-container-low: var(--mat-sys-surface-container-low);
+  --color-surface-container: var(--mat-sys-surface-container);
+  --color-surface-container-high: var(--mat-sys-surface-container-high);
+  --color-surface-container-highest: var(--mat-sys-surface-container-highest);
+
+  --color-inverse-primary: var(--mat-sys-inverse-primary);
+  --color-primary-fixed: var(--mat-sys-primary-fixed);
+  --color-on-primary-fixed: var(--mat-sys-on-primary-fixed);
   
   /* Modern font settings synced with Material Typography */
   --font-sans: "Inter", sans-serif;
-  --font-brand: "Outfit", sans-serif;
+  --font-brand: "Work Sans", sans-serif;
 }

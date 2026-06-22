@@ -1,0 +1,87 @@
+<h2 mat-dialog-title>{{ data.title }}</h2>
+
+<mat-dialog-content class="dialog-content">
+  <p class="text-base mb-6">{{ data.message }}</p>
+
+  <div class="flex gap-12">
+    <div class="flex flex-col p-8 w-3/5 bg-[#d3dce3]">
+      <img
+        src="assets/images/motor-rings-example.png"
+        alt="Imagen de ejemplo de anillos y posición de carbones del motor"
+        srcset="assets/images/motor-rings-example.png"
+        class="h-[90%] w-auto object-contain mx-auto"
+      />
+      <p class="text-on-primary italic">
+        * Los anillos se identifican desde el exterior hacia el interior. <br />
+        * Los carbones se ordenan en sentido horario dentro de cada anillo.
+      </p>
+    </div>
+    <div class="flex w-2/5 justify-center">
+      <div class="flex flex-col justify-center gap-12">
+        <div class="flex items-start gap-3">
+          <div
+            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-tertiary-container text-base font-semibold text-on-tertiary-container"
+          >
+            1
+          </div>
+
+          <div class="flex-row">
+            <h3 class="text-2xl font-medium leading-8 text-on-background mb-3">
+              Selecciona la ubicación
+            </h3>
+            <p class="max-w-[90%] text-lg leading-6 text-on-background">
+              Motor → Anillo (de exterior a interior: A, B, C...) → Carbón (ordenado en sentido
+              horario)
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-3">
+          <div
+            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-tertiary-container text-base font-semibold text-on-tertiary-container"
+          >
+            2
+          </div>
+
+          <div class="flex-row">
+            <h3 class="text-2xl font-medium leading-8 text-on-background mb-3">
+              Activa el sensor
+            </h3>
+            <p class="max-w-[90%] text-lg leading-6 text-on-background">
+              Enciende el sensor del carbón seleccionado para iniciar la detección.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-3">
+          <div
+            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-tertiary-container text-base font-semibold text-on-tertiary-container"
+          >
+            3
+          </div>
+
+          <div class="flex-row">
+            <h3 class="text-2xl font-medium leading-8 text-on-background mb-3">
+              Confirma la sincronización
+            </h3>
+            <p class="max-w-[90%] text-lg leading-6 text-on-background">
+              La señal detectada valida la asociación entre el sensor y su ubicación.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions class="dialog-actions">
+  <button
+    matButton="filled"
+    type="button"
+    class="btn-secondary w-full"
+    color="secondary"
+    (click)="onConfirm()"
+  >
+    Entendido, comenzar
+  </button>
+</mat-dialog-actions>
