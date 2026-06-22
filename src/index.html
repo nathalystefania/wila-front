@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es" class="dark-high-contrast">
+<html lang="es" class="dark-medium-contrast">
   <head>
     <meta charset="utf-8" />
     <title>Wila - Dashboard</title>
@@ -23,10 +23,10 @@
         document.querySelector('meta[name="color-scheme"]').content = theme;
         if (theme === 'light') {
           document.documentElement.classList.add('light-theme');
-          document.documentElement.classList.remove('dark-high-contrast');
+          document.documentElement.classList.remove('dark-medium-contrast');
         } else {
           document.documentElement.classList.remove('light-theme');
-          document.documentElement.classList.add('dark-high-contrast');
+          document.documentElement.classList.add('dark-medium-contrast');
         }
       })();
     </script>

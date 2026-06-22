@@ -42,6 +42,15 @@ export interface MotorApi {
     estado: string;
 }
 
+export interface SensorApi {
+    id: string;
+    id_hardware: string;
+    nombre: string;
+    estado: string;
+    ocupado: boolean;
+    carbon_id_actual?: string;
+}
+
 export interface MotorCatalogo {
     id: string;
     codigo: string;
