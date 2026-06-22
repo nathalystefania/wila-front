@@ -2,8 +2,8 @@
 
 @include mat.core();
 
-// Define Custom Dark Theme (Default)
-$custom-dark-theme: mat.define-theme((
+// Provide Material component tokens once; colors come from external CSS variables.
+$base-theme: mat.define-theme((
   color: (
     theme-type: dark,
     primary: mat.$cyan-palette,
@@ -20,29 +20,12 @@ $custom-dark-theme: mat.define-theme((
   ),
 ));
 
-// Define Custom Light Theme
-$custom-light-theme: mat.define-theme((
-  color: (
-    theme-type: light,
-    primary: mat.$cyan-palette,
-    tertiary: mat.$magenta-palette,
-    use-system-variables: true,
-  ),
-  typography: (
-    brand-family: '"Outfit", sans-serif',
-    plain-family: '"Inter", sans-serif',
-    use-system-variables: true,
-  ),
-  density: (
-    scale: 0,
-  ),
-));
+@import './assets/themes/dark-mc.css';
+@import './assets/themes/light-mc.css';
 
-// Apply default theme to HTML root
 html {
-  @include mat.all-component-themes($custom-dark-theme);
-  @include mat.system-level-colors($custom-dark-theme);
-  @include mat.system-level-typography($custom-dark-theme);
+  @include mat.all-component-themes($base-theme);
+  @include mat.system-level-typography($base-theme);
   
   color-scheme: dark;
   
@@ -52,12 +35,16 @@ html {
   scrollbar-color: var(--color-scrollbar-thumb) var(--color-scrollbar-track);
 }
 
-// Apply light theme overrides
-html.light-theme {
-  @include mat.all-component-themes($custom-light-theme);
-  @include mat.system-level-colors($custom-light-theme);
-  @include mat.system-level-typography($custom-light-theme);
-  
+html.dark-medium-contrast {
+  color-scheme: dark;
+
+  // Custom scrollbars for dark theme
+  --color-scrollbar-track: #0f172a;
+  --color-scrollbar-thumb: #334155;
+  scrollbar-color: var(--color-scrollbar-thumb) var(--color-scrollbar-track);
+}
+
+html.light-medium-contrast {
   color-scheme: light;
   
   // Custom scrollbars for light theme

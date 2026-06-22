@@ -68,7 +68,7 @@ export class App {
 
   constructor() {
     // Sync UI toggle state with the document class initialized in index.html
-    const hasLightThemeClass = document.documentElement.classList.contains('light-theme');
+    const hasLightThemeClass = document.documentElement.classList.contains('light-medium-contrast');
     this.isDarkTheme.set(!hasLightThemeClass);
   }
 
@@ -84,9 +84,11 @@ export class App {
     }
     
     if (nextTheme === 'light') {
-      document.documentElement.classList.add('light-theme');
+      document.documentElement.classList.remove('dark-medium-contrast');
+      document.documentElement.classList.add('light-medium-contrast');
     } else {
-      document.documentElement.classList.remove('light-theme');
+      document.documentElement.classList.remove('light-medium-contrast');
+      document.documentElement.classList.add('dark-medium-contrast');
     }
   }
 
