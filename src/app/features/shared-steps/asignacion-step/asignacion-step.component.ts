@@ -1,277 +1,331 @@
-import { Component, OnInit, OnDestroy, Output, EventEmitter, inject, ChangeDetectorRef, Inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, Output, EventEmitter, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Subject, firstValueFrom } from 'rxjs';
-import { MatDialog, MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { Subject, Observable, merge } from 'rxjs';
+import { map, startWith } from 'rxjs/operators';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatTableModule } from '@angular/material/table';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { OnboardingStep } from '@models/onboarding.models';
-import { MotoresService, Motor, Anillo, Carbon } from '@services/motores.service';
-import { SensoresService, SensorData } from '@services/sensores.service';
+import { MotorDraft } from '@models/motor.models';
+import { SensorApi } from '@models/catalogo.models';
 import { OnboardingStateService } from '@core/state/onboarding-state.service';
+import { CatalogoService } from '@services/catalogo.service';
+
+interface Anillo {
+  id: string;
+  nombre: string;
+  posicion: number;
+}
+
+interface Motor extends MotorDraft {
+  id: string;
+}
+
+interface CarbonRow {
+  numero: number;
+  id: string;
+}
+
+export interface Carbones {
+  anillo_id: string;
+  id: string;
+  numero_carbon: number;
+  identificador: string;
+  largo_alarma: number;
+  largo_inicial: number;
+  largo_prealarma: number;
+  nivel_bateria_minimo: number;
+}
 
 @Component({
   selector: 'app-asignacion-step',
-  imports: [CommonModule, MatDialogModule, MatButtonModule, MatProgressSpinnerModule, MatIconModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatProgressSpinnerModule,
+    MatIconModule,
+    MatTabsModule,
+    MatExpansionModule,
+    MatTableModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatAutocompleteModule,
+  ],
   templateUrl: './asignacion-step.component.html',
   styleUrls: ['./asignacion-step.component.scss'],
 })
 export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingStep {
+
+  displayedColumns: string[] = [
+    'id',
+    'identificador',
+    'sensor',
+  ];
+
   private cdr = inject(ChangeDetectorRef);
-  private dialog = inject(MatDialog);
-  private motoresService = inject(MotoresService);
-  private sensoresService = inject(SensoresService);
   private state = inject(OnboardingStateService);
+  private catalogoService = inject(CatalogoService);
 
   @Output() stateChange = new EventEmitter<void>();
-  @Output() subStepChange = new EventEmitter<number>();
 
-  subStep: 1 | 2 | 3 | 4 | 5 = 1;
   isLoading = false;
+  loadingSensores = false;
   error: string | null = null;
 
   motors: Motor[] = [];
-  selectedMotor: Motor | null = null;
-
-  anillos: Anillo[] = [];
-  selectedAnillo: Anillo | null = null;
-
-  carbones: Carbon[] = [];
-  selectedCarbon: Carbon | null = null;
-
-  // Snapshot fijo al llegar al paso 4, inmune a cambios de CD
-  step4Motor: Motor | null = null;
-  step4Anillo: Anillo | null = null;
-  step4Carbon: Carbon | null = null;
-
-  step5Motor: Motor | null = null;
-  step5Anillo: Anillo | null = null;
-  step5Carbon: Carbon | null = null;
-
-  dispositivos: SensorData[] = [];
-  loadingDispositivos = false;
+  motorAnillosMap: Map<string, Anillo[]> = new Map();
+  carbonesByAnilloMap: Map<string, Carbones[]> = new Map();
+  sensoresDisponibles: SensorApi[] = [];
+  sensorSearchByCarbonId: Record<string, FormControl> = {};
+  filteredSensoresByCarbonId: Record<string, Observable<SensorApi[]>> = {};
+  sensorAssignmentByCarbonId: Record<string, string> = {};
 
   private destroy$ = new Subject<void>();
-  private isDestroyed = false;
+  private sensorAssignmentChanged$ = new Subject<void>();
 
   ngOnInit() {
-    // this.openAssignmentDialog();
     this.loadMotores();
-  }
-
-  openAssignmentDialog() {
-    this.dialog.open(AssignmentDialogComponent, {
-      minWidth: '90vw',
-      height: '95vh',
-      minHeight: '95vh',
-      disableClose: true,
-      panelClass: 'custom-assignment-dialog',
-      data: {
-        title: 'Sincronización de sensores',
-        message: 'En este paso se vincula cada sensor con su posición exacta en el motor, considerando el anillo y el orden del carbón.'
-      }
-    });
+    this.loadSensoresDisponibles();
   }
 
   async loadMotores() {
-    const plantaId = this.state.getPlantaId();
-    if (!plantaId) {
-      this.error = 'No se encontró una planta activa.';
+    const motorsDraft = this.state.getMotoresDraft();
+    
+    if (!motorsDraft || motorsDraft.length === 0) {
+      this.error = 'No se encontraron motores configurados. Vuelve al paso anterior.';
       this.cdr.detectChanges();
       return;
     }
+
     this.isLoading = true;
     this.error = null;
-    this.cdr.detectChanges();
+    
     try {
-      this.motors = await firstValueFrom(this.motoresService.getMotoresByPlanta(plantaId));
-    } catch (err: any) {
-      this.error = 'Error al cargar los motores de la planta.';
-    } finally {
-      this.isLoading = false;
-      this.cdr.detectChanges();
-    }
-  }
+      // Convertir MotorDraft a Motor con id y generar anillos
+      this.motors = motorsDraft.map((draft, index) => ({
+        ...draft,
+        id: draft.codigo || `motor-${index}`
+      })) as Motor[];
 
-  selectMotor(motor: Motor) {
-    this.selectedMotor = motor;
-    this.avanzarAAnillos();
-  }
+      // Pre-generar anillos para cada motor
+      this.motors.forEach(motor => {
+        this.generateAnillos(motor);
+      });
 
-  async avanzarAAnillos() {
-    if (!this.selectedMotor) return;
-    this.subStep = 2;
-    this.subStepChange.emit(2);
-    this.anillos = [];
-    this.selectedAnillo = null;
-    this.isLoading = true;
-    this.error = null;
-    this.cdr.detectChanges();
-    try {
-      this.anillos = await firstValueFrom(this.motoresService.getAnillosByMotor(this.selectedMotor.id));
-    } catch (err: any) {
-      this.error = 'Error al cargar los anillos del motor.';
-    } finally {
-      this.isLoading = false;
-      this.cdr.detectChanges();
-    }
-  }
+      this.buildCarbonesData();
 
-  selectAnillo(anillo: Anillo) {
-    this.selectedAnillo = anillo;
-    this.avanzarACarbones();
-  }
-
-  async avanzarACarbones() {
-    if (!this.selectedAnillo) return;
-    this.subStep = 3;
-    this.subStepChange.emit(3);
-    this.carbones = [];
-    this.selectedCarbon = null;
-    this.isLoading = true;
-    this.error = null;
-    this.cdr.detectChanges();
-    try {
-      this.carbones = await firstValueFrom(this.motoresService.getCarbonesByAnillo(this.selectedAnillo.id));
-    } catch (err: any) {
-      this.error = 'Error al cargar los carbones del anillo.';
-    } finally {
-      this.isLoading = false;
-      this.cdr.detectChanges();
-    }
-  }
-
-  selectCarbon(carbon: Carbon) {
-    this.selectedCarbon = carbon;
-    this.step4Motor = this.selectedMotor;
-    this.step4Anillo = this.selectedAnillo;
-    this.step4Carbon = carbon;
-    this.cargarDispositivosDetectados();
-
-    this.subStep = 4;
-    this.cdr.detectChanges(); // renderiza paso 4 con todos los valores
-    // Emitir al padre en microtask para que su cdr.detectChanges() no pisote la vista recién renderizada
-    Promise.resolve().then(() => {
-      this.subStepChange.emit(4);
       this.stateChange.emit();
+    } catch (err: any) {
+      this.error = 'Error al procesar los motores.';
+    } finally {
+      this.isLoading = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  private generateAnillos(motor: Motor) {
+    const anillos: Anillo[] = [];
+    for (let i = 0; i < motor.num_anillos; i++) {
+      anillos.push({
+        id: `${motor.id}-anillo-${i}`,
+        nombre: `Anillo ${i + 1}`,
+        posicion: i + 1
+      });
+    }
+    this.motorAnillosMap.set(motor.id, anillos);
+  }
+
+  private buildCarbonesData() {
+    const carbonIds = this.state.getCarbonIds();
+    let carbonCursor = 0;
+
+    this.carbonesByAnilloMap.clear();
+    this.sensorSearchByCarbonId = {};
+    this.filteredSensoresByCarbonId = {};
+
+    this.motors.forEach((motor) => {
+      const anillos = this.getAnillosByMotor(motor);
+      const carbonesPorAnillo = Number(motor.carbones_por_anillo) || 0;
+
+      anillos.forEach((anillo) => {
+        const carbones: Carbones[] = Array.from({ length: carbonesPorAnillo }, (_, index) => {
+          const numeroCarbon = index + 1;
+          const realId = carbonIds[carbonCursor];
+          carbonCursor += 1;
+
+          const carbonId = String(realId ?? `${anillo.id}-carbon-${numeroCarbon}`);
+
+          // Crear FormControl para este carbón
+          const formControl = new FormControl('');
+          this.sensorSearchByCarbonId[carbonId] = formControl;
+
+          // Crear observable filtrado para este carbón
+          // Se actualiza cuando: 1) El usuario tipea (valueChanges), 2) Se asigna un sensor en otro carbón
+          this.filteredSensoresByCarbonId[carbonId] = merge(
+            formControl.valueChanges.pipe(startWith('')),
+            this.sensorAssignmentChanged$.pipe(startWith(null))
+          ).pipe(
+            map(() => this.getAvailableSensoresForCarbon(carbonId, formControl.value ?? ''))
+          );
+
+          return {
+            anillo_id: anillo.id,
+            id: carbonId,
+            numero_carbon: numeroCarbon,
+            identificador: `${motor.codigo}-A${anillo.posicion}-C${numeroCarbon}`,
+            largo_inicial: Number(motor.alto_carbon_mm) || 0,
+            largo_prealarma: Number(motor.prealarma_mm) || 0,
+            largo_alarma: Number(motor.minimo_cambio_mm) || 0,
+            nivel_bateria_minimo: 20,
+          };
+        });
+
+        this.carbonesByAnilloMap.set(anillo.id, carbones);
+      });
     });
   }
 
-  cargarDispositivosDetectados() {
-    this.dispositivos = [];
-    this.loadingDispositivos = true;
-    this.cdr.detectChanges();
-    this.sensoresService.getDispositivosDetectados().subscribe({
-      next: (data) => {
-        this.dispositivos = data;
-        this.loadingDispositivos = false;
+  getCarbonesTableByAnillo(anillo: Anillo): Carbones[] {
+    return this.carbonesByAnilloMap.get(anillo.id) ?? [];
+  }
+
+  loadSensoresDisponibles() {
+    this.loadingSensores = true;
+    this.catalogoService.getSensores().subscribe({
+      next: (sensores) => {
+        // Filtrar solo sensores disponibles. Algunos backends envian ocupado como string.
+        this.sensoresDisponibles = sensores.filter(s => this.isSensorDisponible(s));
+        this.loadingSensores = false;
+        // Fuerza recalculo de todas las listas del autocomplete con los datos recien cargados.
+        this.sensorAssignmentChanged$.next();
         this.cdr.detectChanges();
       },
       error: () => {
-        this.loadingDispositivos = false;
+        this.loadingSensores = false;
+        this.error = 'No se pudieron cargar los sensores desde catalogo.';
         this.cdr.detectChanges();
-      }
-    });
-  }
-
-  asignarDispositivo(deveui: string) {
-    if (!this.selectedCarbon) return;
-    this.isLoading = true;
-    this.cdr.detectChanges();
-    
-    const carbonId = this.selectedCarbon.id;
-    this.sensoresService.asignarSensor(carbonId, deveui).subscribe({
-      next: (data) => {
-        console.log('Dispositivo asignado exitosamente:', data);
-        this.isLoading = false;
-        this.cdr.detectChanges();
-        // Avanzar al paso 5 con los datos del dispositivo asignado
-        this.step5Motor = this.step4Motor;
-        this.step5Anillo = this.step4Anillo;
-        this.step5Carbon = this.step4Carbon;
-        this.subStep = 5;
-        this.subStepChange.emit(5);
-        this.stateChange.emit();
       },
-      error: (err) => {
-        console.error('Error al asignar dispositivo:', err);
-        this.error = 'Error al asignar el dispositivo. Intenta de nuevo.';
-        this.isLoading = false;
-        this.cdr.detectChanges();
-      }
     });
   }
 
-  private setSubStep(step: 1 | 2 | 3 | 4 | 5) {
-    this.subStep = step;
-    this.subStepChange.emit(step);
-    this.cdr.detectChanges();
+  getSensorFormControl(carbonId: string): FormControl {
+    if (!this.sensorSearchByCarbonId[carbonId]) {
+      this.sensorSearchByCarbonId[carbonId] = new FormControl('');
+      const formControl = this.sensorSearchByCarbonId[carbonId];
+      this.filteredSensoresByCarbonId[carbonId] = merge(
+        formControl.valueChanges.pipe(startWith('')),
+        this.sensorAssignmentChanged$.pipe(startWith(null))
+      ).pipe(
+        map(() => this.getAvailableSensoresForCarbon(carbonId, formControl.value ?? ''))
+      );
+    }
+    return this.sensorSearchByCarbonId[carbonId];
   }
 
-  goTo(step: 1 | 2 | 3 | 4 | 5) {
-    this.error = null;
-    if (step === 1) {
-      this.setSubStep(step);
-    } else if (step === 2 && this.selectedMotor) {
-      this.setSubStep(step);
-    } else if (step === 3 && this.selectedAnillo) {
-      this.setSubStep(step);
-    } else if (step === 4 && this.selectedCarbon) {
-      this.setSubStep(step);
-    } else if (step === 5 && this.selectedCarbon) {
-      this.setSubStep(step);
-    } else {
-      // Si no se cumplen las condiciones para volver al paso solicitado, no hacer nada
+  getFilteredSensores(carbonId: string): Observable<SensorApi[]> {
+    return this.filteredSensoresByCarbonId[carbonId] || (this.sensoresDisponibles as any);
+  }
+
+  onSensorSelected(carbonId: string, sensor: SensorApi): void {
+    if (!sensor) {
+      delete this.sensorAssignmentByCarbonId[carbonId];
+      this.getSensorFormControl(carbonId).setValue('');
+      this.sensorAssignmentChanged$.next();
+      this.stateChange.emit();
       return;
+    }
+
+    if (this.isSensorAssignedToAnotherCarbon(carbonId, sensor.id_hardware)) {
+      this.error = `El sensor ${sensor.id_hardware} ya está asignado a otro carbón.`;
+      this.getSensorFormControl(carbonId).setValue('');
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.error = null;
+    this.sensorAssignmentByCarbonId[carbonId] = sensor.id_hardware;
+    this.getSensorFormControl(carbonId).setValue(sensor.id_hardware);
+    this.sensorAssignmentChanged$.next();
+    this.stateChange.emit();
+  }
+
+  onOptionSelected(carbonId: string, event: any): void {
+    const hardwareId = event.option.value; // Solo el string id_hardware
+    const sensor = this.sensoresDisponibles.find(s => s.id_hardware === hardwareId);
+    if (sensor) {
+      this.onSensorSelected(carbonId, sensor);
     }
   }
 
-  reboot() {
-    // Resetea todo el estado para permitir una nueva asignación desde cero
-    this.selectedMotor = null;
-    this.selectedAnillo = null;
-    this.selectedCarbon = null;
-    this.step4Motor = null;
-    this.step4Anillo = null;
-    this.step4Carbon = null;
-    this.step5Motor = null;
-    this.step5Anillo = null;
-    this.step5Carbon = null;
-    this.dispositivos = [];
-    this.error = null;
-    this.loadMotores();
-    this.setSubStep(1);
+  getAvailableSensoresForCarbon(carbonId: string, searchTerm: string = ''): SensorApi[] {
+    const term = (searchTerm ?? '').trim().toLowerCase();
+    const assignedByOthers = new Set(
+      Object.entries(this.sensorAssignmentByCarbonId)
+        .filter(([id]) => id !== carbonId)
+        .map(([, hardwareId]) => hardwareId)
+    );
+
+    return this.sensoresDisponibles
+      .filter(sensor => !assignedByOthers.has(sensor.id_hardware))
+      .filter(sensor => !term || sensor.id_hardware.toLowerCase().includes(term) || sensor.nombre.toLowerCase().includes(term));
+  }
+
+  displaySensorName(sensor?: SensorApi): string {
+    return sensor ? `${sensor.id_hardware} - ${sensor.nombre}` : '';
+  }
+
+  private isSensorDisponible(sensor: SensorApi): boolean {
+    const raw = (sensor as any).ocupado;
+
+    if (typeof raw === 'boolean') {
+      return raw === false;
+    }
+
+    if (typeof raw === 'number') {
+      return raw === 0;
+    }
+
+    if (typeof raw === 'string') {
+      const normalized = raw.trim().toLowerCase();
+      return normalized === 'false' || normalized === '0' || normalized === 'no';
+    }
+
+    return !raw;
+  }
+
+  private isSensorAssignedToAnotherCarbon(carbonId: string, hardwareId: string): boolean {
+    return Object.entries(this.sensorAssignmentByCarbonId)
+      .some(([id, assigned]) => id !== carbonId && assigned === hardwareId);
+  }
+
+  getAnillosByMotor(motor: Motor): Anillo[] {
+    return this.motorAnillosMap.get(motor.id) || [];
+  }
+
+  onMotorTabChange(event: any) {
+    // Los anillos ya están pre-generados, solo detectar cambios
+    this.cdr.detectChanges();
   }
 
   ngOnDestroy() {
-    this.isDestroyed = true;
     this.destroy$.next();
     this.destroy$.complete();
+    this.sensorAssignmentChanged$.complete();
   }
 
   canContinue(): boolean {
-    return this.selectedCarbon !== null;
+    return this.motors.length > 0;
   }
 
   async commit(): Promise<void> {
     if (!this.canContinue()) throw new Error('INVALID_STEP');
-  }
-}
-
-@Component({
-  selector: 'assignment-dialog',
-  standalone: true,
-  imports: [CommonModule, MatDialogModule, MatButtonModule],
-  templateUrl: './assignment-dialog.component.html',
-  styleUrl: './assignment-dialog.component.scss'
-})
-export class AssignmentDialogComponent {
-  constructor(
-    public dialogRef: MatDialogRef<AssignmentDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: any
-  ) {}
-
-  onConfirm(): void {
-    this.dialogRef.close(true);
   }
 }

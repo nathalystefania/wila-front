@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, forkJoin, map, of } from 'rxjs';
-import { EmpresaApi, DivisionApi, AreaApi, EquipoApi, MotorApi, MotorCatalogo } from '../models/catalogo.models';
+import { EmpresaApi, DivisionApi, AreaApi, EquipoApi, MotorApi, MotorCatalogo, SensorApi } from '../models/catalogo.models';
 import { ApiService } from './api.service';
 
 
@@ -26,6 +26,16 @@ export class CatalogoService {
 
     getMotores(): Observable<MotorApi[]> {
         return this.api.get<MotorApi[]>('/api/motores');
+    }
+
+    getSensores(): Observable<SensorApi[]> {
+        return this.api.get<SensorApi[]>('/api/sensores');
+    }
+
+    getSensoresByOcupado(ocupado: boolean): Observable<SensorApi[]> {
+        return this.getSensores().pipe(
+            map(sensores => sensores.filter(sensor => sensor.ocupado === ocupado))
+        );
     }
 
     getDivisionesByEmpresaId(
