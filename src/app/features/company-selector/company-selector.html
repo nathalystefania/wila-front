@@ -1,0 +1,34 @@
+<div class="min-h-screen flex items-center justify-center">
+  <div class="w-full max-w-4xl p-8">
+
+    <h1 class="text-3xl font-bold mb-8">
+      Seleccione una empresa
+    </h1>
+
+    @if (loading()) {
+      <p>Cargando...</p>
+    }
+
+    <div class="grid gap-4">
+
+      @for (company of companies(); track company.id) {
+
+        <button
+          class="border rounded-lg p-4 text-left hover:bg-gray-100"
+          (click)="selectCompany(company)"
+        >
+          <div class="font-semibold">
+            {{ company.nombre }}
+          </div>
+
+          <div class="text-sm text-gray-500">
+            {{ company.codigo }}
+          </div>
+        </button>
+
+      }
+
+    </div>
+
+  </div>
+</div>

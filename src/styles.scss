@@ -60,3 +60,205 @@ body {
   background-color: var(--mat-sys-background);
   color: var(--mat-sys-on-background);
 }
+
+// por aca
+
+
+// @include mat.core();
+
+// // Define Custom Dark Theme (Default)
+// $custom-dark-theme: mat.define-theme((color: (theme-type: dark,
+//         primary: mat.$blue-palette,
+//         tertiary: mat.$orange-palette,
+//         use-system-variables: true,
+//       ),
+
+//       typography: (brand-family: '"Works", Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif',
+//         plain-family: '"Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif',
+//         use-system-variables: true,
+//       ),
+
+//       density: (scale: 0,
+//       ),
+//     ));
+
+// // Define Custom Light Theme
+// $custom-light-theme: mat.define-theme((color: (theme-type: light,
+//         primary: mat.$blue-palette,
+//         tertiary: mat.$orange-palette,
+//         use-system-variables: true,
+//       ),
+//       typography: (brand-family: '"Works", Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif',
+//         plain-family: '"Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif',
+//         use-system-variables: true,
+//       ),
+//       density: (scale: 0,
+//       ),
+//     ));
+
+// // Apply default theme to HTML root
+// html {
+//   height: 100%;
+
+//   @include mat.all-component-themes($custom-dark-theme);
+//   @include mat.system-level-colors($custom-dark-theme);
+//   @include mat.system-level-typography($custom-dark-theme);
+
+//   color-scheme: dark;
+
+//   // Custom scrollbars
+//   --color-scrollbar-track: #0f172a;
+//   --color-scrollbar-thumb: #334155;
+//   scrollbar-color: var(--color-scrollbar-thumb) var(--color-scrollbar-track);
+
+
+//   // @include mat.all-component-themes($app-theme);
+//   @include mat.theme-overrides((
+//     corner-small: 4px,
+//       corner-medium: 6px,
+//       corner-large: 8px,
+
+//       body-medium-size: 1rem,
+//       body-large-size: 1.125rem,
+//       title-medium-size: 1.25rem,
+//       headline-small-size: 1.5rem,
+//     ));
+//   @include mat.stepper-overrides((
+//     container-color: var(--mat-sys-surface-container-low),
+//       line-color: var(--mat-sys-on-surface),
+//       header-error-state-label-text-color: var(--mat-sys-on-surface),
+//       header-label-text-color: var(--mat-sys-on-surface-variant),
+//       header-optional-label-text-color: var(--mat-sys-on-surface-variant),
+//       header-selected-state-label-text-color: var(--mat-sys-on-surface),
+//       header-icon-background-color: var(--mat-sys-surface-container-highest),
+//       header-icon-foreground-color: var(--mat-sys-on-surface-variant),
+//       header-selected-state-icon-background-color: var(--mat-sys-primary),
+//       header-edit-state-icon-background-color: var(--mat-sys-primary),
+//       header-edit-state-icon-foreground-color: var(--mat-sys-on-primary),
+//       header-done-state-icon-background-color: var(--mat-sys-primary),
+//       header-done-state-icon-foreground-color: var(--mat-sys-on-primary),
+//     ));
+//   @include mat.button-overrides((
+//     filled-container-shape: 4px,
+//       filled-disabled-label-text-color: var(--color-disabled-textos),
+//       filled-disabled-container-color: var(--color-disabled-base),
+//       filled-label-text-size: 1rem,
+//       outlined-container-shape: 4px,
+//       outlined-outline-width: 2px,
+//       outlined-label-text-size: 1rem,
+//       protected-container-elevation-shadow: var(--mat-sys-level0),
+//     ));
+//   @include mat.fab-overrides((
+//     extended-container-elevation-shadow: var(--mat-sys-level0),
+//     extended-container-height: 40px,
+//     ));
+//   @include mat.expansion-overrides((
+//     container-shape: 4px,
+//     container-elevation-shadow: none,
+//     container-background-color: var(--mat-sys-surface-container-low),
+//     header-collapsed-state-height: 4.2rem,
+//     ));
+//   @include mat.list-overrides((
+//     active-indicator-shape: 0px,
+//     active-indicator-color: var(--color-surface-container),
+//     list-item-label-text-color: var(--color-on-primary),
+//     list-item-supporting-text-color: var(--color-on-primary),
+//     list-item-trailing-supporting-text-color: var(--color-on-primary),
+//     ));
+//   @include mat.form-field-overrides((
+//     outlined-label-text-populated-size: 1.3rem,
+//     outlined-focus-outline-color: var(--mat-sys-outline),
+//     outlined-focus-label-text-color: var(--mat-sys-outline),
+//     outlined-error-label-text-color: var(--mat-sys-error),
+//     outlined-error-outline-color: var(--mat-sys-error),
+//     outlined-error-hover-label-text-color: var(--mat-sys-error-container),
+//     outlined-error-hover-outline-color: var(--mat-sys-error-container),
+//     ));
+// }
+
+// // Apply light theme overrides
+// html.light-theme {
+//   @include mat.all-component-themes($custom-light-theme);
+//   @include mat.system-level-colors($custom-light-theme);
+//   @include mat.system-level-typography($custom-light-theme);
+
+//   color-scheme: light;
+
+//   // Custom scrollbars for light theme
+//   --color-scrollbar-track: #f1f5f9;
+//   --color-scrollbar-thumb: #cbd5e1;
+//   scrollbar-color: var(--color-scrollbar-thumb) var(--color-scrollbar-track);
+// }
+
+// body {
+//   background-color: var(--mat-sys-background);
+//   color: var(--mat-sys-on-background);
+//   font-family: 'Inter', sans-serif;
+//   font-size: 16px;
+//   margin: 0;
+//   min-height: 100vh;
+// }
+
+// // .mat-mdc-text-field-wrapper{
+// //   background: var(--color-cards);
+// // }
+
+// .mat-stepper-vertical-line::before {
+//   top: calc(8px - calc((var(--mat-stepper-header-height, 72px)) / 2)) !important;
+//   bottom: calc(8px - calc((var(--mat-stepper-header-height, 72px)) / 2)) !important;
+//   left: 4px !important;
+// }
+
+// .mat-vertical-stepper-header {
+//   height: inherit !important;
+// }
+
+// .mat-step {
+//   &-header {
+//     gap: 8px;
+//   }
+
+//   &-icon {
+//     height: 32px !important;
+//     width: 32px !important;
+
+//     &-state-edit,
+//     &-state-done {
+//       box-shadow: 0 0px 0px 6px rgb(177, 197, 255, 0.2), 0 0px 0px 6px rgb(177, 197, 255, 0.3);
+//     }
+
+//     &-selected {
+//       box-shadow: 0 0px 0px 6px rgb(177, 197, 255, 0.2), 0 0px 0px 6px rgb(177, 197, 255, 0.3);
+//     }
+//   }
+
+//   &-text-label {
+//     font-size: 1.1rem;
+
+//     .step-label {
+//       .title {
+//         color: var(--mat-sys-on-surface);
+//         font-weight: 600;
+//       }
+
+//       .subtitle {
+//         color: var(--mat-sys-on-surface-variant);
+//         white-space: normal;
+//       }
+//     }
+//   }
+// }
+
+// .mat-vertical-content:empty {
+//   display: none;
+// }
+
+// .mat-mdc-form-field.mat-form-field-appearance-outline .mat-mdc-text-field-wrapper {
+//   will-change: auto;
+//   transform: translateZ(0);
+//   backface-visibility: hidden;
+// }
+
+// .cdk-overlay-dark-backdrop {
+//   background: light-dark(rgba(0, 0, 0, 0.32), rgba(255, 255, 255, 0.32));
+// }

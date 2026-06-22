@@ -1,0 +1,29 @@
+<div class="h-screen flex">
+    <aside class="w-64 border-r">
+        <div class="p-4 border-b">
+            <div class="font-bold">
+                {{ currentCompany()?.nombre }}
+            </div>
+        </div>
+
+        <nav class="p-4">
+            <a routerLink="/dashboard">
+                Dashboard
+            </a>
+            <a routerLink="/motors">
+                Motores
+            </a>
+            <a routerLink="/sensors">
+                Sensores
+            </a>
+            <a routerLink="/users">
+                Usuarios
+            </a>
+        </nav>
+    </aside>
+
+    <main class="flex-1 overflow-auto">
+        <router-outlet />
+    </main>
+
+</div>

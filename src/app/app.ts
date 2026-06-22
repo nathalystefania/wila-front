@@ -18,6 +18,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatBadgeModule } from '@angular/material/badge';
+import { RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-root',
@@ -39,8 +40,9 @@ import { MatBadgeModule } from '@angular/material/badge';
     MatMenuModule,
     MatTabsModule,
     MatProgressBarModule,
-    MatBadgeModule
-  ],
+    MatBadgeModule,
+    RouterOutlet
+],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
