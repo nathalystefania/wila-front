@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 
@@ -6,13 +6,22 @@ import { CatalogoService } from '@services/catalogo.service';
 import { MotorCatalogo } from '@models/catalogo.models';
 import { DashboardMotor, DashboardKpis, AlertaReciente } from '@models/dashboard.models';
 
+import { OnboardingStateService } from '@core/state/onboarding-state.service';
+
 @Component({
   selector: 'app-dashboard-home',
   imports: [CommonModule, MatButtonModule],
   templateUrl: './dashboard-home.html',
   styleUrl: './dashboard-home.scss',
 })
-export class DashboardHome {
+export class DashboardHome implements OnInit {
+
+  private onboardingStateService = inject(OnboardingStateService);
+
+  ngOnInit(): void {
+    this.onboardingStateService.clear();
+  }
+
   private catalogoService = inject(CatalogoService);
 
   motores: DashboardMotor[] = [];
