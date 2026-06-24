@@ -453,6 +453,22 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
     return total;
   }
 
+  isConfigCompleted(motor: Motor): boolean {
+    const anillos = this.getAnillosByMotor(motor);
+
+    if (anillos.length === 0) {
+      return false;
+    }
+
+    return anillos.every(anillo => {
+      const carbones = this.getCarbonesTableByAnillo(anillo);
+      return carbones.every(carbon => {
+        const control = this.getSensorFormControl(carbon.id);
+        return !this.isCarbonEnabled(carbon.id) || (control.value && String(control.value).trim() !== '');
+      });
+    });
+  }
+
   canContinue(): boolean {
     if (this.motors.length === 0) {
       return false;

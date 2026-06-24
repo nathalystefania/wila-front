@@ -20,9 +20,12 @@
   <mat-tab-group *ngIf="motors.length > 0" mat-stretch-tabs="false" mat-align-tabs="start"
     class="rounded-xl border border-outline/20 bg-surface-container-highest text-on-background"
     (selectedIndexChange)="onMotorTabChange($event)">
-    <mat-tab *ngFor="let motor of motors" [label]="motor.codigo">
+    <mat-tab *ngFor="let motor of motors; let i = index" [label]="motor.codigo">
       <ng-template mat-tab-label>
         <p class="uppercase font-bold text-base">Motor <span>{{ motor.codigo }}</span></p>
+        <span class="material-symbols-outlined ml-2">
+          {{ isConfigCompleted(motor) ? 'check_circle' : 'error' }}
+        </span>
       </ng-template>
 
       <!-- Anillos Expansion Panels -->
