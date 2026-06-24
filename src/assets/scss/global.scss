@@ -56,9 +56,26 @@ $icon-sizes: (
   vertical-align: middle;
 }
 
-// mat-mdc-input-element mat-mdc-form-field-input-control mdc-text-field__input cdk-text-field-autofill-monitored ng-dirty ng-valid ng-touched
-// mat-mdc-input-element ng-untouched ng-pristine ng-invalid mat-mdc-form-field-input-control mdc-text-field__input cdk-text-field-autofill-monitored
 .mat-mdc-form-field.mat-form-field-animations-enabled .mdc-text-field__input.ng-untouched,
 .mat-mdc-form-field.mat-form-field-animations-enabled .mdc-text-field__input.ng-pristine{
   opacity: 0.5;
+}
+
+.text-code{
+  font-family: var(--default-mono-font-family);
+}
+
+.custom-btn-fab{
+  cursor: pointer;
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  min-height: 48px;
+  border-radius: 50%;
+  transition: all 0.3s ease-in-out;
+
+  &:hover{
+    background-color: var(--mat-sys-surface-container-high);
+    border: 1px solid var(--mat-sys-outline);
+  }
 }

@@ -15,7 +15,7 @@ import { CatalogoService } from '@services/catalogo.service';
 import { DivisionApi, EmpresaApi } from '@models/catalogo.models';
 
 @Component({
-  selector: 'app-planta-step',
+  selector: 'app-empresa-step',
   standalone: true,
   imports: [
     CommonModule,
@@ -26,10 +26,10 @@ import { DivisionApi, EmpresaApi } from '@models/catalogo.models';
     MatSelectModule,
     MatProgressSpinnerModule
   ],
-  templateUrl: './planta-step.component.html',
-  styleUrl: './planta-step.component.scss',
+  templateUrl: './empresa-step.component.html',
+  styleUrl: './empresa-step.component.scss',
 })
-export class PlantaStepComponent implements OnInit, OnDestroy, OnboardingStep {
+export class EmpresaStepComponent implements OnInit, OnDestroy, OnboardingStep {
   private fb = inject(FormBuilder);
   private state = inject(OnboardingStateService);
   private catalogoService = inject(CatalogoService);
@@ -42,7 +42,7 @@ export class PlantaStepComponent implements OnInit, OnDestroy, OnboardingStep {
 
   error = '';
   loading = false;
-  loadingPlantas = false;
+  loadingEmpresas = false;
   empresas: EmpresaApi[] = [];
   divisiones: DivisionApi[] = [];
 
@@ -53,7 +53,7 @@ export class PlantaStepComponent implements OnInit, OnDestroy, OnboardingStep {
   });
 
   ngOnInit(): void {
-    const draft = this.state.getPlantaDraft();
+    const draft = this.state.getEmpresaDraft();
     const cant = this.state.getCantidadMotores();
 
     if (draft) {
@@ -82,7 +82,7 @@ export class PlantaStepComponent implements OnInit, OnDestroy, OnboardingStep {
       const divisionId = (v.divisionId ?? '').trim();
 
       if (empresaId) {
-        this.state.setPlantaDraft({ empresaId, divisionId: divisionId || null });
+        this.state.setEmpresaDraft({ empresaId, divisionId: divisionId || null });
       }
 
       const n = Number(v.cantidad_motores);
@@ -94,7 +94,7 @@ export class PlantaStepComponent implements OnInit, OnDestroy, OnboardingStep {
   }
 
   private loadEmpresas(): void {
-    this.loadingPlantas = true;
+    this.loadingEmpresas = true;
     this.error = '';
 
     this.catalogoService.getEmpresas().subscribe({
@@ -109,10 +109,10 @@ export class PlantaStepComponent implements OnInit, OnDestroy, OnboardingStep {
         }
       },
       error: () => {
-        this.error = 'No se pudo cargar la información de la planta';
+        this.error = 'No se pudo cargar la información de la empresa';
       },
     }).add(() => {
-      this.loadingPlantas = false;
+      this.loadingEmpresas = false;
       this.stateChange.emit();
     });
   }
@@ -166,7 +166,7 @@ export class PlantaStepComponent implements OnInit, OnDestroy, OnboardingStep {
   }
 
   canContinue(): boolean {
-    return this.form.valid && !this.loading && !this.loadingPlantas;
+    return this.form.valid && !this.loading && !this.loadingEmpresas;
   }
 
   async commit(): Promise<void> {
@@ -177,7 +177,7 @@ export class PlantaStepComponent implements OnInit, OnDestroy, OnboardingStep {
 
     const v = this.form.getRawValue();
     this.state.setCantidadMotores(v.cantidad_motores!);
-    this.state.setPlantaDraft({
+    this.state.setEmpresaDraft({
       empresaId: (v.empresaId ?? '').trim(),
       divisionId: (v.divisionId ?? '').trim() || null,
     });

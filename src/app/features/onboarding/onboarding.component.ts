@@ -4,10 +4,11 @@ import { MatStepperModule, MatStepper } from '@angular/material/stepper';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { StepperSelectionEvent } from '@angular/cdk/stepper';
+import { Router } from '@angular/router';
 
 import { OnboardingStep } from '@models/onboarding.models';
 import { AuthStepComponent } from '../shared-steps/auth-step/auth-step.component';
-import { PlantaStepComponent } from '../shared-steps/planta-step/planta-step.component';
+import { EmpresaStepComponent } from '../shared-steps/empresa-step/empresa-step.component';
 import { MotoresStepComponent } from '../shared-steps/motores-step/motores-step.component';
 import { AsignacionStepComponent } from '../shared-steps/asignacion-step/asignacion-step.component';
 import { ConfigurationCompleteComponent } from '../shared-steps/configuration-complete-step/configuration-complete.component';
@@ -19,7 +20,7 @@ import { OnboardingStateService } from '@core/state/onboarding-state.service';
   imports: [
     CommonModule,
     AuthStepComponent,
-    PlantaStepComponent,
+    EmpresaStepComponent,
     MotoresStepComponent,
     AsignacionStepComponent,
     ConfigurationCompleteComponent,
@@ -42,17 +43,19 @@ export class OnboardingComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // Propiedades cacheadas para evitar ExpressionChangedAfterItHasBeenCheckedError
   isAuthStepCompleted = false;
-  isPlantaStepCompleted = false;
+  isEmpresaStepCompleted = false;
   isMotoresStepCompleted = false;
+  isAsignacionStepCompleted = false;
+  isConfigurationCompleteStepCompleted = false;
   canCurrentStepContinue = false;
 
-  private updateInterval?: number;
   private cdr = inject(ChangeDetectorRef);
   private authService = inject(AuthService);
   private onboardingState = inject(OnboardingStateService);
+  private router = inject(Router);
 
   @ViewChild(AuthStepComponent) authStep?: AuthStepComponent;
-  @ViewChild(PlantaStepComponent) plantaStep?: PlantaStepComponent;
+  @ViewChild(EmpresaStepComponent) empresaStep?: EmpresaStepComponent;
   @ViewChild(MotoresStepComponent) motoresStep?: MotoresStepComponent;
   @ViewChild(AsignacionStepComponent) asignacionStep?: AsignacionStepComponent;
   @ViewChild(MatStepper) stepper?: MatStepper;
@@ -62,10 +65,10 @@ export class OnboardingComponent implements OnInit, AfterViewInit, OnDestroy {
     // Inicializar estados de pasos de forma SÍNCRONA antes de renderizar el stepper
     // Esto evita que el stepper linear rechace selectedIndex > 0 por [completed]=false
     this.isAuthStepCompleted = this.authService.isAuthenticated();
-    this.isPlantaStepCompleted = !!(this.onboardingState.getPlantaDraft()?.empresaId);
+    this.isEmpresaStepCompleted = !!(this.onboardingState.getEmpresaDraft()?.empresaId);
     const motores = this.onboardingState.getMotoresDraft();
     this.isMotoresStepCompleted = !!(motores && motores.length > 0 &&
-      motores.every(m => m.codigo && m.modelo !== undefined && m.num_anillos && m.carbones_por_anillo));
+      motores.every(m => !!m.codigo && !!m.num_anillos && !!m.carbones_por_anillo));
 
     const determinedStep = this.determineCurrentStep();
     this.setCurrentStep(determinedStep);
@@ -135,14 +138,14 @@ export class OnboardingComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private areViewChildrenReady(): boolean {
     const authReady = this.authStep !== undefined;
-    const plantaReady = this.plantaStep !== undefined;
+    const empresaReady = this.empresaStep !== undefined;
     const motoresReady = this.motoresStep !== undefined;
     const asignacionReady = this.asignacionStep !== undefined;
     
     // Al menos el componente del paso actual debe estar listo
     switch (this.currentStep) {
       case 0: return authReady;
-      case 1: return plantaReady;
+      case 1: return empresaReady;
       case 2: return motoresReady;
       case 3: return asignacionReady;
       default: return false;
@@ -155,10 +158,12 @@ export class OnboardingComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private syncStepStates(): void {
     this.isAuthStepCompleted = this.authService.isAuthenticated();
-    this.isPlantaStepCompleted = !!(this.onboardingState.getPlantaDraft()?.empresaId);
+    this.isEmpresaStepCompleted = !!(this.onboardingState.getEmpresaDraft()?.empresaId);
     const motores = this.onboardingState.getMotoresDraft();
     this.isMotoresStepCompleted = !!(motores && motores.length > 0 &&
-      motores.every(m => m.codigo && m.modelo !== undefined && m.num_anillos && m.carbones_por_anillo));
+      motores.every(m => m.codigo !== undefined && m.num_anillos && m.carbones_por_anillo));
+    this.isAsignacionStepCompleted = this.currentStep >= 4;
+    this.isConfigurationCompleteStepCompleted = this.currentStep >= 4;
   }
 
   private updateStepStates() {
@@ -170,6 +175,11 @@ export class OnboardingComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private updateCanContinueState() {
+    if (this.currentStep === 4) {
+      this.canCurrentStepContinue = true;
+      return;
+    }
+
     const activeStep = this.getActiveStep();
     
     if (!activeStep) {
@@ -204,20 +214,20 @@ export class OnboardingComponent implements OnInit, AfterViewInit, OnDestroy {
       return 0;
     }
 
-    // Si está autenticado pero no tiene planta draft, ir al paso 1 (planta)
-    const plantaDraft = this.onboardingState.getPlantaDraft();
-    if (!plantaDraft?.empresaId) {
+    // Si está autenticado pero no tiene empresa draft, ir al paso 1 (empresa)
+    const empresaDraft = this.onboardingState.getEmpresaDraft();
+    if (!empresaDraft?.empresaId) {
       return 1;
     }
 
-    // Si tiene planta pero no tiene motores configurados, ir al paso 2 (motores)
+    // Si tiene empresa pero no tiene motores configurados, ir al paso 2 (motores)
     const motores = this.onboardingState.getMotoresDraft();
     if (!motores || motores.length === 0) {
       return 2;
     }
 
     // Si tiene motores ir al paso 3 (revisión)
-    const motoresCompletos = motores.every(m => m.codigo && m.modelo !== undefined);
+    const motoresCompletos = motores.every(m => m.codigo !== undefined);
     if (!motoresCompletos) {
       return 2; // Si los motores no están completos, quedarse en el paso 2
     }
@@ -314,7 +324,7 @@ export class OnboardingComponent implements OnInit, AfterViewInit, OnDestroy {
     switch (step) {
       case 0: return false; // No puede ir a auth
       case 1: return this.isAuthStepCompleted; // Necesita estar autenticado
-      case 2: return this.isPlantaStepCompleted; // Necesita tener planta
+      case 2: return this.isEmpresaStepCompleted; // Necesita tener empresa
       case 3: return this.isMotoresStepCompleted; // Necesita tener revisión completada
       default: return false; // Pasos futuros no disponibles aún
     }
@@ -326,8 +336,8 @@ export class OnboardingComponent implements OnInit, AfterViewInit, OnDestroy {
         const authStep = this.authStep ?? null;
         return authStep;
       case 1: 
-        const plantaStep = this.plantaStep ?? null;
-        return plantaStep;
+        const empresaStep = this.empresaStep ?? null;
+        return empresaStep;
       case 2: 
         const motoresStep = this.motoresStep ?? null;
         return motoresStep;
@@ -340,6 +350,11 @@ export class OnboardingComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   async nextClicked() {
+    if (this.currentStep === 4) {
+      this.router.navigate(['/dashboard']);
+      return;
+    }
+
     const step = this.getActiveStep();
     this.nextError = '';
 

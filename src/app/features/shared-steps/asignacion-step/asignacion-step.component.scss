@@ -1,0 +1,28 @@
+:host::ng-deep {
+    .mat-expansion-panel-body {
+        padding: 0 0 16px 0;
+    }
+
+    .mat-mdc-table {
+        .mat-mdc-header-cell {
+            background-color: var(--mat-sys-surface-container-high);
+            border-top: 1px solid var(--mat-sys-outline);
+        }
+
+        .mat-mdc-form-field-subscript-wrapper {
+            display: none;
+        }
+    }
+
+    .mat-mdc-standard-chip:not(.mdc-evolution-chip--disabled).chip-success {
+        background-color: var(--mat-sys-inverse-primary);
+        
+        .mdc-evolution-chip__text-label {
+            color: var(--mat-sys-inverse-surface);
+        }
+    }
+
+    .mat-column-sensor {
+        width: 100%;
+    }
+}

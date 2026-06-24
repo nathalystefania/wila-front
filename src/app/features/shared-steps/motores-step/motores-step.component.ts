@@ -9,17 +9,18 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
+import { MatTabsModule } from '@angular/material/tabs';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { OnboardingStep } from '@models/onboarding.models';
 import { OnboardingStateService } from '@core/state/onboarding-state.service';
 import { CatalogoService } from '@services/catalogo.service';
-import { MotorDraft } from '@models/motor.models';
+import { MotorConfiguracionDraft } from '@models/catalogo.models';
 
 @Component({
   selector: 'app-motores-step',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatExpansionModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule, MatListModule, MatProgressSpinnerModule],
+  imports: [CommonModule, ReactiveFormsModule, MatExpansionModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule, MatListModule, MatProgressSpinnerModule, MatTabsModule],
   templateUrl: './motores-step.component.html',
   styleUrl: './motores-step.component.scss',
 })
@@ -40,15 +41,15 @@ export class MotoresStepComponent implements OnInit, OnboardingStep {
   loadingMotores = false;
   selectedMotorIndex = 0; // Índice del motor seleccionado en la segunda etapa
   focusedField: 'alto_carbon_mm' | 'prealarma_mm' | 'minimo_cambio_mm' | null = 'alto_carbon_mm'; // Campo enfocado
-  motoresDisponibles: MotorDraft[] = [];
+  motoresDisponibles: MotorConfiguracionDraft[] = [];
 
   formConfiguracion = this.fb.group({
     motores: this.fb.array([])
   });
 
   ngOnInit(): void {
-    const empresaId = this.state.getPlantaDraft()?.empresaId?.trim();
-    const divisionId = this.state.getPlantaDraft()?.divisionId?.trim() ?? '';
+    const empresaId = this.state.getEmpresaDraft()?.empresaId?.trim();
+    const divisionId = this.state.getEmpresaDraft()?.divisionId?.trim() ?? '';
 
     if (!empresaId) {
       this.error = 'No se encontró la empresa seleccionada. Vuelve al paso anterior.';
@@ -56,7 +57,7 @@ export class MotoresStepComponent implements OnInit, OnboardingStep {
     }
 
     this.loadingMotores = true;
-    const existentes = this.state.getMotoresDraft();
+    const existentes = this.state.getMotoresDraft() ?? [];
 
     this.loadSub?.unsubscribe();
     this.loadSub = this.catalogoService.getMotoresByEmpresaDivision(empresaId, divisionId).pipe(
@@ -77,15 +78,15 @@ export class MotoresStepComponent implements OnInit, OnboardingStep {
           const existente = existentes.find(item => item.codigo === motor.codigo) ?? existentes[index];
           return {
             codigo: motor.codigo,
-            modelo: motor.nombre,
-            ubicacion: `${motor.division_id} - ${motor.area_id} - ${motor.equipo_id}`,
-            descripcion: motor.equipo_id ? `Equipo ID: ${motor.equipo_id}` : null,
+            nombre: motor.nombre,
+            tipo_motor: motor.tipo_motor,
             num_anillos: existente?.num_anillos ?? null,
             carbones_por_anillo: existente?.carbones_por_anillo ?? null,
             alto_carbon_mm: existente?.alto_carbon_mm ?? null,
             prealarma_mm: existente?.prealarma_mm ?? null,
             minimo_cambio_mm: existente?.minimo_cambio_mm ?? null,
-          } as MotorDraft;
+            nivel_bateria_minimo: existente?.nivel_bateria_minimo ?? null,
+          } as MotorConfiguracionDraft;
         });
 
         this.state.setCantidadMotores(this.motoresDisponibles.length);
@@ -101,7 +102,7 @@ export class MotoresStepComponent implements OnInit, OnboardingStep {
     });
   }
 
-  private initConfiguracionForms(motores: MotorDraft[]) {
+  private initConfiguracionForms(motores: MotorConfiguracionDraft[]) {
     this.motoresConfiguracion.clear();
 
     for (let i = 0; i < motores.length; i++) {
@@ -124,13 +125,14 @@ export class MotoresStepComponent implements OnInit, OnboardingStep {
     return this.formConfiguracion.get('motores') as FormArray;
   }
 
-  private createConfiguracionForm(motor: MotorDraft) {
+  private createConfiguracionForm(motor: MotorConfiguracionDraft) {
     return this.fb.group({
       num_anillos: [motor.num_anillos ?? null, [Validators.required, Validators.min(1), Validators.max(10)]],
       carbones_por_anillo: [motor.carbones_por_anillo ?? null, [Validators.required, Validators.min(1), Validators.max(50)]],
       alto_carbon_mm: [motor.alto_carbon_mm ?? null, [Validators.required, Validators.maxLength(6)]],
       prealarma_mm: [motor.prealarma_mm ?? null, [Validators.required, Validators.maxLength(6)]],
       minimo_cambio_mm: [motor.minimo_cambio_mm ?? null, [Validators.required, Validators.maxLength(6)]],
+      nivel_bateria_minimo: [motor.nivel_bateria_minimo ?? null, [Validators.required, Validators.min(0), Validators.max(100)]],
     });
   }
 
@@ -153,18 +155,18 @@ export class MotoresStepComponent implements OnInit, OnboardingStep {
 
     const motoresConfig = this.motoresConfiguracion.getRawValue();
 
-    const motoresCompletos: MotorDraft[] = this.motoresDisponibles.map((motorBase, index) => {
+    const motoresCompletos: MotorConfiguracionDraft[] = this.motoresDisponibles.map((motorBase, index) => {
       const config = motoresConfig[index];
       return {
         codigo: motorBase.codigo?.trim() || '',
-        modelo: motorBase.modelo?.trim() || null,
-        ubicacion: motorBase.ubicacion?.trim() || null,
-        descripcion: motorBase.descripcion?.trim() || null,
+        nombre: motorBase.nombre?.trim() || null,
+        tipo_motor: motorBase.tipo_motor?.trim() || null,
         num_anillos: Number(config.num_anillos) || 0,
         carbones_por_anillo: Number(config.carbones_por_anillo) || 0,
         alto_carbon_mm: config.alto_carbon_mm ? Number(config.alto_carbon_mm) : null,
         prealarma_mm: config.prealarma_mm ? Number(config.prealarma_mm) : null,
         minimo_cambio_mm: config.minimo_cambio_mm ? Number(config.minimo_cambio_mm) : null,
+        nivel_bateria_minimo: Number(config.nivel_bateria_minimo) || 0,
       };
     });
 
@@ -174,7 +176,7 @@ export class MotoresStepComponent implements OnInit, OnboardingStep {
   getMotorCodigoByIndex(index: number): string {
     const motor = this.motoresDisponibles[index];
     if (!motor) return `Motor ${index + 1}`;
-    return `${motor.codigo} - ${motor.modelo ?? `Motor ${index + 1}`}`;
+    return `${motor.codigo} - ${motor.nombre ?? `Motor ${index + 1}`}`;
   }
 
   isMotorConfigCompleted(index: number): boolean {

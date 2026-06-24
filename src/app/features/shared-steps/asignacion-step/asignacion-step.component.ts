@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Subject, Observable, merge } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
@@ -11,20 +12,21 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatTableModule } from '@angular/material/table';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatAutocompleteModule, MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatChipsModule } from '@angular/material/chips';
 import { OnboardingStep } from '@models/onboarding.models';
-import { MotorDraft } from '@models/motor.models';
-import { SensorApi } from '@models/catalogo.models';
+import { MotorConfiguracionDraft, SensorApi } from '@models/catalogo.models';
 import { OnboardingStateService } from '@core/state/onboarding-state.service';
 import { CatalogoService } from '@services/catalogo.service';
 
 interface Anillo {
   id: string;
-  nombre: string;
-  posicion: number;
+  identificador: string;
+  motor_id: string;
 }
 
-interface Motor extends MotorDraft {
+interface Motor extends MotorConfiguracionDraft {
   id: string;
 }
 
@@ -58,6 +60,9 @@ export interface Carbones {
     MatFormFieldModule,
     MatInputModule,
     MatAutocompleteModule,
+    MatTooltipModule,
+    MatChipsModule,
+    MatAutocompleteTrigger
   ],
   templateUrl: './asignacion-step.component.html',
   styleUrls: ['./asignacion-step.component.scss'],
@@ -68,6 +73,7 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
     'id',
     'identificador',
     'sensor',
+    'lock'
   ];
 
   private cdr = inject(ChangeDetectorRef);
@@ -87,6 +93,7 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
   sensorSearchByCarbonId: Record<string, FormControl> = {};
   filteredSensoresByCarbonId: Record<string, Observable<SensorApi[]>> = {};
   sensorAssignmentByCarbonId: Record<string, string> = {};
+  carbonEnabledById: Record<string, boolean> = {};
 
   private destroy$ = new Subject<void>();
   private sensorAssignmentChanged$ = new Subject<void>();
@@ -133,11 +140,12 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
 
   private generateAnillos(motor: Motor) {
     const anillos: Anillo[] = [];
-    for (let i = 0; i < motor.num_anillos; i++) {
+    const totalAnillos = Number(motor.num_anillos) || 0;
+    for (let i = 0; i < totalAnillos; i++) {
       anillos.push({
         id: `${motor.id}-anillo-${i}`,
-        nombre: `Anillo ${i + 1}`,
-        posicion: i + 1
+        identificador: `Anillo ${i + 1}`,
+        motor_id: motor.id
       });
     }
     this.motorAnillosMap.set(motor.id, anillos);
@@ -150,6 +158,7 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
     this.carbonesByAnilloMap.clear();
     this.sensorSearchByCarbonId = {};
     this.filteredSensoresByCarbonId = {};
+    this.carbonEnabledById = {};
 
     this.motors.forEach((motor) => {
       const anillos = this.getAnillosByMotor(motor);
@@ -162,10 +171,18 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
           carbonCursor += 1;
 
           const carbonId = String(realId ?? `${anillo.id}-carbon-${numeroCarbon}`);
+          this.carbonEnabledById[carbonId] = true;
 
           // Crear FormControl para este carbón
           const formControl = new FormControl('');
           this.sensorSearchByCarbonId[carbonId] = formControl;
+
+          // Notificar al padre para recalcular canContinue cuando cambie cualquier input.
+          formControl.valueChanges
+            .pipe(takeUntil(this.destroy$))
+            .subscribe(() => {
+              this.stateChange.emit();
+            });
 
           // Crear observable filtrado para este carbón
           // Se actualiza cuando: 1) El usuario tipea (valueChanges), 2) Se asigna un sensor en otro carbón
@@ -180,7 +197,7 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
             anillo_id: anillo.id,
             id: carbonId,
             numero_carbon: numeroCarbon,
-            identificador: `${motor.codigo}-A${anillo.posicion}-C${numeroCarbon}`,
+            identificador: `${motor.codigo}-A${anillo.id}-C${numeroCarbon}`,
             largo_inicial: Number(motor.alto_carbon_mm) || 0,
             largo_prealarma: Number(motor.prealarma_mm) || 0,
             largo_alarma: Number(motor.minimo_cambio_mm) || 0,
@@ -220,6 +237,16 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
     if (!this.sensorSearchByCarbonId[carbonId]) {
       this.sensorSearchByCarbonId[carbonId] = new FormControl('');
       const formControl = this.sensorSearchByCarbonId[carbonId];
+
+      formControl.valueChanges
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(() => {
+          this.stateChange.emit();
+        });
+
+      if (!this.isCarbonEnabled(carbonId)) {
+        formControl.disable({ emitEvent: false });
+      }
       this.filteredSensoresByCarbonId[carbonId] = merge(
         formControl.valueChanges.pipe(startWith('')),
         this.sensorAssignmentChanged$.pipe(startWith(null))
@@ -227,14 +254,48 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
         map(() => this.getAvailableSensoresForCarbon(carbonId, formControl.value ?? ''))
       );
     }
+    
     return this.sensorSearchByCarbonId[carbonId];
   }
+  
+  // Eliminar el valor seleccionado en el input
+  cleanValue(carbonId: string, trigger: MatAutocompleteTrigger): void {
+    this.getSensorFormControl(carbonId).setValue('');
+    setTimeout(() => trigger.closePanel(), 0);
+  }
+
 
   getFilteredSensores(carbonId: string): Observable<SensorApi[]> {
     return this.filteredSensoresByCarbonId[carbonId] || (this.sensoresDisponibles as any);
   }
 
+  isCarbonEnabled(carbonId: string): boolean {
+    return this.carbonEnabledById[carbonId] !== false;
+  }
+
+  setCarbonEnabled(carbonId: string, enabled: boolean): void {
+    this.carbonEnabledById[carbonId] = enabled;
+    const control = this.getSensorFormControl(carbonId);
+
+    if (!enabled) {
+      delete this.sensorAssignmentByCarbonId[carbonId];
+      control.setValue('', { emitEvent: false });
+      control.disable({ emitEvent: false });
+      this.error = null;
+    } else {
+      control.enable({ emitEvent: false });
+    }
+
+    this.sensorAssignmentChanged$.next();
+    this.stateChange.emit();
+    this.cdr.detectChanges();
+  }
+
   onSensorSelected(carbonId: string, sensor: SensorApi): void {
+    if (!this.isCarbonEnabled(carbonId)) {
+      return;
+    }
+
     if (!sensor) {
       delete this.sensorAssignmentByCarbonId[carbonId];
       this.getSensorFormControl(carbonId).setValue('');
@@ -258,6 +319,10 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
   }
 
   onOptionSelected(carbonId: string, event: any): void {
+    if (!this.isCarbonEnabled(carbonId)) {
+      return;
+    }
+
     const hardwareId = event.option.value; // Solo el string id_hardware
     const sensor = this.sensoresDisponibles.find(s => s.id_hardware === hardwareId);
     if (sensor) {
@@ -266,6 +331,10 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
   }
 
   getAvailableSensoresForCarbon(carbonId: string, searchTerm: string = ''): SensorApi[] {
+    if (!this.isCarbonEnabled(carbonId)) {
+      return [];
+    }
+
     const term = (searchTerm ?? '').trim().toLowerCase();
     const assignedByOthers = new Set(
       Object.entries(this.sensorAssignmentByCarbonId)
@@ -279,7 +348,7 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
   }
 
   displaySensorName(sensor?: SensorApi): string {
-    return sensor ? `${sensor.id_hardware} - ${sensor.nombre}` : '';
+    return sensor ? `${sensor.id_hardware}` : '';
   }
 
   private isSensorDisponible(sensor: SensorApi): boolean {
@@ -310,6 +379,43 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
     return this.motorAnillosMap.get(motor.id) || [];
   }
 
+  getAsignadosCount(anillo: Anillo): number {
+    // Contar cuantos carbones de este anillo tienen valor asignado en input getSensorFormControl(element.id)
+    const carbones = this.getCarbonesTableByAnillo(anillo);
+    return carbones.filter(carbon => {
+      const control = this.getSensorFormControl(carbon.id);
+      return control.value && control.value.trim() !== '';
+    }).length;
+  }
+
+  getDisabledCount(anillo: Anillo): number {
+    // Contar cuantos carbones están bloqueados (disabled)
+    const carbones = this.getCarbonesTableByAnillo(anillo);
+    return carbones.filter(carbon => !this.isCarbonEnabled(carbon.id)).length;
+  }
+
+  getSinAsignarCount(anillo: Anillo): number {
+    // Contar cuantos carbones están habilitados pero sin sensor asignado
+    const carbones = this.getCarbonesTableByAnillo(anillo);
+    return carbones.filter(carbon => {
+      const control = this.getSensorFormControl(carbon.id);
+      return this.isCarbonEnabled(carbon.id) && (!control.value || control.value.trim() === '');
+    }).length;
+  }
+
+  getTotalCarbonesCount(anillo: Anillo): number {
+    const carbones = this.getCarbonesTableByAnillo(anillo);
+
+    return carbones.filter(carbon => {
+      if (!this.isCarbonEnabled(carbon.id)) {
+        return true;
+      }
+
+      const control = this.getSensorFormControl(carbon.id);
+      return !!(control.value && String(control.value).trim() !== '');
+    }).length;
+  }
+
   onMotorTabChange(event: any) {
     // Los anillos ya están pre-generados, solo detectar cambios
     this.cdr.detectChanges();
@@ -321,8 +427,43 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
     this.sensorAssignmentChanged$.complete();
   }
 
+  private getExpectedCarbonesCount(): number {
+    let total = 0;
+
+    for (const motor of this.motors) {
+      const anillos = this.getAnillosByMotor(motor);
+      for (const anillo of anillos) {
+        total += this.getCarbonesTableByAnillo(anillo).length;
+      }
+    }
+
+    return total;
+  }
+
+  private getConfiguredCarbonesCount(): number {
+    let total = 0;
+
+    for (const motor of this.motors) {
+      const anillos = this.getAnillosByMotor(motor);
+      for (const anillo of anillos) {
+        total += this.getTotalCarbonesCount(anillo);
+      }
+    }
+
+    return total;
+  }
+
   canContinue(): boolean {
-    return this.motors.length > 0;
+    if (this.motors.length === 0) {
+      return false;
+    }
+
+    const expectedCarbones = this.getExpectedCarbonesCount();
+    if (expectedCarbones === 0) {
+      return false;
+    }
+
+    return this.getConfiguredCarbonesCount() === expectedCarbones;
   }
 
   async commit(): Promise<void> {
