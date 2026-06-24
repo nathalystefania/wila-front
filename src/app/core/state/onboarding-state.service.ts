@@ -1,7 +1,9 @@
 import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { PlantaDraft } from '../models/planta.models';
-import { MotorDraft } from '../models/motor.models';
+import {
+  EmpresaSelectionDraft,
+  MotorConfiguracionDraft,
+} from '@core/models/catalogo.models';
 
 export interface AuthDraft {
   email: string;
@@ -15,12 +17,10 @@ export class OnboardingStateService {
   
   private state: {
     authDraft?: AuthDraft;
-    plantaId?: number;
+    empresaDraft?: EmpresaSelectionDraft;
     cantidadMotores?: number;
-    plantaDraft?: PlantaDraft;
-    motoresDraft?: MotorDraft[];
-    motoresIds?: number[];
-    carbonesIds?: number[];
+    motoresDraft?: MotorConfiguracionDraft[];
+    carbonIds?: string[];
   } = {};
 
   private get isBrowser(): boolean {
@@ -62,64 +62,58 @@ export class OnboardingStateService {
     return this.state.authDraft ?? null;
   }
 
-  // Planta
-  setPlantaId(id: number | null) {
-    if (id === null) {
-      delete this.state.plantaId;
+  // Empresa
+  setEmpresaDraft(draft: EmpresaSelectionDraft | null) {
+    if (draft === null) {
+      delete this.state.empresaDraft;
     } else {
-      this.state.plantaId = id;
+      this.state.empresaDraft = draft;
     }
     this.saveToStorage();
   }
-  getPlantaId(): number | null {
-    return this.state.plantaId ?? null;
+  getEmpresaDraft(): EmpresaSelectionDraft | null {
+    return this.state.empresaDraft ?? null;
   }
 
-  setCantidadMotores(n: number) {
-    this.state.cantidadMotores = n;
+  // Cantidad de motores
+  setCantidadMotores(cantidad: number | null) {
+    if (cantidad === null) {
+      delete this.state.cantidadMotores;
+    } else {
+      this.state.cantidadMotores = cantidad;
+    }
     this.saveToStorage();
   }
+
   getCantidadMotores(): number | null {
     return this.state.cantidadMotores ?? null;
   }
 
-  setPlantaDraft(draft: PlantaDraft | null) {
-    if (draft === null) {
-      delete this.state.plantaDraft;
+  // Motores (draft)
+  setMotoresDraft(motores: MotorConfiguracionDraft[] | null) {
+    if (motores === null) {
+      delete this.state.motoresDraft;
     } else {
-      this.state.plantaDraft = draft;
+      this.state.motoresDraft = motores;
     }
     this.saveToStorage();
   }
-  getPlantaDraft(): PlantaDraft | null {
-    return this.state.plantaDraft ?? null;
+  getMotoresDraft(): MotorConfiguracionDraft[] | null {
+    return this.state.motoresDraft ?? null;
   }
 
-  // Motores (draft)
-  setMotoresDraft(motores: MotorDraft[]) {
-    this.state.motoresDraft = motores;
+  // IDs de carbones en onboarding
+  setCarbonIds(ids: string[] | null) {
+    if (ids === null) {
+      delete this.state.carbonIds;
+    } else {
+      this.state.carbonIds = ids;
+    }
     this.saveToStorage();
-  }
-  getMotoresDraft(): MotorDraft[] {
-    return this.state.motoresDraft ?? [];
   }
 
-  // IDs de motores creados en la API
-  setMotoresIds(ids: number[]) {
-    this.state.motoresIds = ids;
-    this.saveToStorage();
-  }
-  getMotoresIds(): number[] {
-    return this.state.motoresIds ?? [];
-  }
-
-  // IDs de carbones creados en la API
-  setCarbonIds(ids: number[]) {
-    this.state.carbonesIds = ids;
-    this.saveToStorage();
-  }
-  getCarbonIds(): number[] {
-    return this.state.carbonesIds ?? [];
+  getCarbonIds(): string[] {
+    return this.state.carbonIds ?? [];
   }
 
   clear() {

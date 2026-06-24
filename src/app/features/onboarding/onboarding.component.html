@@ -20,7 +20,7 @@
           </ng-template>
         </mat-step>
 
-        <mat-step [completed]="isPlantaStepCompleted" [editable]="isPlantaStepCompleted">
+        <mat-step [completed]="isEmpresaStepCompleted" [editable]="isEmpresaStepCompleted">
           <ng-template matStepLabel>
             <div class="step-label">
               <div class="title">Selección de cliente</div>
@@ -41,7 +41,7 @@
           </ng-template>
         </mat-step>
 
-        <mat-step [editable]="false">
+        <mat-step [completed]="isAsignacionStepCompleted" [editable]="false">
           <ng-template matStepLabel>
             <div class="step-label">
               <div class="title">Asignación de sensores</div>
@@ -50,7 +50,7 @@
           </ng-template>
         </mat-step>
 
-        <mat-step label="Configuración completada" [editable]="false"></mat-step>
+        <mat-step label="Configuración completada" [completed]="isConfigurationCompleteStepCompleted" [editable]="false"></mat-step>
       </mat-vertical-stepper>
     </div>
     <div class="w-full flex justify-center items-center px-8 pb-6">
@@ -63,13 +63,13 @@
 
   <!-- Columna derecha: contenido -->
   <div class="w-3/4 p-8 flex flex-col justify-between min-h-screen ml-auto relative">
-    <div class="flex-grow flex items-center justify-stretch pb-12">
+    <div class="flex items-center justify-stretch h-full pb-12">
       @if (currentStep === 0) {
         <app-auth-step class="w-full" (stateChange)="onStepStateChange()"></app-auth-step>
       }
 
       @if (currentStep === 1) {
-        <app-planta-step class="w-full" (stateChange)="onStepStateChange()"></app-planta-step>
+        <app-empresa-step class="w-full" (stateChange)="onStepStateChange()"></app-empresa-step>
       }
 
       @if (currentStep === 2) {
@@ -87,15 +87,15 @@
       }
 
       @if (currentStep === 4) {
-        <app-configuration-complete></app-configuration-complete>
+        <app-configuration-complete class="w-full"></app-configuration-complete>
       }
     </div>
 
-    @if (currentStep !== 4 && !(currentStep === 3 && asignacionSubStep < 4)) {
-    <div class="fixed bottom-0 right-0 w-2/3 bg-background px-8 py-4 z-50">
+    
+    <div class="fixed bottom-0 right-0 w-3/4 bg-background px-8 py-4 z-50">
       <div class="flex justify-between w-full [&>*:only-child]:mx-auto">
         @if (currentStep > 1) {
-          <button matButton="filled" type="button" class="btn-accent !min-w-52" (click)="back()" [disabled]="currentStep === 0">
+          <button matButton="outlined" type="button" class="!min-w-52" (click)="back()" [disabled]="currentStep === 0">
             <span class="material-symbols-outlined">arrow_left_alt</span>
             Volver
           </button>
@@ -109,9 +109,13 @@
           (click)="nextClicked()"
           [disabled]="loadingNext || !canCurrentStepContinue"
         >
-          @if (currentStep > 0) {
+          @if (currentStep > 0 && currentStep < 4) {
             {{ loadingNext ? 'Guardando...' : 'Guardar y continuar' }}
-          } @else {
+          }
+          @else if (currentStep === 4) {
+            {{ loadingNext ? 'Cargando...' : 'Ir al Dashboard' }}
+          }
+          @else {
             {{ loadingNext ? 'Cargando...' : 'Empecemos' }}
           }
           <span *ngIf="currentStep > 0" class="material-symbols-outlined">arrow_right_alt</span>
@@ -124,7 +128,7 @@
         </div>
       }
     </div>
-    }
+    
   </div>
 </div>
 
@@ -149,7 +153,7 @@
           <h2 class="text-text-primary text-xl font-semibold mb-4">Antes de comenzar</h2>
           <p class="text-text-primary mb-4 text-balance">
             Este proceso sirve para dejar el sistema listo para funcionar correctamente en tu
-            planta.<br />
+            empresa.<br />
             Aquí se ingresan datos básicos como los motores y sus características, para que el
             sistema pueda monitorear su estado y mostrar información útil más adelante.<br />
             Completar estos pasos una sola vez evita configuraciones manuales y posibles errores en

@@ -103,6 +103,7 @@ html {
     container-elevation-shadow: none,
     container-background-color: var(--mat-sys-surface-container-low),
     header-collapsed-state-height: 4.2rem,
+    header-text-size: 1.1rem,
     ));
   @include mat.list-overrides((
     active-indicator-shape: 0px,
@@ -120,6 +121,14 @@ html {
     outlined-error-hover-label-text-color: var(--mat-sys-error-container),
     outlined-error-hover-outline-color: var(--mat-sys-error-container),
     ));
+  @include mat.table-overrides((
+    background-color: var(--mat-sys-surface-container-low),
+    row-item-container-height: 5.5rem,
+    header-container-height: 2.5rem,
+  ));
+  @include mat.chips-overrides((
+    container-shape-radius: 2rem,
+  ));
 }
 
 // Apply light theme overrides
@@ -207,4 +216,25 @@ body {
 
 .cdk-overlay-dark-backdrop {
   background: light-dark(rgba(0, 0, 0, 0.32), rgba(255, 255, 255, 0.32));
+}
+
+.mat-mdc-option.mdc-list-item{
+  border-bottom: 1px solid var(--mat-sys-outline);
+  padding: 16px;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:nth-child(odd){
+    background-color: var(--mat-sys-surface-container-low);
+  }
+}
+
+.mat-expansion-panel{
+  border-bottom: 1px solid var(--mat-sys-outline);
+
+  &:last-child {
+    border-bottom: none;
+  }
 }
