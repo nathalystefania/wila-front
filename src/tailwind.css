@@ -50,4 +50,6 @@
   /* Modern font settings synced with Material Typography */
   --font-sans: "Inter", sans-serif;
   --font-brand: "Work Sans", sans-serif;
+
+  --breakpoint-tablet: 830px;
 }

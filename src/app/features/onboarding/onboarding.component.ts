@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { MatStepperModule, MatStepper } from '@angular/material/stepper';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { MatSidenavModule } from '@angular/material/sidenav';
 import { StepperSelectionEvent } from '@angular/cdk/stepper';
 import { Router } from '@angular/router';
 
@@ -26,7 +27,8 @@ import { OnboardingStateService } from '@core/state/onboarding-state.service';
     ConfigurationCompleteComponent,
     MatStepperModule,
     MatIconModule,
-    MatButtonModule
+    MatButtonModule,
+    MatSidenavModule
   ],
   templateUrl: './onboarding.component.html',
   styleUrl: './onboarding.component.scss',
@@ -383,10 +385,6 @@ export class OnboardingComponent implements OnInit, AfterViewInit, OnDestroy {
       this.loadingNext = false;
       this.cdr.detectChanges();
     }
-  }
-
-  toggleExplanation() {
-    this.showExplanation = !this.showExplanation;
   }
 
 }

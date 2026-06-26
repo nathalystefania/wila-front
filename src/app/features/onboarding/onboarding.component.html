@@ -1,174 +1,156 @@
-<div class="flex min-h-screen">
-  <div class="flex flex-col justify-between h-screen w-1/4 bg-surface-container-low fixed left-0 top-0">
-    <div>
-      <img src="assets/images/logo-wila.svg" alt="Logo Wila" class="mx-8 mt-8 mb-4 w-50" />
-      <mat-vertical-stepper
-        #stepper
-        [selectedIndex]="currentStep"
-        [linear]="true"
-        (selectionChange)="onStepChange($event)"
-      >
-        <ng-template matStepperIcon="done">
-          <span class="material-symbols-outlined">check</span>
-        </ng-template>
-        <mat-step [completed]="isAuthStepCompleted" [editable]="false">
-          <ng-template matStepLabel>
-            <div class="step-label">
-              <div class="title">Inicio de sesión</div>
-              <!-- <div class="subtitle">Crear usuario y guardar la configuración.</div> -->
-            </div>
-          </ng-template>
-        </mat-step>
-
-        <mat-step [completed]="isEmpresaStepCompleted" [editable]="isEmpresaStepCompleted">
-          <ng-template matStepLabel>
-            <div class="step-label">
-              <div class="title">Selección de cliente</div>
-              <!-- <div class="subtitle">Ubicación específica del cliente.</div> -->
-            </div>
-          </ng-template>
-          <ng-template matStepperIcon="edit" let-index="index">
+<mat-drawer-container class="example-container" [hasBackdrop]="true" autosize>
+  <div class="flex min-h-screen">
+    <div class="flex flex-col justify-between h-screen tablet:w-1/4 w-auto bg-surface-container-low fixed left-0 top-0">
+      <div>
+        <img src="assets/images/logo-wila.svg" alt="Logo Wila" class="hidden tablet:block mx-8 mt-8 mb-4 w-50" />
+        <img src="assets/images/isotipo-wila-light.svg" alt="Logo Wila"
+          class="block tablet:hidden mx-auto mt-5 mb-4 w-10" />
+        <mat-vertical-stepper #stepper [selectedIndex]="currentStep" [linear]="true"
+          (selectionChange)="onStepChange($event)">
+          <ng-template matStepperIcon="done">
             <span class="material-symbols-outlined">check</span>
           </ng-template>
-        </mat-step>
+          <mat-step [completed]="isAuthStepCompleted" [editable]="false">
+            <ng-template matStepLabel>
+              <div class="step-label">
+                <div class="title">Inicio de sesión</div>
+                <!-- <div class="subtitle">Crear usuario y guardar la configuración.</div> -->
+              </div>
+            </ng-template>
+          </mat-step>
 
-        <mat-step [completed]="isMotoresStepCompleted" [editable]="isMotoresStepCompleted">
-          <ng-template matStepLabel>
-            <div class="step-label">
-              <div class="title">Configuración de motores</div>
-              <!-- <div class="subtitle">Parámetros de cada motor.</div> -->
-            </div>
-          </ng-template>
-        </mat-step>
+          <mat-step [completed]="isEmpresaStepCompleted" [editable]="isEmpresaStepCompleted">
+            <ng-template matStepLabel>
+              <div class="step-label">
+                <div class="title">Selección de cliente</div>
+                <!-- <div class="subtitle">Ubicación específica del cliente.</div> -->
+              </div>
+            </ng-template>
+            <ng-template matStepperIcon="edit" let-index="index">
+              <span class="material-symbols-outlined">check</span>
+            </ng-template>
+          </mat-step>
 
-        <mat-step [completed]="isAsignacionStepCompleted" [editable]="false">
-          <ng-template matStepLabel>
-            <div class="step-label">
-              <div class="title">Asignación de sensores</div>
-              <!-- <div class="subtitle">Asociar dispositivos a su ubicación.</div> -->
-            </div>
-          </ng-template>
-        </mat-step>
+          <mat-step [completed]="isMotoresStepCompleted" [editable]="isMotoresStepCompleted">
+            <ng-template matStepLabel>
+              <div class="step-label">
+                <div class="title">Configuración de motores</div>
+                <!-- <div class="subtitle">Parámetros de cada motor.</div> -->
+              </div>
+            </ng-template>
+          </mat-step>
 
-        <mat-step label="Configuración completada" [completed]="isConfigurationCompleteStepCompleted" [editable]="false"></mat-step>
-      </mat-vertical-stepper>
+          <mat-step [completed]="isAsignacionStepCompleted" [editable]="false">
+            <ng-template matStepLabel>
+              <div class="step-label">
+                <div class="title">Asignación de sensores</div>
+                <!-- <div class="subtitle">Asociar dispositivos a su ubicación.</div> -->
+              </div>
+            </ng-template>
+          </mat-step>
+
+          <mat-step label="Configuración completada" [completed]="isConfigurationCompleteStepCompleted"
+            [editable]="false"></mat-step>
+        </mat-vertical-stepper>
+      </div>
+      <div class="w-full flex justify-center items-center px-8 pb-6">
+        <button (click)="drawer.toggle()"
+          class="text-text-secondary hover:text-text-primary flex items-center gap-2">
+          <span class="material-symbols-outlined">help</span>
+          <div class="tablet:block hidden">¿Qué es esta configuración?</div>
+        </button>
+      </div>
     </div>
-    <div class="w-full flex justify-center items-center px-8 pb-6">
-      <button (click)="toggleExplanation()" class="text-text-secondary hover:text-text-primary flex items-center gap-2">
-        <span class="material-symbols-outlined">help</span>
-        ¿Qué es esta configuración?
-      </button>
-    </div>
-  </div>
 
-  <!-- Columna derecha: contenido -->
-  <div class="w-3/4 p-8 flex flex-col justify-between min-h-screen ml-auto relative">
-    <div class="flex items-center justify-stretch h-full pb-12">
-      @if (currentStep === 0) {
+    <!-- Columna derecha: contenido -->
+    <div class="w-[calc(100%-88px)] tablet:w-3/4 p-8 flex flex-col justify-between min-h-screen ml-auto relative">
+      <div class="flex items-center justify-stretch h-full pb-12">
+        @if (currentStep === 0) {
         <app-auth-step class="w-full" (stateChange)="onStepStateChange()"></app-auth-step>
-      }
+        }
 
-      @if (currentStep === 1) {
+        @if (currentStep === 1) {
         <app-empresa-step class="w-full" (stateChange)="onStepStateChange()"></app-empresa-step>
-      }
+        }
 
-      @if (currentStep === 2) {
-        <app-motores-step
-          class="w-full"
-          (stateChange)="onStepStateChange()"
-        ></app-motores-step>
-      }
+        @if (currentStep === 2) {
+        <app-motores-step class="w-full" (stateChange)="onStepStateChange()"></app-motores-step>
+        }
 
-      @if (currentStep === 3) {
-        <app-asignacion-step
-          class="w-full"
-          (stateChange)="onStepStateChange()"
-        ></app-asignacion-step>
-      }
+        @if (currentStep === 3) {
+        <app-asignacion-step class="w-full" (stateChange)="onStepStateChange()"></app-asignacion-step>
+        }
 
-      @if (currentStep === 4) {
+        @if (currentStep === 4) {
         <app-configuration-complete class="w-full"></app-configuration-complete>
-      }
-    </div>
+        }
+      </div>
 
-    
-    <div class="fixed bottom-0 right-0 w-3/4 bg-background px-8 py-4 z-50">
-      <div class="flex justify-between w-full [&>*:only-child]:mx-auto">
-        @if (currentStep > 1) {
+
+      <div class="fixed bottom-0 right-0 w-3/4 bg-background px-8 py-4 z-50">
+        <div class="flex justify-between w-full [&>*:only-child]:mx-auto">
+          @if (currentStep > 1) {
           <button matButton="outlined" type="button" class="!min-w-52" (click)="back()" [disabled]="currentStep === 0">
             <span class="material-symbols-outlined">arrow_left_alt</span>
             Volver
           </button>
-        }
+          }
 
-        <button
-          matButton="filled"
-          type="button"
-          class="btn-secondary btn-icon-right"
-          [ngClass]="currentStep === 0 ? 'first-step w-2/3' : ''"
-          (click)="nextClicked()"
-          [disabled]="loadingNext || !canCurrentStepContinue"
-        >
-          @if (currentStep > 0 && currentStep < 4) {
-            {{ loadingNext ? 'Guardando...' : 'Guardar y continuar' }}
-          }
-          @else if (currentStep === 4) {
-            {{ loadingNext ? 'Cargando...' : 'Ir al Dashboard' }}
-          }
-          @else {
-            {{ loadingNext ? 'Cargando...' : 'Empecemos' }}
-          }
-          <span *ngIf="currentStep > 0" class="material-symbols-outlined">arrow_right_alt</span>
-        </button>
-      </div>
+          <button matButton="filled" type="button" class="btn-secondary btn-icon-right"
+            [ngClass]="currentStep === 0 ? 'first-step w-2/3' : ''" (click)="nextClicked()"
+            [disabled]="loadingNext || !canCurrentStepContinue">
+            @if (currentStep > 0 && currentStep < 4) { {{ loadingNext ? 'Guardando...' : 'Guardar y continuar' }} }
+              @else if (currentStep===4) { {{ loadingNext ? 'Cargando...' : 'Ir al Dashboard' }} } @else { {{
+              loadingNext ? 'Cargando...' : 'Empecemos' }} } <span *ngIf="currentStep > 0"
+              class="material-symbols-outlined">arrow_right_alt</span>
+          </button>
+        </div>
 
-      @if (nextError) {
+        @if (nextError) {
         <div class="text-error-20 mt-4">
           {{ nextError }}
         </div>
-      }
+        }
+      </div>
+
     </div>
-    
   </div>
-</div>
 
-@if (showExplanation) {
-  <div class="fixed inset-0 z-50 flex">
-    <div
-      class="sidenav--explanation w-1/3 bg-surface-container-low p-12 relative z-10 transform transition-transform duration-300 ease-out translate-y-0 flex flex-col justify-center h-screen"
-      [class.animate-slide-up]="showExplanation"
-      [class.animate-slide-down]="!showExplanation"
-    >
-      <button
-        aria-label="Cerrar explicación"
-        class="absolute top-4 right-4 text-accent"
-        (click)="toggleExplanation()"
-      >
-        <span class="material-symbols-outlined">close</span>
-      </button>
-      <div class="border-info border-1 p-8 grid gap-12 place-content-center text-center">
-        <img src="assets/images/logo-wila.svg" alt="Logo Wila" class="w-50 mx-auto" />
+  <mat-drawer #drawer (opened)="showExplanation = true" (closed)="showExplanation = false" mode="over">
+    @if (showExplanation) {
+    <div class="sidenav--explanation fixed inset-0 z-50 flex">
+      <div
+        class="lg:w-1/3 w-full bg-surface-container-low p-12 relative z-10 transform transition-transform duration-300 ease-out translate-y-0 flex flex-col justify-center h-screen"
+        [class.animate-slide-up]="showExplanation" [class.animate-slide-down]="!showExplanation">
+        <button aria-label="Cerrar explicación" class="absolute top-4 right-4 text-accent"
+          (click)="drawer.toggle()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+        <div class="border-info border-1 p-8 grid gap-12 place-content-center text-center">
+          <img src="assets/images/logo-wila.svg" alt="Logo Wila" class="w-50 mx-auto" />
 
-        <div class="">
-          <h2 class="text-text-primary text-xl font-semibold mb-4">Antes de comenzar</h2>
-          <p class="text-text-primary mb-4 text-balance">
-            Este proceso sirve para dejar el sistema listo para funcionar correctamente en tu
-            empresa.<br />
-            Aquí se ingresan datos básicos como los motores y sus características, para que el
-            sistema pueda monitorear su estado y mostrar información útil más adelante.<br />
-            Completar estos pasos una sola vez evita configuraciones manuales y posibles errores en
-            el futuro.
-          </p>
-          <p class="text-text-primary text-sm opacity-75">Tiempo estimado: <b>30 minutos</b></p>
-        </div>
+          <div class="">
+            <h2 class="text-text-primary text-xl font-semibold mb-4">Antes de comenzar</h2>
+            <p class="text-text-primary mb-4 text-balance">
+              Este proceso sirve para dejar el sistema listo para funcionar correctamente en tu
+              empresa.<br />
+              Aquí se ingresan datos básicos como los motores y sus características, para que el
+              sistema pueda monitorear su estado y mostrar información útil más adelante.<br />
+              Completar estos pasos una sola vez evita configuraciones manuales y posibles errores en
+              el futuro.
+            </p>
+            <p class="text-text-primary text-sm opacity-75">Tiempo estimado: <b>30 minutos</b></p>
+          </div>
 
-        <div class="mx-auto">
-          <button (click)="toggleExplanation()" class="text-info flex items-center gap-2">
-            Entendido
-            <span class="material-symbols-outlined">thumb_up</span>
-          </button>
+          <div class="mx-auto">
+            <button (click)="drawer.toggle()" class="text-info flex items-center gap-2">
+              Entendido
+              <span class="material-symbols-outlined">thumb_up</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-}
+    }
+  </mat-drawer>
+</mat-drawer-container>

@@ -8,7 +8,8 @@
 @use './assets/themes/dark-mc.css' as dark-medium-contrast;
 @use './assets/themes/dark-hc.css' as dark-high-contrast;
 
-@use 'assets/scss/global';
+@use './tailwind.css';
+@use './assets/scss/global';
 
 @include mat.core();
 
@@ -59,8 +60,7 @@ html {
 
 
   // @include mat.all-component-themes($app-theme);
-  @include mat.theme-overrides((
-    corner-small: 4px,
+  @include mat.theme-overrides((corner-small: 4px,
       corner-medium: 6px,
       corner-large: 8px,
 
@@ -69,8 +69,7 @@ html {
       title-medium-size: 1.25rem,
       headline-small-size: 1.5rem,
     ));
-  @include mat.stepper-overrides((
-    container-color: var(--mat-sys-surface-container-low),
+  @include mat.stepper-overrides((container-color: var(--mat-sys-surface-container-low),
       line-color: var(--mat-sys-on-surface),
       header-error-state-label-text-color: var(--mat-sys-on-surface),
       header-label-text-color: var(--mat-sys-on-surface-variant),
@@ -84,8 +83,7 @@ html {
       header-done-state-icon-background-color: var(--mat-sys-primary),
       header-done-state-icon-foreground-color: var(--mat-sys-on-primary),
     ));
-  @include mat.button-overrides((
-    filled-container-shape: 4px,
+  @include mat.button-overrides((filled-container-shape: 4px,
       filled-disabled-label-text-color: var(--color-disabled-textos),
       filled-disabled-container-color: var(--color-disabled-base),
       filled-label-text-size: 1rem,
@@ -94,41 +92,35 @@ html {
       outlined-label-text-size: 1rem,
       protected-container-elevation-shadow: var(--mat-sys-level0),
     ));
-  @include mat.fab-overrides((
-    extended-container-elevation-shadow: var(--mat-sys-level0),
-    extended-container-height: 40px,
+  @include mat.fab-overrides((extended-container-elevation-shadow: var(--mat-sys-level0),
+      extended-container-height: 40px,
     ));
-  @include mat.expansion-overrides((
-    container-shape: 4px,
-    container-elevation-shadow: none,
-    container-background-color: var(--mat-sys-surface-container-low),
-    header-collapsed-state-height: 4.2rem,
-    header-text-size: 1.1rem,
+  @include mat.expansion-overrides((container-shape: 4px,
+      container-elevation-shadow: none,
+      container-background-color: var(--mat-sys-surface-container-low),
+      header-collapsed-state-height: 4.2rem,
+      header-text-size: 1.1rem,
     ));
-  @include mat.list-overrides((
-    active-indicator-shape: 0px,
-    active-indicator-color: var(--color-surface-container),
-    list-item-label-text-color: var(--color-on-primary),
-    list-item-supporting-text-color: var(--color-on-primary),
-    list-item-trailing-supporting-text-color: var(--color-on-primary),
+  @include mat.list-overrides((active-indicator-shape: 0px,
+      active-indicator-color: var(--color-surface-container),
+      list-item-label-text-color: var(--color-on-primary),
+      list-item-supporting-text-color: var(--color-on-primary),
+      list-item-trailing-supporting-text-color: var(--color-on-primary),
     ));
-  @include mat.form-field-overrides((
-    outlined-label-text-populated-size: 1.3rem,
-    outlined-focus-outline-color: var(--mat-sys-outline),
-    outlined-focus-label-text-color: var(--mat-sys-outline),
-    outlined-error-label-text-color: var(--mat-sys-error),
-    outlined-error-outline-color: var(--mat-sys-error),
-    outlined-error-hover-label-text-color: var(--mat-sys-error-container),
-    outlined-error-hover-outline-color: var(--mat-sys-error-container),
+  @include mat.form-field-overrides((outlined-label-text-populated-size: 1.3rem,
+      outlined-focus-outline-color: var(--mat-sys-outline),
+      outlined-focus-label-text-color: var(--mat-sys-outline),
+      outlined-error-label-text-color: var(--mat-sys-error),
+      outlined-error-outline-color: var(--mat-sys-error),
+      outlined-error-hover-label-text-color: var(--mat-sys-error-container),
+      outlined-error-hover-outline-color: var(--mat-sys-error-container),
     ));
-  @include mat.table-overrides((
-    background-color: var(--mat-sys-surface-container-low),
-    row-item-container-height: 5.5rem,
-    header-container-height: 2.5rem,
-  ));
-  @include mat.chips-overrides((
-    container-shape-radius: 2rem,
-  ));
+  @include mat.table-overrides((background-color: var(--mat-sys-surface-container-low),
+      row-item-container-height: 5.5rem,
+      header-container-height: 2.5rem,
+    ));
+  @include mat.chips-overrides((container-shape-radius: 2rem,
+    ));
 }
 
 // Apply light theme overrides
@@ -166,6 +158,7 @@ body {
 
 .mat-vertical-stepper-header {
   height: inherit !important;
+  margin: 5px 0;
 }
 
 .mat-step {
@@ -185,10 +178,20 @@ body {
     &-selected {
       box-shadow: 0 0px 0px 6px rgb(177, 197, 255, 0.2), 0 0px 0px 6px rgb(177, 197, 255, 0.3);
     }
+
+    @media screen and (max-width: 830px) {
+      margin-right: 0px!important;
+    }
   }
 
   &-text-label {
     font-size: 1.1rem;
+    white-space: break-spaces;
+    word-break: break-word;
+    
+    @media screen and (max-width: 1280px) {
+      font-size: 1rem;
+    }
 
     .step-label {
       .title {
@@ -198,7 +201,6 @@ body {
 
       .subtitle {
         color: var(--mat-sys-on-surface-variant);
-        white-space: normal;
       }
     }
   }
@@ -218,7 +220,7 @@ body {
   background: light-dark(rgba(0, 0, 0, 0.32), rgba(255, 255, 255, 0.32));
 }
 
-.mat-mdc-option.mdc-list-item{
+.mat-mdc-option.mdc-list-item {
   border-bottom: 1px solid var(--mat-sys-outline);
   padding: 16px;
 
@@ -226,15 +228,25 @@ body {
     border-bottom: none;
   }
 
-  &:nth-child(odd){
+  &:nth-child(odd) {
     background-color: var(--mat-sys-surface-container-low);
   }
 }
 
-.mat-expansion-panel{
+.mat-expansion-panel {
   border-bottom: 1px solid var(--mat-sys-outline);
 
   &:last-child {
     border-bottom: none;
   }
+}
+
+.mat-step-label {
+  @media screen and (max-width: 830px) {
+    display: none!important;
+  }
+}
+
+.mat-drawer-content {
+  transition: none !important;
 }
