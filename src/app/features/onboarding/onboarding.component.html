@@ -2,6 +2,9 @@
   <div class="flex flex-col justify-between h-screen w-1/4 bg-surface-container-low fixed left-0 top-0">
     <div>
       <img src="assets/images/logo-wila.svg" alt="Logo Wila" class="mx-8 mt-8 mb-4 w-50" />
+      <!-- ONLY FOR DEVELOPMENT -->
+      <small class="text-gray-400 block text-center">V.{{ versionService.version().commit }}</small>
+      <!-- ONLY FOR DEVELOPMENT -->
       <mat-vertical-stepper
         #stepper
         [selectedIndex]="currentStep"
