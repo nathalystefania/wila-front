@@ -39,3 +39,5 @@ yarn-error.log*
 # Miscellaneous
 .DS_Store
 proxy.conf.json
+
+src/environments/version.ts

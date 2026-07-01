@@ -16,6 +16,8 @@ import { ConfigurationCompleteComponent } from '../shared-steps/configuration-co
 import { AuthService } from '@services/auth.service';
 import { OnboardingStateService } from '@core/state/onboarding-state.service';
 
+import { VersionService } from '@services/version.service';
+
 @Component({
   selector: 'app-onboarding',
   imports: [
@@ -35,6 +37,9 @@ import { OnboardingStateService } from '@core/state/onboarding-state.service';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class OnboardingComponent implements OnInit, AfterViewInit, OnDestroy {
+
+  versionService = inject(VersionService);
+  
   currentStep = 0;
   readonly maxStep = 4;
 

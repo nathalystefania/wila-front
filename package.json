@@ -3,11 +3,12 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
-    "watch": "ng build --watch --configuration development",
-    "test": "ng test",
-    "local": "ng serve --open --port 3600"
+    "start": "npm run generate-version && ng serve",
+    "build": "npm run generate-version && ng build",
+    "watch": "npm run generate-version && ng build --watch --configuration development",
+    "test": "npm run generate-version && ng test",
+    "local": "npm run generate-version && ng serve --open --port 3600",
+    "generate-version": "node src/scripts/version.js"
   },
   "private": true,
   "packageManager": "npm@10.8.2",

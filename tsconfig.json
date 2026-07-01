@@ -23,6 +23,7 @@
       "@services/*": ["./src/app/core/services/*"],
       "@guards/*": ["./src/app/core/guards/*"],
       "@interceptors/*": ["./src/app/core/interceptors/*"],
+      "@environments/*": ["./src/environments/*"]
     }
   },
   "angularCompilerOptions": {
