@@ -106,10 +106,20 @@ export interface MotorConfiguracionDraft {
     tipo_motor?: string | null;
     num_anillos: number | null;
     carbones_por_anillo: number | null;
-    alto_carbon_mm?: number | null;
-    prealarma_mm?: number | null;
-    minimo_cambio_mm?: number | null;
-    umbral_desgaste_perc?: number | null;
-    duracion_estimada_dias?: number | null;
-    nivel_bateria_minimo?: number | null;
+}
+
+export interface CarbonConfiguracionDraft {
+    motor_codigo?: string;
+    anillo_id?: string;
+    id?: string;
+    identificador?: string;
+    largo_inicial: number | null;
+    largo_prealarma: number | null;
+    largo_alarma: number | null;
+    nivel_bateria_minimo: number | null;
+}
+
+export interface AsignacionDraft {
+  carbon_id: string;
+  sensor_id: string;
 }

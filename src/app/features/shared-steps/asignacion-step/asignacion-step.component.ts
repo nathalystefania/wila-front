@@ -16,7 +16,7 @@ import { MatAutocompleteModule, MatAutocompleteTrigger } from '@angular/material
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatChipsModule } from '@angular/material/chips';
 import { OnboardingStep } from '@models/onboarding.models';
-import { MotorConfiguracionDraft, SensorApi } from '@models/catalogo.models';
+import { CarbonConfiguracionDraft, MotorConfiguracionDraft, SensorApi, AsignacionDraft } from '@models/catalogo.models';
 import { OnboardingStateService } from '@core/state/onboarding-state.service';
 import { CatalogoService } from '@services/catalogo.service';
 
@@ -105,7 +105,7 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
 
   async loadMotores() {
     const motorsDraft = this.state.getMotoresDraft();
-    
+
     if (!motorsDraft || motorsDraft.length === 0) {
       this.error = 'No se encontraron motores configurados. Vuelve al paso anterior.';
       this.cdr.detectChanges();
@@ -114,7 +114,7 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
 
     this.isLoading = true;
     this.error = null;
-    
+
     try {
       // Convertir MotorDraft a Motor con id y generar anillos
       this.motors = motorsDraft.map((draft, index) => ({
@@ -128,6 +128,7 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
       });
 
       this.buildCarbonesData();
+      this.restoreAsignacionDraft();
 
       this.stateChange.emit();
     } catch (err: any) {
@@ -152,7 +153,8 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
   }
 
   private buildCarbonesData() {
-    const carbonIds = this.state.getCarbonIds();
+    const carbonDraft = this.state.getcarbonDraft();
+    const carbonConfigDraft = this.state.getCarbonesConfiguracionDraft() ?? [];
     let carbonCursor = 0;
 
     this.carbonesByAnilloMap.clear();
@@ -160,14 +162,15 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
     this.filteredSensoresByCarbonId = {};
     this.carbonEnabledById = {};
 
-    this.motors.forEach((motor) => {
+    this.motors.forEach((motor, motorIndex) => {
+      const carbonConfig = this.getCarbonConfigForMotor(motor.codigo, carbonConfigDraft, motorIndex);
       const anillos = this.getAnillosByMotor(motor);
       const carbonesPorAnillo = Number(motor.carbones_por_anillo) || 0;
 
       anillos.forEach((anillo) => {
         const carbones: Carbones[] = Array.from({ length: carbonesPorAnillo }, (_, index) => {
           const numeroCarbon = index + 1;
-          const realId = carbonIds[carbonCursor];
+          const realId = carbonDraft[carbonCursor];
           carbonCursor += 1;
 
           const carbonId = String(realId ?? `${anillo.id}-carbon-${numeroCarbon}`);
@@ -198,16 +201,41 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
             id: carbonId,
             numero_carbon: numeroCarbon,
             identificador: `${motor.codigo}-A${anillo.id}-C${numeroCarbon}`,
-            largo_inicial: Number(motor.alto_carbon_mm) || 0,
-            largo_prealarma: Number(motor.prealarma_mm) || 0,
-            largo_alarma: Number(motor.minimo_cambio_mm) || 0,
-            nivel_bateria_minimo: 20,
+            largo_inicial: Number(carbonConfig?.largo_inicial) || 0,
+            largo_prealarma: Number(carbonConfig?.largo_prealarma) || 0,
+            largo_alarma: Number(carbonConfig?.largo_alarma) || 0,
+            nivel_bateria_minimo: Number(carbonConfig?.nivel_bateria_minimo) || 20,
           };
         });
 
         this.carbonesByAnilloMap.set(anillo.id, carbones);
       });
     });
+  }
+
+  private restoreAsignacionDraft(): void {
+    const asignaciones = this.state.getAsignacionDraft() ?? [];
+
+    for (const asignacion of asignaciones) {
+      if (!this.isCarbonEnabled(asignacion.carbon_id)) {
+        continue;
+      }
+
+      this.sensorAssignmentByCarbonId[asignacion.carbon_id] = asignacion.sensor_id;
+      this.getSensorFormControl(asignacion.carbon_id).setValue(asignacion.sensor_id, {
+        emitEvent: false,
+      });
+    }
+
+    this.sensorAssignmentChanged$.next();
+  }
+
+  private getCarbonConfigForMotor(
+    motorCodigo: string,
+    carbonConfigDraft: CarbonConfiguracionDraft[],
+    motorIndex: number
+  ): CarbonConfiguracionDraft | undefined {
+    return carbonConfigDraft.find(item => item.motor_codigo === motorCodigo) ?? carbonConfigDraft[motorIndex];
   }
 
   getCarbonesTableByAnillo(anillo: Anillo): Carbones[] {
@@ -254,10 +282,10 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
         map(() => this.getAvailableSensoresForCarbon(carbonId, formControl.value ?? ''))
       );
     }
-    
+
     return this.sensorSearchByCarbonId[carbonId];
   }
-  
+
   // Eliminar el valor seleccionado en el input
   cleanValue(carbonId: string, trigger: MatAutocompleteTrigger): void {
     this.getSensorFormControl(carbonId).setValue('');
@@ -483,6 +511,19 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
   }
 
   async commit(): Promise<void> {
-    if (!this.canContinue()) throw new Error('INVALID_STEP');
+    if (!this.canContinue()) {
+      throw new Error('INVALID_STEP');
+    }
+
+    const asignaciones: AsignacionDraft[] = Object.entries(this.sensorAssignmentByCarbonId)
+      .filter(([carbonId, sensorId]) => {
+        return this.isCarbonEnabled(carbonId) && !!String(sensorId).trim();
+      })
+      .map(([carbonId, sensorId]) => ({
+        carbon_id: carbonId,
+        sensor_id: sensorId,
+      }));
+
+    this.state.setAsignacionDraft(asignaciones);
   }
 }

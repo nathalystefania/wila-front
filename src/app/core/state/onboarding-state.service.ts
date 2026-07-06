@@ -2,7 +2,9 @@ import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import {
   EmpresaSelectionDraft,
+  CarbonConfiguracionDraft,
   MotorConfiguracionDraft,
+  AsignacionDraft,
 } from '@core/models/catalogo.models';
 
 export interface AuthDraft {
@@ -18,9 +20,10 @@ export class OnboardingStateService {
   private state: {
     authDraft?: AuthDraft;
     empresaDraft?: EmpresaSelectionDraft;
-    cantidadMotores?: number;
     motoresDraft?: MotorConfiguracionDraft[];
-    carbonIds?: string[];
+    carbonesConfiguracionDraft?: CarbonConfiguracionDraft[];
+    carbonDraft?: string[];
+    asignacionDraft?: AsignacionDraft[];
   } = {};
 
   private get isBrowser(): boolean {
@@ -75,20 +78,6 @@ export class OnboardingStateService {
     return this.state.empresaDraft ?? null;
   }
 
-  // Cantidad de motores
-  setCantidadMotores(cantidad: number | null) {
-    if (cantidad === null) {
-      delete this.state.cantidadMotores;
-    } else {
-      this.state.cantidadMotores = cantidad;
-    }
-    this.saveToStorage();
-  }
-
-  getCantidadMotores(): number | null {
-    return this.state.cantidadMotores ?? null;
-  }
-
   // Motores (draft)
   setMotoresDraft(motores: MotorConfiguracionDraft[] | null) {
     if (motores === null) {
@@ -102,18 +91,44 @@ export class OnboardingStateService {
     return this.state.motoresDraft ?? null;
   }
 
-  // IDs de carbones en onboarding
-  setCarbonIds(ids: string[] | null) {
-    if (ids === null) {
-      delete this.state.carbonIds;
+  setCarbonesConfiguracionDraft(carbones: CarbonConfiguracionDraft[] | null) {
+    if (carbones === null) {
+      delete this.state.carbonesConfiguracionDraft;
     } else {
-      this.state.carbonIds = ids;
+      this.state.carbonesConfiguracionDraft = carbones;
     }
     this.saveToStorage();
   }
 
-  getCarbonIds(): string[] {
-    return this.state.carbonIds ?? [];
+  getCarbonesConfiguracionDraft(): CarbonConfiguracionDraft[] | null {
+    return this.state.carbonesConfiguracionDraft ?? null;
+  }
+
+  // IDs de carbones en onboarding
+  setcarbonDraft(ids: string[] | null) {
+    if (ids === null) {
+      delete this.state.carbonDraft;
+    } else {
+      this.state.carbonDraft = ids;
+    }
+    this.saveToStorage();
+  }
+
+  getcarbonDraft(): string[] {
+    return this.state.carbonDraft ?? [];
+  }
+
+  setAsignacionDraft(asignaciones: AsignacionDraft[] | null) {
+    if (asignaciones === null) {
+      delete this.state.asignacionDraft;
+    } else {
+      this.state.asignacionDraft = asignaciones;
+    }
+    this.saveToStorage();
+  }
+
+  getAsignacionDraft(): AsignacionDraft[] | null {
+    return this.state.asignacionDraft ?? null;
   }
 
   clear() {

@@ -38,6 +38,8 @@ export class ConfigurationCompleteComponent implements OnInit {
   async ngOnInit() {
     const empresaDraft = this.state.getEmpresaDraft();
     const motores = this.state.getMotoresDraft() ?? [];
+    const carbones = this.state.getCarbonesConfiguracionDraft() ?? [];
+    const asignaciones = this.state.getAsignacionDraft() ?? [];
     this.userEmail = this.authService.getUser()?.email ?? '—';
 
     if (!empresaDraft?.empresaId) {
@@ -52,8 +54,8 @@ export class ConfigurationCompleteComponent implements OnInit {
       const carbones = Number(motor.carbones_por_anillo) || 0;
       return sum + (anillos * carbones);
     }, 0);
-    this.carbonesSincronizados = 0;
-    this.carbonesSinSincronizar = this.totalCarbones;
+    this.carbonesSincronizados = asignaciones.length;
+    this.carbonesSinSincronizar = this.totalCarbones - this.carbonesSincronizados;
 
     try {
       const [empresas, divisiones] = await Promise.all([

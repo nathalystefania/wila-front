@@ -103,7 +103,7 @@
             [ngClass]="currentStep === 0 ? 'first-step w-2/3' : ''" (click)="nextClicked()"
             [disabled]="loadingNext || !canCurrentStepContinue">
             @if (currentStep > 0 && currentStep < 4) { {{ loadingNext ? 'Guardando...' : 'Guardar y continuar' }} }
-              @else if (currentStep===4) { {{ loadingNext ? 'Cargando...' : 'Ir al Dashboard' }} } @else { {{
+              @else if (currentStep===4) { {{ loadingNext ? 'Cargando...' : 'Confirmar e ir al Dashboard' }} } @else { {{
               loadingNext ? 'Cargando...' : 'Empecemos' }} } <span *ngIf="currentStep > 0"
               class="material-symbols-outlined">arrow_right_alt</span>
           </button>

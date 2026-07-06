@@ -15,7 +15,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { OnboardingStep } from '@models/onboarding.models';
 import { OnboardingStateService } from '@core/state/onboarding-state.service';
 import { CatalogoService } from '@services/catalogo.service';
-import { MotorConfiguracionDraft } from '@models/catalogo.models';
+import { MotorConfiguracionDraft, CarbonConfiguracionDraft } from '@models/catalogo.models';
 
 @Component({
   selector: 'app-motores-step',
@@ -40,7 +40,7 @@ export class MotoresStepComponent implements OnInit, OnboardingStep {
   loading = false;
   loadingMotores = false;
   selectedMotorIndex = 0; // Índice del motor seleccionado en la segunda etapa
-  focusedField: 'alto_carbon_mm' | 'prealarma_mm' | 'minimo_cambio_mm' | null = 'alto_carbon_mm'; // Campo enfocado
+  focusedField: 'largo_inicial' | 'largo_prealarma' | 'largo_alarma' | null = 'largo_inicial'; // Campo enfocado
   motoresDisponibles: MotorConfiguracionDraft[] = [];
 
   formConfiguracion = this.fb.group({
@@ -58,6 +58,7 @@ export class MotoresStepComponent implements OnInit, OnboardingStep {
 
     this.loadingMotores = true;
     const existentes = this.state.getMotoresDraft() ?? [];
+  const carbonesExistentes = this.state.getCarbonesConfiguracionDraft() ?? [];
 
     this.loadSub?.unsubscribe();
     this.loadSub = this.catalogoService.getMotoresByEmpresaDivision(empresaId, divisionId).pipe(
@@ -82,15 +83,10 @@ export class MotoresStepComponent implements OnInit, OnboardingStep {
             tipo_motor: motor.tipo_motor,
             num_anillos: existente?.num_anillos ?? null,
             carbones_por_anillo: existente?.carbones_por_anillo ?? null,
-            alto_carbon_mm: existente?.alto_carbon_mm ?? null,
-            prealarma_mm: existente?.prealarma_mm ?? null,
-            minimo_cambio_mm: existente?.minimo_cambio_mm ?? null,
-            nivel_bateria_minimo: existente?.nivel_bateria_minimo ?? null,
           } as MotorConfiguracionDraft;
         });
 
-        this.state.setCantidadMotores(this.motoresDisponibles.length);
-        this.initConfiguracionForms(this.motoresDisponibles);
+        this.initConfiguracionForms(this.motoresDisponibles, carbonesExistentes);
         this.etapaChange.emit('configuracion');
         this.stateChange.emit();
         this.cdr.detectChanges();
@@ -102,11 +98,12 @@ export class MotoresStepComponent implements OnInit, OnboardingStep {
     });
   }
 
-  private initConfiguracionForms(motores: MotorConfiguracionDraft[]) {
+  private initConfiguracionForms(motores: MotorConfiguracionDraft[], carbones: CarbonConfiguracionDraft[]) {
     this.motoresConfiguracion.clear();
 
     for (let i = 0; i < motores.length; i++) {
-      const configForm = this.createConfiguracionForm(motores[i]);
+      const carbon = carbones.find(item => item.motor_codigo === motores[i].codigo) ?? carbones[i];
+      const configForm = this.createConfiguracionForm(motores[i], carbon);
       this.motoresConfiguracion.push(configForm);
     }
 
@@ -125,14 +122,14 @@ export class MotoresStepComponent implements OnInit, OnboardingStep {
     return this.formConfiguracion.get('motores') as FormArray;
   }
 
-  private createConfiguracionForm(motor: MotorConfiguracionDraft) {
+  private createConfiguracionForm(motor: MotorConfiguracionDraft, carbon?: CarbonConfiguracionDraft) {
     return this.fb.group({
       num_anillos: [motor.num_anillos ?? null, [Validators.required, Validators.min(1), Validators.max(10)]],
       carbones_por_anillo: [motor.carbones_por_anillo ?? null, [Validators.required, Validators.min(1), Validators.max(50)]],
-      alto_carbon_mm: [motor.alto_carbon_mm ?? null, [Validators.required, Validators.maxLength(6)]],
-      prealarma_mm: [motor.prealarma_mm ?? null, [Validators.required, Validators.maxLength(6)]],
-      minimo_cambio_mm: [motor.minimo_cambio_mm ?? null, [Validators.required, Validators.maxLength(6)]],
-      nivel_bateria_minimo: [motor.nivel_bateria_minimo ?? null, [Validators.required, Validators.min(0), Validators.max(100)]],
+      largo_inicial: [carbon?.largo_inicial ?? null, [Validators.required, Validators.maxLength(6)]],
+      largo_prealarma: [carbon?.largo_prealarma ?? null, [Validators.required, Validators.maxLength(6)]],
+      largo_alarma: [carbon?.largo_alarma ?? null, [Validators.required, Validators.maxLength(6)]],
+      nivel_bateria_minimo: [carbon?.nivel_bateria_minimo ?? null, [Validators.required, Validators.min(0), Validators.max(100)]],
     });
   }
 
@@ -163,14 +160,23 @@ export class MotoresStepComponent implements OnInit, OnboardingStep {
         tipo_motor: motorBase.tipo_motor?.trim() || null,
         num_anillos: Number(config.num_anillos) || 0,
         carbones_por_anillo: Number(config.carbones_por_anillo) || 0,
-        alto_carbon_mm: config.alto_carbon_mm ? Number(config.alto_carbon_mm) : null,
-        prealarma_mm: config.prealarma_mm ? Number(config.prealarma_mm) : null,
-        minimo_cambio_mm: config.minimo_cambio_mm ? Number(config.minimo_cambio_mm) : null,
-        nivel_bateria_minimo: Number(config.nivel_bateria_minimo) || 0,
+      };
+    });
+
+    const carbonesConfiguracion: CarbonConfiguracionDraft[] = this.motoresDisponibles.map((motorBase, index) => {
+      const config = motoresConfig[index];
+      return {
+        motor_codigo: motorBase.codigo?.trim() || '',
+        identificador: motorBase.nombre?.trim() || motorBase.codigo?.trim() || undefined,
+        largo_inicial: config.largo_inicial ? Number(config.largo_inicial) : null,
+        largo_prealarma: config.largo_prealarma ? Number(config.largo_prealarma) : null,
+        largo_alarma: config.largo_alarma ? Number(config.largo_alarma) : null,
+        nivel_bateria_minimo: config.nivel_bateria_minimo ? Number(config.nivel_bateria_minimo) : null,
       };
     });
 
     this.state.setMotoresDraft(motoresCompletos);
+    this.state.setCarbonesConfiguracionDraft(carbonesConfiguracion);
   }
 
   getMotorCodigoByIndex(index: number): string {
@@ -187,12 +193,12 @@ export class MotoresStepComponent implements OnInit, OnboardingStep {
     return this.isMotorConfigCompleted(i) ? 'ok' : 'warn';
   }
 
-  onFieldFocus(fieldName: 'alto_carbon_mm' | 'prealarma_mm' | 'minimo_cambio_mm') {
+  onFieldFocus(fieldName: 'largo_inicial' | 'largo_prealarma' | 'largo_alarma') {
     this.focusedField = fieldName;
   }
 
   onFieldBlur() {
-    // Mantener el campo enfocado o volver a alto_carbon_mm por defecto
+    // Mantener el campo enfocado o volver a largo_inicial por defecto
     // this.focusedField = null; // Si quieres que no haya nada seleccionado al salir
   }
 
@@ -213,7 +219,7 @@ export class MotoresStepComponent implements OnInit, OnboardingStep {
     event.preventDefault();
   }
 
-  onNumericInput(controlName: 'alto_carbon_mm' | 'prealarma_mm' | 'minimo_cambio_mm', event: Event): void {
+  onNumericInput(controlName: 'largo_inicial' | 'largo_prealarma' | 'largo_alarma', event: Event): void {
     const input = event.target as HTMLInputElement;
     const sanitized = input.value.replace(/\D+/g, '');
 
@@ -227,11 +233,11 @@ export class MotoresStepComponent implements OnInit, OnboardingStep {
 
   getImageForField(): string {
     switch (this.focusedField) {
-      case 'alto_carbon_mm':
+      case 'largo_inicial':
         return 'assets/images/carbon-1.png';
-      case 'prealarma_mm':
+      case 'largo_prealarma':
         return 'assets/images/carbon-2.png';
-      case 'minimo_cambio_mm':
+      case 'largo_alarma':
         return 'assets/images/carbon-3.png';
       default:
         return 'assets/images/carbon-1.png';
@@ -246,11 +252,11 @@ export class MotoresStepComponent implements OnInit, OnboardingStep {
 
   getLabelForField(): string {
     switch (this.focusedField) {
-      case 'alto_carbon_mm':
+      case 'largo_inicial':
         return 'Largo del carbón nuevo';
-      case 'prealarma_mm':
+      case 'largo_prealarma':
         return 'Largo de pre alarma';
-      case 'minimo_cambio_mm':
+      case 'largo_alarma':
         return 'Largo mínimo de cambio';
       default:
         return 'Medida';
@@ -259,11 +265,11 @@ export class MotoresStepComponent implements OnInit, OnboardingStep {
 
   getCssClassForField(): string {
     switch (this.focusedField) {
-      case 'alto_carbon_mm':
+      case 'largo_inicial':
         return 'carbon-alto';
-      case 'prealarma_mm':
+      case 'largo_prealarma':
         return 'carbon-prealarma';
-      case 'minimo_cambio_mm':
+      case 'largo_alarma':
         return 'carbon-minimo';
       default:
         return 'carbon-default';

@@ -54,17 +54,12 @@ export class EmpresaStepComponent implements OnInit, OnDestroy, OnboardingStep {
 
   ngOnInit(): void {
     const draft = this.state.getEmpresaDraft();
-    const cant = this.state.getCantidadMotores();
 
     if (draft) {
       this.form.patchValue({
         empresaId: draft.empresaId ?? '',
         divisionId: draft.divisionId ?? '',
       }, { emitEvent: false });
-    }
-
-    if (cant) {
-      this.form.patchValue({ cantidad_motores: cant }, { emitEvent: false });
     }
 
     this.loadEmpresas();
@@ -84,9 +79,6 @@ export class EmpresaStepComponent implements OnInit, OnDestroy, OnboardingStep {
       if (empresaId) {
         this.state.setEmpresaDraft({ empresaId, divisionId: divisionId || null });
       }
-
-      const n = Number(v.cantidad_motores);
-      if (Number.isFinite(n)) this.state.setCantidadMotores(n);
 
       // Notificar cambios al componente padre
       this.stateChange.emit();
@@ -176,7 +168,6 @@ export class EmpresaStepComponent implements OnInit, OnDestroy, OnboardingStep {
     if (this.form.invalid) throw new Error('INVALID_STEP');
 
     const v = this.form.getRawValue();
-    this.state.setCantidadMotores(v.cantidad_motores!);
     this.state.setEmpresaDraft({
       empresaId: (v.empresaId ?? '').trim(),
       divisionId: (v.divisionId ?? '').trim() || null,
