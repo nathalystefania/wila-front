@@ -167,21 +167,27 @@ export class AuthStepComponent implements OnInit, OnDestroy, OnboardingStep {
 
       const status = err?.status;
 
-      if (status === 404 || status === 401) {
-        this.mode = 'register';
-        this.state.setAuthDraft({ email: creds.email, mode: this.mode });
-        this.error = 'No tienes cuenta registrada. Crea una contraseña para continuar.';
-        this.stateChange.emit();
-        throw new Error('USER_NOT_FOUND');
-      }
+      // Temporalmente deshabilitado: esta validación se reactivará cuando el
+      // flujo de autenticación vuelva a ser requerido.
+      // if (status === 404 || status === 401) {
+      //   this.mode = 'register';
+      //   this.state.setAuthDraft({ email: creds.email, mode: this.mode });
+      //   this.error = 'No tienes cuenta registrada. Crea una contraseña para continuar.';
+      //   this.stateChange.emit();
+      //   throw new Error('USER_NOT_FOUND');
+      // }
 
-      if (status === 409) {
-        this.mode = 'login';
-        this.state.setAuthDraft({ email: creds.email, mode: this.mode });
-        this.error = 'Este correo ya existe. Inicia sesión para continuar.';
-        this.stateChange.emit();
-        throw new Error('STEP_NEEDS_LOGIN');
-      }
+      // if (status === 409) {
+      //   this.mode = 'login';
+      //   this.state.setAuthDraft({ email: creds.email, mode: this.mode });
+      //   this.error = 'Este correo ya existe. Inicia sesión para continuar.';
+      //   this.stateChange.emit();
+      //   throw new Error('STEP_NEEDS_LOGIN');
+      // }
+
+      this.state.setAuthDraft({ email: creds.email, mode: this.mode });
+      this.stateChange.emit();
+      return;
 
       // if (status === 401) {
       //   this.error = 'Credenciales incorrectas.';

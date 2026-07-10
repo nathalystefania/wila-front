@@ -2,8 +2,8 @@ import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import {
   EmpresaSelectionDraft,
-  CarbonConfiguracionDraft,
-  MotorConfiguracionDraft,
+  AnillosDraft,
+  CarbonesDraft,
   AsignacionDraft,
 } from '@core/models/catalogo.models';
 
@@ -20,8 +20,8 @@ export class OnboardingStateService {
   private state: {
     authDraft?: AuthDraft;
     empresaDraft?: EmpresaSelectionDraft;
-    motoresDraft?: MotorConfiguracionDraft[];
-    carbonesConfiguracionDraft?: CarbonConfiguracionDraft[];
+    anillosDraft?: AnillosDraft[];
+    carbonesDraft?: CarbonesDraft[];
     carbonDraft?: string[];
     asignacionDraft?: AsignacionDraft[];
   } = {};
@@ -78,30 +78,30 @@ export class OnboardingStateService {
     return this.state.empresaDraft ?? null;
   }
 
-  // Motores (draft)
-  setMotoresDraft(motores: MotorConfiguracionDraft[] | null) {
-    if (motores === null) {
-      delete this.state.motoresDraft;
+  // Anillos (draft)
+  setAnillosDraft(anillos: AnillosDraft[] | null) {
+    if (anillos === null) {
+      delete this.state.anillosDraft;
     } else {
-      this.state.motoresDraft = motores;
+      this.state.anillosDraft = anillos;
     }
     this.saveToStorage();
   }
-  getMotoresDraft(): MotorConfiguracionDraft[] | null {
-    return this.state.motoresDraft ?? null;
+  getAnillosDraft(): AnillosDraft[] | null {
+    return this.state.anillosDraft ?? null;
   }
 
-  setCarbonesConfiguracionDraft(carbones: CarbonConfiguracionDraft[] | null) {
+  setCarbonesDraft(carbones: CarbonesDraft[] | null) {
     if (carbones === null) {
-      delete this.state.carbonesConfiguracionDraft;
+      delete this.state.carbonesDraft;
     } else {
-      this.state.carbonesConfiguracionDraft = carbones;
+      this.state.carbonesDraft = carbones;
     }
     this.saveToStorage();
   }
 
-  getCarbonesConfiguracionDraft(): CarbonConfiguracionDraft[] | null {
-    return this.state.carbonesConfiguracionDraft ?? null;
+  getCarbonesDraft(): CarbonesDraft[] | null {
+    return this.state.carbonesDraft ?? null;
   }
 
   // IDs de carbones en onboarding

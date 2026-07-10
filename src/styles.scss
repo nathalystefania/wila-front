@@ -215,6 +215,9 @@ body {
   transform: translateZ(0);
   backface-visibility: hidden;
 }
+.mat-form-field-invalid {
+  margin-bottom: 1rem;
+}
 
 .cdk-overlay-dark-backdrop {
   background: light-dark(rgba(0, 0, 0, 0.32), rgba(255, 255, 255, 0.32));

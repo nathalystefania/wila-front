@@ -1,6 +1,6 @@
 import { Component, OnInit, Output, EventEmitter, inject, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Subscription, finalize } from 'rxjs';
 
 import { MatExpansionModule } from '@angular/material/expansion';
@@ -11,16 +11,37 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { ErrorStateMatcher } from '@angular/material/core';
 
 import { OnboardingStep } from '@models/onboarding.models';
 import { OnboardingStateService } from '@core/state/onboarding-state.service';
 import { CatalogoService } from '@services/catalogo.service';
-import { MotorConfiguracionDraft, CarbonConfiguracionDraft } from '@models/catalogo.models';
+import { AnillosDraft, CarbonesDraft, MotorCatalogo } from '@models/catalogo.models';
+import { NextOnEnterDirective } from '@core/directives/next-on-enter.directive';
+
+import { motorConfigValidator } from './motor-config.validator';
+
+class GroupErrorStateMatcher implements ErrorStateMatcher {
+  constructor(private readonly errorKey: string) {}
+
+  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+    if (!control) return false;
+
+    const parent = control.parent;
+    const controlInteracted = !!(control.dirty || control.touched || form?.submitted);
+    const groupInteracted = !!(parent && (parent.dirty || parent.touched || form?.submitted));
+
+    return !!(
+      (control.invalid && controlInteracted) ||
+      (parent?.hasError(this.errorKey) && groupInteracted)
+    );
+  }
+}
 
 @Component({
   selector: 'app-motores-step',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatExpansionModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule, MatListModule, MatProgressSpinnerModule, MatTabsModule],
+  imports: [CommonModule, ReactiveFormsModule, MatExpansionModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule, MatListModule, MatProgressSpinnerModule, MatTabsModule, NextOnEnterDirective],
   templateUrl: './motores-step.component.html',
   styleUrl: './motores-step.component.scss',
 })
@@ -39,9 +60,12 @@ export class MotoresStepComponent implements OnInit, OnboardingStep {
   error = '';
   loading = false;
   loadingMotores = false;
+  readonly prealarmaMatcher = new GroupErrorStateMatcher('prealarmaMayorIgualInicial');
+  readonly alarmaMatcher = new GroupErrorStateMatcher('alarmaMayorIgualPrealarma');
+  readonly bateriaMatcher = new GroupErrorStateMatcher('bateriaAvisoInvalida');
   selectedMotorIndex = 0; // Índice del motor seleccionado en la segunda etapa
   focusedField: 'largo_inicial' | 'largo_prealarma' | 'largo_alarma' | null = 'largo_inicial'; // Campo enfocado
-  motoresDisponibles: MotorConfiguracionDraft[] = [];
+  motoresDisponibles: MotorCatalogo[] = [];
 
   formConfiguracion = this.fb.group({
     motores: this.fb.array([])
@@ -57,8 +81,8 @@ export class MotoresStepComponent implements OnInit, OnboardingStep {
     }
 
     this.loadingMotores = true;
-    const existentes = this.state.getMotoresDraft() ?? [];
-  const carbonesExistentes = this.state.getCarbonesConfiguracionDraft() ?? [];
+  const anillosExistentes = this.state.getAnillosDraft() ?? [];
+  const carbonesExistentes = this.state.getCarbonesDraft() ?? [];
 
     this.loadSub?.unsubscribe();
     this.loadSub = this.catalogoService.getMotoresByEmpresaDivision(empresaId, divisionId).pipe(
@@ -75,18 +99,9 @@ export class MotoresStepComponent implements OnInit, OnboardingStep {
           return;
         }
 
-        this.motoresDisponibles = motoresApi.map((motor, index) => {
-          const existente = existentes.find(item => item.codigo === motor.codigo) ?? existentes[index];
-          return {
-            codigo: motor.codigo,
-            nombre: motor.nombre,
-            tipo_motor: motor.tipo_motor,
-            num_anillos: existente?.num_anillos ?? null,
-            carbones_por_anillo: existente?.carbones_por_anillo ?? null,
-          } as MotorConfiguracionDraft;
-        });
+        this.motoresDisponibles = motoresApi;
 
-        this.initConfiguracionForms(this.motoresDisponibles, carbonesExistentes);
+        this.initConfiguracionForms(this.motoresDisponibles, anillosExistentes, carbonesExistentes);
         this.etapaChange.emit('configuracion');
         this.stateChange.emit();
         this.cdr.detectChanges();
@@ -98,12 +113,11 @@ export class MotoresStepComponent implements OnInit, OnboardingStep {
     });
   }
 
-  private initConfiguracionForms(motores: MotorConfiguracionDraft[], carbones: CarbonConfiguracionDraft[]) {
+  private initConfiguracionForms(motores: MotorCatalogo[], anillos: AnillosDraft[], carbones: CarbonesDraft[]) {
     this.motoresConfiguracion.clear();
 
     for (let i = 0; i < motores.length; i++) {
-      const carbon = carbones.find(item => item.motor_codigo === motores[i].codigo) ?? carbones[i];
-      const configForm = this.createConfiguracionForm(motores[i], carbon);
+      const configForm = this.createConfiguracionForm(motores[i], anillos, carbones);
       this.motoresConfiguracion.push(configForm);
     }
 
@@ -122,19 +136,61 @@ export class MotoresStepComponent implements OnInit, OnboardingStep {
     return this.formConfiguracion.get('motores') as FormArray;
   }
 
-  private createConfiguracionForm(motor: MotorConfiguracionDraft, carbon?: CarbonConfiguracionDraft) {
+  private createConfiguracionForm(motor: MotorCatalogo, anillos: AnillosDraft[], carbones: CarbonesDraft[]) {
+    const anillosMotor = anillos.filter(item => item.motor_id === motor.id);
+    const primerAnillo = anillosMotor[0];
+    const carbonesPrimerAnillo = primerAnillo
+      ? carbones.filter(item => item.anillo_id === primerAnillo.id)
+      : [];
+    const primerCarbon = carbonesPrimerAnillo[0];
+
     return this.fb.group({
-      num_anillos: [motor.num_anillos ?? null, [Validators.required, Validators.min(1), Validators.max(10)]],
-      carbones_por_anillo: [motor.carbones_por_anillo ?? null, [Validators.required, Validators.min(1), Validators.max(50)]],
-      largo_inicial: [carbon?.largo_inicial ?? null, [Validators.required, Validators.maxLength(6)]],
-      largo_prealarma: [carbon?.largo_prealarma ?? null, [Validators.required, Validators.maxLength(6)]],
-      largo_alarma: [carbon?.largo_alarma ?? null, [Validators.required, Validators.maxLength(6)]],
-      nivel_bateria_minimo: [carbon?.nivel_bateria_minimo ?? null, [Validators.required, Validators.min(0), Validators.max(100)]],
+      num_anillos: [
+        anillosMotor.length || null,
+        [Validators.required, Validators.min(1), Validators.max(10)]
+      ],
+
+      carbones_por_anillo: [
+        carbonesPrimerAnillo.length || null,
+        [Validators.required, Validators.min(1), Validators.max(50)]
+      ],
+
+      largo_inicial: [
+        primerCarbon?.largo_inicial ?? null,
+        [Validators.required, Validators.maxLength(6)]
+      ],
+
+      largo_prealarma: [
+        primerCarbon?.largo_prealarma ?? null,
+        [Validators.required, Validators.maxLength(6)]
+      ],
+
+      largo_alarma: [
+        primerCarbon?.largo_alarma ?? null,
+        [Validators.required, Validators.maxLength(6)]
+      ],
+
+      nivel_bateria_aviso: [
+        primerCarbon?.nivel_bateria_aviso ?? null,
+        [Validators.required, Validators.min(0), Validators.max(100)]
+      ],
+
+      nivel_bateria_minimo: [
+        primerCarbon?.nivel_bateria_minimo ?? null,
+        [Validators.required, Validators.min(0), Validators.max(100)]
+      ],
+    },
+    {
+      validators: motorConfigValidator
     });
   }
 
   selectMotor(index: number): void {
     this.selectedMotorIndex = index;
+  }
+
+  get selectedMotorForm(): FormGroup {
+    return this.motoresConfiguracion.at(this.selectedMotorIndex) as FormGroup;
   }
 
   canContinue(): boolean {
@@ -152,31 +208,49 @@ export class MotoresStepComponent implements OnInit, OnboardingStep {
 
     const motoresConfig = this.motoresConfiguracion.getRawValue();
 
-    const motoresCompletos: MotorConfiguracionDraft[] = this.motoresDisponibles.map((motorBase, index) => {
+    const anillosDraft: AnillosDraft[] = [];
+    const carbonesDraft: CarbonesDraft[] = [];
+
+    this.motoresDisponibles.forEach((motorBase, index) => {
       const config = motoresConfig[index];
-      return {
-        codigo: motorBase.codigo?.trim() || '',
-        nombre: motorBase.nombre?.trim() || null,
-        tipo_motor: motorBase.tipo_motor?.trim() || null,
-        num_anillos: Number(config.num_anillos) || 0,
-        carbones_por_anillo: Number(config.carbones_por_anillo) || 0,
-      };
+      const motorId = motorBase.id?.trim() || `M-${index + 1}`;
+      const motorCodigo = motorBase.codigo?.trim() || `M-${index + 1}`;
+      const cantidadAnillos = Number(config.num_anillos) || 0;
+      const carbonesPorAnillo = Number(config.carbones_por_anillo) || 0;
+
+      for (let anilloIndex = 0; anilloIndex < cantidadAnillos; anilloIndex++) {
+        const anilloId = this.createDraftId('ANI-FRONT-');
+        anillosDraft.push({
+          id: anilloId,
+          identificador: `Anillo ${anilloIndex + 1}`,
+          motor_id: motorId,
+        });
+
+        for (let carbonIndex = 0; carbonIndex < carbonesPorAnillo; carbonIndex++) {
+          carbonesDraft.push({
+            anillo_id: anilloId,
+            id: this.createDraftId('CAR'),
+            identificador: `Carbon-${carbonIndex + 1}-${motorCodigo}-A${anilloIndex + 1}`,
+            largo_inicial: Number(config.largo_inicial) || 0,
+            largo_prealarma: Number(config.largo_prealarma) || 0,
+            largo_alarma: Number(config.largo_alarma) || 0,
+            nivel_bateria_aviso: Number(config.nivel_bateria_aviso) || 0,
+            nivel_bateria_minimo: Number(config.nivel_bateria_minimo) || 0,
+          });
+        }
+      }
     });
 
-    const carbonesConfiguracion: CarbonConfiguracionDraft[] = this.motoresDisponibles.map((motorBase, index) => {
-      const config = motoresConfig[index];
-      return {
-        motor_codigo: motorBase.codigo?.trim() || '',
-        identificador: motorBase.nombre?.trim() || motorBase.codigo?.trim() || undefined,
-        largo_inicial: config.largo_inicial ? Number(config.largo_inicial) : null,
-        largo_prealarma: config.largo_prealarma ? Number(config.largo_prealarma) : null,
-        largo_alarma: config.largo_alarma ? Number(config.largo_alarma) : null,
-        nivel_bateria_minimo: config.nivel_bateria_minimo ? Number(config.nivel_bateria_minimo) : null,
-      };
-    });
+    this.state.setAnillosDraft(anillosDraft);
+    this.state.setCarbonesDraft(carbonesDraft);
+  }
 
-    this.state.setMotoresDraft(motoresCompletos);
-    this.state.setCarbonesConfiguracionDraft(carbonesConfiguracion);
+  private createDraftId(prefix: string): string {
+    const uniquePart = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+    return `${prefix}-${uniquePart}`;
   }
 
   getMotorCodigoByIndex(index: number): string {
@@ -189,17 +263,8 @@ export class MotoresStepComponent implements OnInit, OnboardingStep {
     return this.motoresConfiguracion.at(index)?.valid ?? false;
   }
 
-  panelIcon(i: number): 'ok' | 'warn' {
-    return this.isMotorConfigCompleted(i) ? 'ok' : 'warn';
-  }
-
   onFieldFocus(fieldName: 'largo_inicial' | 'largo_prealarma' | 'largo_alarma') {
     this.focusedField = fieldName;
-  }
-
-  onFieldBlur() {
-    // Mantener el campo enfocado o volver a largo_inicial por defecto
-    // this.focusedField = null; // Si quieres que no haya nada seleccionado al salir
   }
 
   onNumericKeydown(event: KeyboardEvent): void {
@@ -276,32 +341,4 @@ export class MotoresStepComponent implements OnInit, OnboardingStep {
     }
   }
 
-  // Métodos de navegación entre motores
-  goToPreviousMotor(): void {
-    if (this.selectedMotorIndex > 0) {
-      this.selectMotor(this.selectedMotorIndex - 1);
-    }
-  }
-
-  goToNextMotor(): void {
-    if (this.selectedMotorIndex < this.motoresDisponibles.length - 1) {
-      this.selectMotor(this.selectedMotorIndex + 1);
-    }
-  }
-
-  // Métodos de validación para habilitar/deshabilitar botones
-  canGoToPreviousMotor(): boolean {
-    return this.selectedMotorIndex > 0;
-  }
-
-  canGoToNextMotor(): boolean {
-    return this.selectedMotorIndex < this.motoresDisponibles.length - 1;
-  }
-
-  // Ir directamente a la configuración de un motor específico (llamado desde revisión)
-  irAConfiguracionMotor(motorIndex: number): void {
-    this.selectedMotorIndex = Math.max(0, Math.min(motorIndex, this.motoresDisponibles.length - 1));
-    this.etapaChange.emit('configuracion');
-    this.stateChange.emit();
-  }
 }

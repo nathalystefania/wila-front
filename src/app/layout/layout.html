@@ -1,43 +1,75 @@
-<header class="bg-surface text-white py-2 px-4 flex flex-col lg:flex-row justify-between items-center gap-4 z-30">
-    <div class="flex items-center gap-4">
-        <img src="../assets/images/logo-wila.svg" alt="Logo Wila" class="h-8 cursor-pointer" />
+<div class="flex">
+    <div
+        class="sidebar flex flex-col h-screen w-1/8 bg-sys-surface-dim border-r-1 border-outline/30">
+        <div class="p-4">
+            <img src="../assets/images/logo-wila.svg" alt="Logo Wila" class="logo-wila h-8 mx-auto" />
+            <img src="assets/images/isotipo-wila-light.svg" alt="Logo Wila" class="isotipo-wila block mx-auto w-10" />
+        </div>
+        <ul class="sidebar--menu flex-1">
+            <li>
+                <form>
+                    <mat-form-field appearance="outline" floatLabel="always" class="w-full">
+                        <mat-label>Cliente</mat-label>
+                        <mat-select formControlName="empresaId">
+                            @for (empresa of empresas; track empresa) {
+                            <mat-option [value]="empresa.id">{{ empresa.nombre }}</mat-option>
+                            }
+                        </mat-select>
+                    </mat-form-field>
+                </form>
+            </li>
+            <li>
+                <a routerLink="/dashboard" routerLinkActive="active" class="flex items-center gap-2">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <a routerLink="/settings" class="flex items-center gap-2">
+                    <span class="material-symbols-outlined">build_circle</span>
+                    <span>Configuración</span>
+                </a>
+            </li>
+        </ul>
+
+        <ul class="sidebar--menu border-t-1 border-outline/30">
+            <li>
+                <a href="javascript:void(0)" (click)="collapseSidebar($event)">
+                    <span class="material-symbols-outlined">{{ isCollapsed ? 'right_panel_close' : 'left_panel_close' }}</span>
+                    <span>Colapsar</span>
+                </a>
+            </li>
+        </ul>
     </div>
 
-    <!-- Center controls -->
-    <div class="flex flex-wrap items-center gap-4 text-sm font-semibold">
-        <!-- Sim progress -->
-        <div class="flex items-center gap-2 text-on-background bg-background px-3 py-1.5 rounded-lg border border-white/10">
-            <span class="material-symbols-outlined">timelapse</span>
-            <span>Próx. medición</span>
-            <!-- progress bar container -->
-            <div class="w-16 bg-on-background rounded-full h-1.5 overflow-hidden">
-                <div id="SPF" class="bg-primary h-1.5 rounded-full transition-all duration-300" style="width: 0%">
+    <div class="px-8 py-4 flex flex-col ml-auto relative layout-wide" [class.collapsed]="isCollapsed">
+        <header class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-4">
+            <!-- breadcrumbs -->
+            <div class="flex items-center gap-2">
+                <h1 class="font-semibold text-on-background">Dashboard</h1>
+                <span class="material-symbols-outlined text-on-background/50">chevron_right</span>
+                <h2 class="font-semibold text-on-background/50">Mediciones</h2>
+            </div>
+            
+            <div class="flex flex-wrap items-center gap-4 text-sm font-semibold">
+                <div
+                    class="flex items-center gap-2 text-on-background bg-background px-3 py-1.5 rounded-lg border border-white/10">
+                    <span class="material-symbols-outlined">timelapse</span>
+                    <span>Próx. medición</span>
+                    <div class="w-16 bg-on-background rounded-full h-1.5 overflow-hidden">
+                        <div id="SPF" class="bg-primary h-1.5 rounded-full transition-all duration-300"
+                            style="width: 0%">
+                        </div>
+                    </div>
+                    <span id="SCD" class="font-mono text-on-background">--:--</span>
+                    <button extended matButton="tonal">
+                        <mat-icon fontSet="material-symbols-outlined">pause_circle</mat-icon>
+                        Pausar
+                    </button>
                 </div>
             </div>
-            <span id="SCD" class="font-mono text-on-background">--:--</span>
-            <button extended matButton="tonal">
-                <mat-icon fontSet="material-symbols-outlined">pause_circle</mat-icon>
-                Pausar
-            </button>
-        </div>
-    </div>
+        </header>
 
-    <!-- Right action badges & details -->
-    <div class="flex flex-wrap items-center gap-4 text-sm font-semibold">
-        <div id="BTN_ADMIN_WRAP" class="flex items-center">
-            <button matFab extended>
-                <mat-icon fontSet="material-symbols-outlined">build_circle</mat-icon>
-                Admin
-            </button>
-        </div>
-        <div id="BTN_ADMIN_LOGOUT" style="display:none">
-            <button matFab extended>
-                <mat-icon fontSet="material-symbols-outlined">logout</mat-icon> Salir Admin
-            </button>
-        </div>
+        <router-outlet></router-outlet>
     </div>
-</header>
-
-<main class="p-4 w-full h-full overflow-auto">
-    <router-outlet></router-outlet>
-</main>
+</div>

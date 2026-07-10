@@ -65,21 +65,63 @@
 }
 
 .cota-carbon {
+  align-items: center;
+  display: flex;
   color: var(--mat-sys-scrim);
+  background-color: #FFF;
+  border-top: 1px solid var(--mat-sys-outline);
+  border-bottom: 1px solid var(--mat-sys-outline);
+  bottom: 15px;
   font-size: 1rem;
   position: absolute;
   text-align: right;
-  right: 70%;
+  right: 78%;
+  white-space: nowrap;
 
   &.carbon-alto {
-    bottom: 60px;
+    height: 50%;
   }
 
   &.carbon-prealarma {
-    bottom: 50px;
+    height: 40%;
   }
 
   &.carbon-minimo {
-    bottom: 45px;
+    height: 35%;
+  }
+
+  &:before,
+  &:after {
+    content: '';
+    position: absolute;
+    width: 1px;
+    height: calc(50% - 1rem);
+    right: 50%;
+    background-color: var(--mat-sys-outline);
+  }
+  
+  &:before{
+    top: 0;
+  }
+  &:after {
+    bottom: 0;
+  }
+}
+
+.pulse {
+  animation: pulse 2s 6;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.1);
+  }
+
+  100% {
+    transform: scale(1);
   }
 }

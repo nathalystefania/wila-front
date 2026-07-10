@@ -2,7 +2,6 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { Router } from '@angular/router';
 import confetti from 'canvas-confetti';
 
 import { OnboardingStateService } from '@core/state/onboarding-state.service';
@@ -37,8 +36,8 @@ export class ConfigurationCompleteComponent implements OnInit {
 
   async ngOnInit() {
     const empresaDraft = this.state.getEmpresaDraft();
-    const motores = this.state.getMotoresDraft() ?? [];
-    const carbones = this.state.getCarbonesConfiguracionDraft() ?? [];
+    const anillos = this.state.getAnillosDraft() ?? [];
+    const carbones = this.state.getCarbonesDraft() ?? [];
     const asignaciones = this.state.getAsignacionDraft() ?? [];
     this.userEmail = this.authService.getUser()?.email ?? '—';
 
@@ -47,15 +46,11 @@ export class ConfigurationCompleteComponent implements OnInit {
       return;
     }
 
-    this.totalMotores = motores.length;
-    this.totalAnillos = motores.reduce((sum, motor) => sum + (Number(motor.num_anillos) || 0), 0);
-    this.totalCarbones = motores.reduce((sum, motor) => {
-      const anillos = Number(motor.num_anillos) || 0;
-      const carbones = Number(motor.carbones_por_anillo) || 0;
-      return sum + (anillos * carbones);
-    }, 0);
-    this.carbonesSincronizados = asignaciones.length;
-    this.carbonesSinSincronizar = this.totalCarbones - this.carbonesSincronizados;
+    this.totalMotores = new Set(anillos.map(anillo => anillo.motor_id)).size;
+    this.totalAnillos = anillos.length;
+    this.totalCarbones = carbones.length;
+    this.carbonesSincronizados = asignaciones.filter(asignacion => asignacion.sensor_id !== '0').length;
+    this.carbonesSinSincronizar = asignaciones.filter(asignacion => asignacion.sensor_id === '0').length;
 
     try {
       const [empresas, divisiones] = await Promise.all([
@@ -75,11 +70,7 @@ export class ConfigurationCompleteComponent implements OnInit {
     this.launchConfetti();
   }
 
-  constructor(private router: Router) { }
-
-  goTo(route: string) {
-    this.router.navigate([route]);
-  }
+  constructor() { }
 
   launchConfetti(): void {
     const count = 100;

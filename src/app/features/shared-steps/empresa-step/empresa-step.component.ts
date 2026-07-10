@@ -41,8 +41,8 @@ export class EmpresaStepComponent implements OnInit, OnDestroy, OnboardingStep {
   private divisionesSub?: Subscription;
 
   error = '';
-  loading = false;
   loadingEmpresas = false;
+  loadingDivisiones = false;
   empresas: EmpresaApi[] = [];
   divisiones: DivisionApi[] = [];
 
@@ -76,7 +76,7 @@ export class EmpresaStepComponent implements OnInit, OnDestroy, OnboardingStep {
       const empresaId = (v.empresaId ?? '').trim();
       const divisionId = (v.divisionId ?? '').trim();
 
-      if (empresaId) {
+      if (divisionId) {
         this.state.setEmpresaDraft({ empresaId, divisionId: divisionId || null });
       }
 
@@ -105,50 +105,56 @@ export class EmpresaStepComponent implements OnInit, OnDestroy, OnboardingStep {
       },
     }).add(() => {
       this.loadingEmpresas = false;
-      this.stateChange.emit();
     });
   }
 
   private updateDivisionesByEmpresa(empresaId: string): void {
+    this.loadingDivisiones = true;
+
     if (!empresaId) {
       this.divisiones = [];
       this.form.get('divisionId')?.setValue('', { emitEvent: false });
+      this.loadingDivisiones = false;
       return;
     }
 
     this.divisionesSub?.unsubscribe();
-    this.divisionesSub =
-      this.catalogoService
-        .getDivisionesConMotoresByEmpresaId(empresaId)
-        .subscribe({
-          next: divisiones => {
-            this.divisiones = divisiones;
+    this.divisionesSub = this.catalogoService
+      .getDivisionesConMotoresByEmpresaId(empresaId)
+      .subscribe({
+        next: divisiones => {
+          this.divisiones = divisiones;
 
-            const divisionControl =
-              this.form.get('divisionId');
+          const divisionControl =
+            this.form.get('divisionId');
 
-            const currentDivision =
-              divisionControl?.value;
+          const currentDivision =
+            divisionControl?.value;
 
-            const existe =
-              divisiones.some(
-                d => d.id === currentDivision
-              );
+          const existe =
+            divisiones.some(
+              d => d.id === currentDivision
+            );
 
-            if (
-              currentDivision &&
-              !existe
-            ) {
-              divisionControl?.setValue(
-                '',
-                { emitEvent: false }
-              );
-            }
-          },
-          error: () => {
-            this.divisiones = [];
+          if (
+            currentDivision &&
+            !existe
+          ) {
+            divisionControl?.setValue(
+              '',
+              { emitEvent: false }
+            );
           }
-        });
+        },
+        error: () => {
+          this.divisiones = [];
+        }
+      });
+    
+    this.divisionesSub?.add(() => {
+      this.loadingDivisiones = false;
+      this.stateChange.emit();
+    });
   }
 
   ngOnDestroy(): void {
@@ -158,7 +164,7 @@ export class EmpresaStepComponent implements OnInit, OnDestroy, OnboardingStep {
   }
 
   canContinue(): boolean {
-    return this.form.valid && !this.loading && !this.loadingEmpresas;
+    return this.form.valid && !this.loadingDivisiones && !this.loadingEmpresas;
   }
 
   async commit(): Promise<void> {

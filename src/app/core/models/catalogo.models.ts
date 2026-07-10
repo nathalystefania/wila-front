@@ -11,6 +11,7 @@ export interface CarbonesApi {
     largo_alarma: number;
     largo_inicial: number;
     largo_prealarma: number;
+    nivel_bateria_aviso: number;
     nivel_bateria_minimo: number;
 }
 
@@ -99,25 +100,9 @@ export interface EmpresaSelectionDraft {
     divisionId: string | null;
 }
 
-export interface MotorConfiguracionDraft {
-    id?: string;
-    codigo: string;
-    nombre?: string | null;
-    tipo_motor?: string | null;
-    num_anillos: number | null;
-    carbones_por_anillo: number | null;
-}
+export interface AnillosDraft extends AnillosApi {}
 
-export interface CarbonConfiguracionDraft {
-    motor_codigo?: string;
-    anillo_id?: string;
-    id?: string;
-    identificador?: string;
-    largo_inicial: number | null;
-    largo_prealarma: number | null;
-    largo_alarma: number | null;
-    nivel_bateria_minimo: number | null;
-}
+export interface CarbonesDraft extends CarbonesApi {}
 
 export interface AsignacionDraft {
   carbon_id: string;

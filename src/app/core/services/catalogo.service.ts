@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, forkJoin, map, of } from 'rxjs';
-import { EmpresaApi, DivisionApi, AreaApi, EquipoApi, MotorApi, MotorCatalogo, SensorApi } from '../models/catalogo.models';
+import { EmpresaApi, DivisionApi, AreaApi, EquipoApi, MotorApi, MotorCatalogo, SensorApi, AnillosDraft, CarbonesDraft, AsignacionDraft } from '../models/catalogo.models';
 import { ApiService } from './api.service';
 
 
@@ -30,6 +30,18 @@ export class CatalogoService {
 
     getSensores(): Observable<SensorApi[]> {
         return this.api.get<SensorApi[]>('/api/sensores');
+    }
+
+    saveAnillo(anillo: AnillosDraft): Observable<AnillosDraft> {
+        return this.api.post<AnillosDraft>('/api/anillos', anillo);
+    }
+
+    saveCarbon(carbon: CarbonesDraft): Observable<CarbonesDraft> {
+        return this.api.post<CarbonesDraft>('/api/carbones', carbon);
+    }
+
+    instalarSensor(asignacion: AsignacionDraft): Observable<unknown> {
+        return this.api.post<unknown>('/api/sensores/instalar', asignacion);
     }
 
     getSensoresByOcupado(ocupado: boolean): Observable<SensorApi[]> {

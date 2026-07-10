@@ -11,13 +11,13 @@ h6 {
   font-family: "Work Sans", sans-serif;
 }
 
-h1 {
-  @apply text-3xl font-semibold;
-}
+// h1 {
+//   @apply text-3xl font-semibold;
+// }
 
-h2 {
-  @apply text-2xl font-medium;
-}
+// h2 {
+//   @apply text-2xl font-medium;
+// }
 
 
 .btn-icon-right {
@@ -52,20 +52,20 @@ $icon-sizes: (
     'FILL' 1;
 }
 
-.material-symbols-outlined{
+.material-symbols-outlined {
   vertical-align: middle;
 }
 
 .mat-mdc-form-field.mat-form-field-animations-enabled .mdc-text-field__input.ng-untouched,
-.mat-mdc-form-field.mat-form-field-animations-enabled .mdc-text-field__input.ng-pristine{
+.mat-mdc-form-field.mat-form-field-animations-enabled .mdc-text-field__input.ng-pristine {
   opacity: 0.5;
 }
 
-.text-code{
+.text-code {
   font-family: var(--default-mono-font-family);
 }
 
-.custom-btn-fab{
+.custom-btn-fab {
   cursor: pointer;
   width: 48px;
   height: 48px;
@@ -74,7 +74,7 @@ $icon-sizes: (
   border-radius: 50%;
   transition: all 0.3s ease-in-out;
 
-  &:hover{
+  &:hover {
     background-color: var(--mat-sys-surface-container-high);
     border: 1px solid var(--mat-sys-outline);
   }

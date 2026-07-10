@@ -1,4 +1,4 @@
-import { Component, ViewChild, ChangeDetectorRef, ChangeDetectionStrategy, inject, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, ViewChild, ChangeDetectorRef, ChangeDetectionStrategy, inject, OnInit, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatStepperModule, MatStepper } from '@angular/material/stepper';
 import { MatIconModule } from '@angular/material/icon';
@@ -6,6 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { StepperSelectionEvent } from '@angular/cdk/stepper';
 import { Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 
 import { OnboardingStep } from '@models/onboarding.models';
 import { AuthStepComponent } from '../shared-steps/auth-step/auth-step.component';
@@ -15,6 +16,7 @@ import { AsignacionStepComponent } from '../shared-steps/asignacion-step/asignac
 import { ConfigurationCompleteComponent } from '../shared-steps/configuration-complete-step/configuration-complete.component';
 import { AuthService } from '@services/auth.service';
 import { OnboardingStateService } from '@core/state/onboarding-state.service';
+import { CatalogoService } from '@services/catalogo.service';
 
 import { VersionService } from '@services/version.service';
 
@@ -36,7 +38,7 @@ import { VersionService } from '@services/version.service';
   styleUrl: './onboarding.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class OnboardingComponent implements OnInit, AfterViewInit, OnDestroy {
+export class OnboardingComponent implements OnInit, AfterViewInit {
 
   versionService = inject(VersionService);
   
@@ -46,7 +48,6 @@ export class OnboardingComponent implements OnInit, AfterViewInit, OnDestroy {
   loadingNext = false;
   nextError = '';
   showExplanation = false;
-  asignacionSubStep = 1; // Nueva propiedad para trackear etapa de motores
 
   // Propiedades cacheadas para evitar ExpressionChangedAfterItHasBeenCheckedError
   isAuthStepCompleted = false;
@@ -59,6 +60,7 @@ export class OnboardingComponent implements OnInit, AfterViewInit, OnDestroy {
   private cdr = inject(ChangeDetectorRef);
   private authService = inject(AuthService);
   private onboardingState = inject(OnboardingStateService);
+  private catalogoService = inject(CatalogoService);
   private router = inject(Router);
 
   @ViewChild(AuthStepComponent) authStep?: AuthStepComponent;
@@ -73,9 +75,11 @@ export class OnboardingComponent implements OnInit, AfterViewInit, OnDestroy {
     // Esto evita que el stepper linear rechace selectedIndex > 0 por [completed]=false
     this.isAuthStepCompleted = this.authService.isAuthenticated();
     this.isEmpresaStepCompleted = !!(this.onboardingState.getEmpresaDraft()?.empresaId);
-    const motores = this.onboardingState.getMotoresDraft();
-    this.isMotoresStepCompleted = !!(motores && motores.length > 0 &&
-      motores.every(m => !!m.codigo && !!m.num_anillos && !!m.carbones_por_anillo));
+    const anillos = this.onboardingState.getAnillosDraft();
+    const carbones = this.onboardingState.getCarbonesDraft();
+    this.isMotoresStepCompleted = !!(anillos && anillos.length > 0 && carbones && carbones.length > 0);
+    //if asignacionDraft isAsignacionStepCompleted = !!(this.onboardingState.getAsignacionDraft()?.length > 0);
+    this.isAsignacionStepCompleted = !!(this.onboardingState.getAsignacionDraft());
 
     const determinedStep = this.determineCurrentStep();
     this.setCurrentStep(determinedStep);
@@ -159,16 +163,12 @@ export class OnboardingComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  ngOnDestroy() {
-    // No hay interval que limpiar ahora
-  }
-
   private syncStepStates(): void {
     this.isAuthStepCompleted = this.authService.isAuthenticated();
     this.isEmpresaStepCompleted = !!(this.onboardingState.getEmpresaDraft()?.empresaId);
-    const motores = this.onboardingState.getMotoresDraft();
-    this.isMotoresStepCompleted = !!(motores && motores.length > 0 &&
-      motores.every(m => m.codigo !== undefined && m.num_anillos && m.carbones_por_anillo));
+    const anillos = this.onboardingState.getAnillosDraft();
+    const carbones = this.onboardingState.getCarbonesDraft();
+    this.isMotoresStepCompleted = !!(anillos && anillos.length > 0 && carbones && carbones.length > 0);
     this.isAsignacionStepCompleted = this.currentStep >= 4;
     this.isConfigurationCompleteStepCompleted = this.currentStep >= 4;
   }
@@ -228,19 +228,20 @@ export class OnboardingComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     // Si tiene empresa pero no tiene motores configurados, ir al paso 2 (motores)
-    const motores = this.onboardingState.getMotoresDraft();
-    if (!motores || motores.length === 0) {
+    const anillos = this.onboardingState.getAnillosDraft();
+    const carbones = this.onboardingState.getCarbonesDraft();
+    if (!anillos || anillos.length === 0 || !carbones || carbones.length === 0) {
       return 2;
     }
 
-    // Si tiene motores ir al paso 3 (revisión)
-    const motoresCompletos = motores.every(m => m.codigo !== undefined);
-    if (!motoresCompletos) {
-      return 2; // Si los motores no están completos, quedarse en el paso 2
+    // Si tiene motores pero no tiene asignación, ir al paso 3 (asignación)
+    const asignaciones = this.onboardingState.getAsignacionDraft();
+    if (!asignaciones || asignaciones.length === 0) {
+      return 3;
     }
-    
-    // Si tiene todo, ir al paso 3 (revisión/siguiente)
-    return 3;
+
+    // Si tiene todo, ir al paso 4 (revisión/siguiente)
+    return 4;
   }
 
   back() {
@@ -251,19 +252,6 @@ export class OnboardingComponent implements OnInit, AfterViewInit, OnDestroy {
       
       this.updateStepStates();
     }
-  }
-
-  // Navegar al paso de motores y abrir la configuración del motor indicado
-  onEditarMotor(motorIndex: number) {
-    this.setCurrentStep(2);
-    this.updateStepStates();
-    // Esperar a que motores-step esté disponible en el DOM tras el cambio de paso
-    setTimeout(() => {
-      if (this.motoresStep) {
-        this.motoresStep.irAConfiguracionMotor(motorIndex);
-      }
-      this.cdr.detectChanges();
-    }, 50);
   }
 
   // Método público para que los componentes puedan notificar cambios
@@ -333,6 +321,7 @@ export class OnboardingComponent implements OnInit, AfterViewInit, OnDestroy {
       case 1: return this.isAuthStepCompleted; // Necesita estar autenticado
       case 2: return this.isEmpresaStepCompleted; // Necesita tener empresa
       case 3: return this.isMotoresStepCompleted; // Necesita tener revisión completada
+      case 4: return this.isAsignacionStepCompleted; // Necesita tener asignación completada
       default: return false; // Pasos futuros no disponibles aún
     }
   }
@@ -357,19 +346,19 @@ export class OnboardingComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   async nextClicked() {
-    if (this.currentStep === 4) {
-      this.router.navigate(['/dashboard']);
-      return;
-    }
-
-    const step = this.getActiveStep();
     this.nextError = '';
-
-    if (!step) return;
-
     this.loadingNext = true;
 
     try {
+      if (this.currentStep === 4) {
+        await this.persistFinalDrafts();
+        this.router.navigate(['/dashboard']);
+        return;
+      }
+
+      const step = this.getActiveStep();
+      if (!step) return;
+
       await step.commit();
       
       if (this.currentStep < this.maxStep) {
@@ -379,6 +368,14 @@ export class OnboardingComponent implements OnInit, AfterViewInit, OnDestroy {
         this.updateStepStates();
       }
     } catch (e: any) {
+      console.error('Onboarding nextClicked error:', {
+        currentStep: this.currentStep,
+        message: e?.message,
+        status: e?.status,
+        error: e?.error,
+        raw: e,
+      });
+
       const msg = e?.message;
       const isModeSwitch = msg === 'USER_NOT_FOUND' || msg === 'STEP_NEEDS_LOGIN';
       if (!isModeSwitch) {
@@ -389,6 +386,71 @@ export class OnboardingComponent implements OnInit, AfterViewInit, OnDestroy {
     } finally {
       this.loadingNext = false;
       this.cdr.detectChanges();
+    }
+  }
+
+  private async persistFinalDrafts(): Promise<void> {
+    const anillos = this.onboardingState.getAnillosDraft() ?? [];
+    const carbones = this.onboardingState.getCarbonesDraft() ?? [];
+    const asignaciones = this.onboardingState.getAsignacionDraft() ?? [];
+
+    try {
+      for (const [index, anillo] of anillos.entries()) {
+        const payload = {
+          id: anillo.id,
+          identificador: anillo.identificador,
+          motor_id: anillo.motor_id,
+        };
+        console.debug('Persisting anillo payload', { index, payload });
+        try {
+          await firstValueFrom(this.catalogoService.saveAnillo(payload));
+        } catch (error) {
+          console.error('Failed to persist anillo', { index, payload, error });
+          throw error;
+        }
+      }
+
+      for (const [index, carbon] of carbones.entries()) {
+        const payload = {
+          anillo_id: carbon.anillo_id,
+          id: carbon.id,
+          identificador: carbon.identificador,
+          largo_alarma: carbon.largo_alarma,
+          largo_inicial: carbon.largo_inicial,
+          largo_prealarma: carbon.largo_prealarma,
+          nivel_bateria_aviso: carbon.nivel_bateria_aviso,
+          nivel_bateria_minimo: carbon.nivel_bateria_minimo,
+        };
+        console.debug('Persisting carbon payload', { index, payload });
+        try {
+          await firstValueFrom(this.catalogoService.saveCarbon(payload));
+        } catch (error) {
+          console.error('Failed to persist carbon', { index, payload, error });
+          throw error;
+        }
+      }
+
+      for (const [index, asignacion] of asignaciones.entries()) {
+        const payload = {
+          carbon_id: asignacion.carbon_id,
+          sensor_id: asignacion.sensor_id,
+        };
+        console.debug('Persisting asignacion payload', { index, payload });
+        try {
+          await firstValueFrom(this.catalogoService.instalarSensor(payload));
+        } catch (error) {
+          console.error('Failed to persist asignacion', { index, payload, error });
+          throw error;
+        }
+      }
+    } catch (error) {
+      console.error('Error persisting final drafts:', {
+        anillosCount: anillos.length,
+        carbonesCount: carbones.length,
+        asignacionesCount: asignaciones.length,
+        error,
+      });
+      throw error;
     }
   }
 

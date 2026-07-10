@@ -1,0 +1,78 @@
+.sidebar {
+    min-width: 250px;
+    max-width: 250px;
+    transition: all 0.3s ease-in-out;
+    position: fixed;
+    left: 0;
+    top: 0;
+
+    .isotipo-wila{
+        display: none;
+    }
+
+    &.collapsed {
+        min-width: 80px;
+        max-width: 80px;
+
+        .logo-wila,
+        form,
+        .sidebar--menu li a span:not(.material-symbols-outlined) {
+            display: none;
+        }
+        .isotipo-wila{
+            display: block;
+        }
+    }
+
+    @media screen and (max-width: 768px) {
+        min-width: 80px;
+        max-width: 80px;
+
+        .logo-wila,
+        form,
+        .sidebar--menu li a span:not(.material-symbols-outlined) {
+            display: none;
+        }
+        .isotipo-wila{
+            display: block;
+        }
+    }
+
+    &--menu {
+        li {
+            padding: 0.5rem 1rem;
+
+            a {
+                align-items: center;
+                border-radius: 1rem;
+                color: var(--mat-sys-outline);
+                display: flex;
+                gap: 0.8rem;
+                padding: 0.8rem;
+                transition: all 0.2s ease-in-out;
+
+                &:hover {
+                    background-color: rgb(from var(--mat-sys-surface-variant) r g b / 30%);
+                    color: var(--mat-sys-on-surface-variant);
+                }
+
+                &.active {
+                    background-color: rgb(from var(--mat-sys-surface-tint) r g b / 20%);
+                    color: var(--mat-sys-surface-tint);
+                }
+            }
+        }
+    }
+}
+.layout-wide{
+    max-width: calc(100% - 250px);
+    transition: all 0.3s ease-in-out;
+    
+    &.collapsed {
+        max-width: calc(100vw - 80px);
+    }
+    
+    @media screen and (max-width: 768px) {
+        max-width: calc(100vw - 80px);
+    }
+}

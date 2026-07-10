@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, Output, EventEmitter, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { Subject, Observable, merge } from 'rxjs';
+import { Subject, Observable, firstValueFrom, merge } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
 import { takeUntil } from 'rxjs/operators';
 import { MatButtonModule } from '@angular/material/button';
@@ -16,35 +16,9 @@ import { MatAutocompleteModule, MatAutocompleteTrigger } from '@angular/material
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatChipsModule } from '@angular/material/chips';
 import { OnboardingStep } from '@models/onboarding.models';
-import { CarbonConfiguracionDraft, MotorConfiguracionDraft, SensorApi, AsignacionDraft } from '@models/catalogo.models';
+import { AnillosDraft, AsignacionDraft, CarbonesApi, CarbonesDraft, MotorCatalogo, SensorApi } from '@models/catalogo.models';
 import { OnboardingStateService } from '@core/state/onboarding-state.service';
 import { CatalogoService } from '@services/catalogo.service';
-
-interface Anillo {
-  id: string;
-  identificador: string;
-  motor_id: string;
-}
-
-interface Motor extends MotorConfiguracionDraft {
-  id: string;
-}
-
-interface CarbonRow {
-  numero: number;
-  id: string;
-}
-
-export interface Carbones {
-  anillo_id: string;
-  id: string;
-  numero_carbon: number;
-  identificador: string;
-  largo_alarma: number;
-  largo_inicial: number;
-  largo_prealarma: number;
-  nivel_bateria_minimo: number;
-}
 
 @Component({
   selector: 'app-asignacion-step',
@@ -86,9 +60,9 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
   loadingSensores = false;
   error: string | null = null;
 
-  motors: Motor[] = [];
-  motorAnillosMap: Map<string, Anillo[]> = new Map();
-  carbonesByAnilloMap: Map<string, Carbones[]> = new Map();
+  motors: MotorCatalogo[] = [];
+  motorAnillosMap: Map<string, AnillosDraft[]> = new Map();
+  carbonesByAnilloMap: Map<string, CarbonesApi[]> = new Map();
   sensoresDisponibles: SensorApi[] = [];
   sensorSearchByCarbonId: Record<string, FormControl> = {};
   filteredSensoresByCarbonId: Record<string, Observable<SensorApi[]>> = {};
@@ -104,9 +78,11 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
   }
 
   async loadMotores() {
-    const motorsDraft = this.state.getMotoresDraft();
+    const empresaDraft = this.state.getEmpresaDraft();
+    const anillosDraft = this.state.getAnillosDraft() ?? [];
+    const carbonesDraft = this.state.getCarbonesDraft() ?? [];
 
-    if (!motorsDraft || motorsDraft.length === 0) {
+    if (!empresaDraft?.empresaId || anillosDraft.length === 0 || carbonesDraft.length === 0) {
       this.error = 'No se encontraron motores configurados. Vuelve al paso anterior.';
       this.cdr.detectChanges();
       return;
@@ -116,18 +92,17 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
     this.error = null;
 
     try {
-      // Convertir MotorDraft a Motor con id y generar anillos
-      this.motors = motorsDraft.map((draft, index) => ({
-        ...draft,
-        id: draft.codigo || `motor-${index}`
-      })) as Motor[];
+      const motoresApi = await firstValueFrom(
+        this.catalogoService.getMotoresByEmpresaDivision(
+          empresaDraft.empresaId.trim(),
+          empresaDraft.divisionId?.trim() ?? ''
+        )
+      );
+      const configuredMotorIds = new Set(anillosDraft.map(anillo => anillo.motor_id));
 
-      // Pre-generar anillos para cada motor
-      this.motors.forEach(motor => {
-        this.generateAnillos(motor);
-      });
-
-      this.buildCarbonesData();
+      this.motors = motoresApi.filter(motor => configuredMotorIds.has(motor.id));
+      this.buildAnillosData(anillosDraft);
+      this.buildCarbonesData(carbonesDraft);
       this.restoreAsignacionDraft();
 
       this.stateChange.emit();
@@ -139,56 +114,42 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
     }
   }
 
-  private generateAnillos(motor: Motor) {
-    const anillos: Anillo[] = [];
-    const totalAnillos = Number(motor.num_anillos) || 0;
-    for (let i = 0; i < totalAnillos; i++) {
-      anillos.push({
-        id: `${motor.id}-anillo-${i}`,
-        identificador: `Anillo ${i + 1}`,
-        motor_id: motor.id
-      });
+  private buildAnillosData(anillosDraft: AnillosDraft[]) {
+    this.motorAnillosMap.clear();
+
+    for (const motor of this.motors) {
+      this.motorAnillosMap.set(
+        motor.id,
+        anillosDraft.filter(anillo => anillo.motor_id === motor.id)
+      );
     }
-    this.motorAnillosMap.set(motor.id, anillos);
   }
 
-  private buildCarbonesData() {
-    const carbonDraft = this.state.getcarbonDraft();
-    const carbonConfigDraft = this.state.getCarbonesConfiguracionDraft() ?? [];
-    let carbonCursor = 0;
-
+  private buildCarbonesData(carbonesDraft: CarbonesDraft[]) {
     this.carbonesByAnilloMap.clear();
     this.sensorSearchByCarbonId = {};
     this.filteredSensoresByCarbonId = {};
     this.carbonEnabledById = {};
 
-    this.motors.forEach((motor, motorIndex) => {
-      const carbonConfig = this.getCarbonConfigForMotor(motor.codigo, carbonConfigDraft, motorIndex);
+    this.motors.forEach((motor) => {
       const anillos = this.getAnillosByMotor(motor);
-      const carbonesPorAnillo = Number(motor.carbones_por_anillo) || 0;
 
       anillos.forEach((anillo) => {
-        const carbones: Carbones[] = Array.from({ length: carbonesPorAnillo }, (_, index) => {
-          const numeroCarbon = index + 1;
-          const realId = carbonDraft[carbonCursor];
-          carbonCursor += 1;
-
-          const carbonId = String(realId ?? `${anillo.id}-carbon-${numeroCarbon}`);
+        const carbones: CarbonesApi[] = carbonesDraft
+          .filter(carbon => carbon.anillo_id === anillo.id)
+          .map(carbon => {
+          const carbonId = carbon.id;
           this.carbonEnabledById[carbonId] = true;
 
-          // Crear FormControl para este carbón
           const formControl = new FormControl('');
           this.sensorSearchByCarbonId[carbonId] = formControl;
 
-          // Notificar al padre para recalcular canContinue cuando cambie cualquier input.
           formControl.valueChanges
             .pipe(takeUntil(this.destroy$))
             .subscribe(() => {
               this.stateChange.emit();
             });
 
-          // Crear observable filtrado para este carbón
-          // Se actualiza cuando: 1) El usuario tipea (valueChanges), 2) Se asigna un sensor en otro carbón
           this.filteredSensoresByCarbonId[carbonId] = merge(
             formControl.valueChanges.pipe(startWith('')),
             this.sensorAssignmentChanged$.pipe(startWith(null))
@@ -197,14 +158,7 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
           );
 
           return {
-            anillo_id: anillo.id,
-            id: carbonId,
-            numero_carbon: numeroCarbon,
-            identificador: `${motor.codigo}-A${anillo.id}-C${numeroCarbon}`,
-            largo_inicial: Number(carbonConfig?.largo_inicial) || 0,
-            largo_prealarma: Number(carbonConfig?.largo_prealarma) || 0,
-            largo_alarma: Number(carbonConfig?.largo_alarma) || 0,
-            nivel_bateria_minimo: Number(carbonConfig?.nivel_bateria_minimo) || 20,
+            ...carbon,
           };
         });
 
@@ -230,15 +184,7 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
     this.sensorAssignmentChanged$.next();
   }
 
-  private getCarbonConfigForMotor(
-    motorCodigo: string,
-    carbonConfigDraft: CarbonConfiguracionDraft[],
-    motorIndex: number
-  ): CarbonConfiguracionDraft | undefined {
-    return carbonConfigDraft.find(item => item.motor_codigo === motorCodigo) ?? carbonConfigDraft[motorIndex];
-  }
-
-  getCarbonesTableByAnillo(anillo: Anillo): Carbones[] {
+  getCarbonesTableByAnillo(anillo: AnillosDraft): CarbonesApi[] {
     return this.carbonesByAnilloMap.get(anillo.id) ?? [];
   }
 
@@ -298,6 +244,10 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
   }
 
   isCarbonEnabled(carbonId: string): boolean {
+    if (this.sensorAssignmentByCarbonId[carbonId] === '0') {
+      return false;
+    }
+
     return this.carbonEnabledById[carbonId] !== false;
   }
 
@@ -306,12 +256,17 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
     const control = this.getSensorFormControl(carbonId);
 
     if (!enabled) {
-      delete this.sensorAssignmentByCarbonId[carbonId];
+      this.sensorAssignmentByCarbonId[carbonId] = '0';
       control.setValue('', { emitEvent: false });
       control.disable({ emitEvent: false });
       this.error = null;
     } else {
+      if (this.sensorAssignmentByCarbonId[carbonId] === '0') {
+        delete this.sensorAssignmentByCarbonId[carbonId];
+      }
+
       control.enable({ emitEvent: false });
+      control.setValue('', { emitEvent: false });
     }
 
     this.sensorAssignmentChanged$.next();
@@ -325,7 +280,8 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
     }
 
     if (!sensor) {
-      delete this.sensorAssignmentByCarbonId[carbonId];
+      // delete this.sensorAssignmentByCarbonId[carbonId];
+      this.sensorAssignmentByCarbonId[carbonId] = '0';
       this.getSensorFormControl(carbonId).setValue('');
       this.sensorAssignmentChanged$.next();
       this.stateChange.emit();
@@ -403,11 +359,11 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
       .some(([id, assigned]) => id !== carbonId && assigned === hardwareId);
   }
 
-  getAnillosByMotor(motor: Motor): Anillo[] {
+  getAnillosByMotor(motor: MotorCatalogo): AnillosDraft[] {
     return this.motorAnillosMap.get(motor.id) || [];
   }
 
-  getAsignadosCount(anillo: Anillo): number {
+  getAsignadosCount(anillo: AnillosDraft): number {
     // Contar cuantos carbones de este anillo tienen valor asignado en input getSensorFormControl(element.id)
     const carbones = this.getCarbonesTableByAnillo(anillo);
     return carbones.filter(carbon => {
@@ -416,13 +372,13 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
     }).length;
   }
 
-  getDisabledCount(anillo: Anillo): number {
+  getDisabledCount(anillo: AnillosDraft): number {
     // Contar cuantos carbones están bloqueados (disabled)
     const carbones = this.getCarbonesTableByAnillo(anillo);
     return carbones.filter(carbon => !this.isCarbonEnabled(carbon.id)).length;
   }
 
-  getSinAsignarCount(anillo: Anillo): number {
+  getSinAsignarCount(anillo: AnillosDraft): number {
     // Contar cuantos carbones están habilitados pero sin sensor asignado
     const carbones = this.getCarbonesTableByAnillo(anillo);
     return carbones.filter(carbon => {
@@ -431,7 +387,7 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
     }).length;
   }
 
-  getTotalCarbonesCount(anillo: Anillo): number {
+  getTotalCarbonesCount(anillo: AnillosDraft): number {
     const carbones = this.getCarbonesTableByAnillo(anillo);
 
     return carbones.filter(carbon => {
@@ -481,7 +437,7 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
     return total;
   }
 
-  isConfigCompleted(motor: Motor): boolean {
+  isConfigCompleted(motor: MotorCatalogo): boolean {
     const anillos = this.getAnillosByMotor(motor);
 
     if (anillos.length === 0) {
@@ -517,7 +473,12 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
 
     const asignaciones: AsignacionDraft[] = Object.entries(this.sensorAssignmentByCarbonId)
       .filter(([carbonId, sensorId]) => {
-        return this.isCarbonEnabled(carbonId) && !!String(sensorId).trim();
+        // return this.isCarbonEnabled(carbonId) && !!String(sensorId).trim();
+        if (!this.isCarbonEnabled(carbonId)) {
+          return true;
+        }
+
+        return !!String(sensorId).trim();
       })
       .map(([carbonId, sensorId]) => ({
         carbon_id: carbonId,

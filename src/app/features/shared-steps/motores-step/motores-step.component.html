@@ -1,7 +1,7 @@
 <div class="grid gap-8">
   <div class="flex flex-col items-center justify-center text-center gap-4 max-w-3/4 mx-auto">
     <!-- <img src="assets/images/isotipo-wila-light.svg" alt="Logo Wila" class="w-16 mx-auto" /> -->
-    <h1>Configuración de motores</h1>
+    <h1 class="text-3xl font-semibold">Configuración de motores</h1>
     <p>
       Se definen parámetros como cantidad de anillos y características de los carbones.
     </p>
@@ -30,13 +30,13 @@
   @if (!loadingMotores && !loading && !error) {
 
   <mat-tab-group mat-stretch-tabs="false" mat-align-tabs="start"
-    class="rounded-xl border border-outline/20 bg-surface-container-highest text-on-background">
+    class="w-full min-w-0 rounded-xl border border-outline/20 bg-surface-container-highest text-on-background">
 
     @for (motor of motoresDisponibles; track motor.codigo; let i = $index) {
     <mat-tab>
       <ng-template mat-tab-label>
         {{ motor.nombre || ('Motor ' + (i + 1)) }}
-        <span class="material-symbols-outlined ml-2">
+        <span class="material-symbols-outlined ml-2" [class.pulse]="isMotorConfigCompleted(i)" [class.text-primary]="isMotorConfigCompleted(i)">
           {{ isMotorConfigCompleted(i) ? 'check_circle' : 'error' }}
         </span>
       </ng-template>
@@ -50,12 +50,12 @@
               <mat-form-field appearance="outline" floatLabel="always">
                 <mat-label>Anillos en este motor</mat-label>
                 <input matInput type="number" formControlName="num_anillos" min="1" max="10"
-                  placeholder="Ingresar un número" />
+                  placeholder="Ingresar un número" nextOnEnter />
               </mat-form-field>
               <mat-form-field appearance="outline" floatLabel="always">
                 <mat-label>Carbones por anillo</mat-label>
                 <input matInput type="number" formControlName="carbones_por_anillo" min="1" max="50"
-                  placeholder="Ingresar un número" />
+                  placeholder="Ingresar un número" nextOnEnter />
               </mat-form-field>
             </div>
 
@@ -63,37 +63,68 @@
             <div class="grid grid-cols-2 gap-4">
               <div class="flex flex-col">
                 <mat-form-field appearance="outline" floatLabel="always">
-                  <mat-label>Nivel mínimo de batería (%)</mat-label>
+                  <mat-label>Nivel batería alerta (%)</mat-label>
+                  <input matInput type="number" formControlName="nivel_bateria_aviso" min="1" max="100"
+                    [errorStateMatcher]="bateriaMatcher"
+                    placeholder="Ingresar un número" nextOnEnter />
+
+                  @if (motorForm.hasError('bateriaAvisoInvalida') &&
+                  (motorForm.get('nivel_bateria_aviso')?.touched || motorForm.get('nivel_bateria_minimo')?.touched)) {
+                  <mat-error>
+                    El nivel de batería de aviso debe ser mayor que el nivel mínimo.
+                  </mat-error>
+                  }
+                </mat-form-field>
+                <mat-form-field appearance="outline" floatLabel="always">
+                  <mat-label>Nivel crítico de batería (%)</mat-label>
                   <input matInput type="number" formControlName="nivel_bateria_minimo" min="1" max="100"
-                    placeholder="Ingresar un número" />
+                    [errorStateMatcher]="bateriaMatcher"
+                    placeholder="Ingresar un número" nextOnEnter />
                 </mat-form-field>
                 <mat-form-field appearance="outline" floatLabel="always">
                   <mat-label>Largo del carbón nuevo</mat-label>
                   <input matInput type="text" inputmode="numeric" formControlName="largo_inicial" maxlength="6"
                     placeholder="Ingresar medida en milímetros" (keydown)="onNumericKeydown($event)"
                     (input)="onNumericInput('largo_inicial', $event)" (focus)="onFieldFocus('largo_inicial')"
-                    (blur)="onFieldBlur()" />
+                     nextOnEnter />
                 </mat-form-field>
                 <mat-form-field appearance="outline" floatLabel="always">
                   <mat-label>Largo de pre alarma</mat-label>
                   <input matInput type="text" inputmode="numeric" formControlName="largo_prealarma" maxlength="6"
+                    [errorStateMatcher]="prealarmaMatcher"
                     placeholder="Ingresar medida en milímetros" (keydown)="onNumericKeydown($event)"
                     (input)="onNumericInput('largo_prealarma', $event)" (focus)="onFieldFocus('largo_prealarma')"
-                    (blur)="onFieldBlur()" />
+                     nextOnEnter />
+
+                  @if (motorForm.get('largo_prealarma')?.touched && motorForm.hasError('prealarmaMayorIgualInicial')) {
+                  <mat-error>
+                    El largo de prealarma debe ser menor que el largo inicial.
+                  </mat-error>
+                  }
                 </mat-form-field>
                 <mat-form-field appearance="outline" floatLabel="always">
                   <mat-label>Largo mínimo de cambio por pauta</mat-label>
                   <input matInput type="text" inputmode="numeric" formControlName="largo_alarma" maxlength="6"
+                    [errorStateMatcher]="alarmaMatcher"
                     placeholder="Ingresar medida en milímetros" (keydown)="onNumericKeydown($event)"
                     (input)="onNumericInput('largo_alarma', $event)" (focus)="onFieldFocus('largo_alarma')"
-                    (blur)="onFieldBlur()" />
+                     nextOnEnter />
+
+                  @if (motorForm.hasError('alarmaMayorIgualPrealarma') &&
+                  (motorForm.get('largo_alarma')?.touched || motorForm.get('largo_prealarma')?.touched)) {
+                  <mat-error>
+                    El largo de alarma debe ser menor que el largo de prealarma.
+                  </mat-error>
+                  }
                 </mat-form-field>
               </div>
-              <div class="flex align-items-center justify-center relative bg-white rounded-md">
-                <div [ngClass]="['cota-carbon', getCssClassForField()]">
-                  {{ getValueForField(motorForm) }} mm
+              <div class="flex align-items-center justify-center bg-white rounded-md">
+                <div class="flex relative w-auto h-full">
+                  <div [ngClass]="['cota-carbon', getCssClassForField()]">
+                    {{ getValueForField(motorForm) }} mm
+                  </div>
+                  <img [src]="getImageForField()" [alt]="getLabelForField()" class="max-w-full h-auto" />
                 </div>
-                <img [src]="getImageForField()" [alt]="getLabelForField()" class="max-w-full h-auto" />
               </div>
             </div>
           </div>
