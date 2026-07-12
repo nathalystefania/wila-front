@@ -31,11 +31,11 @@
 
       <!-- Anillos Expansion Panels -->
       <mat-accordion class="mt-4 mb-4">
-        @for (anillo of getAnillosByMotor(motor); track anillo.id; let i = $index) {
+        @for (anillo of getAnillosByMotor(motor); track anillo.tempId; let i = $index) {
         <mat-expansion-panel [expanded]="i === 0">
           <mat-expansion-panel-header>
             <mat-panel-title>
-              <span class="mr-3">{{ anillo.identificador }}</span>
+              <span class="mr-3 uppercase">{{ anillo.identificador }}</span>
               @if (getSinAsignarCount(anillo) > 0){
               <mat-chip>
                 {{ getSinAsignarCount(anillo) }} {{ getSinAsignarCount(anillo) === 1 ? 'pendiente' : 'pendientes' }}
@@ -57,49 +57,42 @@
             <!-- Carbones: {{ motor.carbones_por_anillo }} -->
             <table mat-table [dataSource]="getCarbonesTableByAnillo(anillo)" class="w-full">
 
-              <ng-container matColumnDef="id">
-                <th mat-header-cell class="uppercase" *matHeaderCellDef><span class="text-gray-100 font-bold"> Anillo ID
-                  </span></th>
-                <td mat-cell *matCellDef="let element"> <span class="text-white font-semibold uppercase text-nowrap"
-                    [class.line-through]="!isCarbonEnabled(element.id)">{{ element.id }}</span> </td>
-              </ng-container>
-
-              <ng-container matColumnDef="identificador">
+              <ng-container matColumnDef="idCarbon">
                 <th mat-header-cell class="uppercase" *matHeaderCellDef><span class="text-gray-100 font-bold">
                     Identificador carbón </span></th>
                 <td mat-cell *matCellDef="let element"> <span class="text-gray-300 text-code text-nowrap"
-                    [class.line-through]="!isCarbonEnabled(element.id)">{{ element.identificador }}</span> </td>
+                    [class.line-through]="!isCarbonEnabled(element.tempId)">{{ element.tempId }}</span> </td>
               </ng-container>
 
               <ng-container matColumnDef="sensor">
                 <th mat-header-cell class="uppercase" *matHeaderCellDef><span class="text-gray-100 font-bold"> Sensor
                     (asignar) </span></th>
                 <td mat-cell *matCellDef="let element">
-                  @if (isCarbonEnabled(element.id)){
+                  @if (isCarbonEnabled(element.tempId)){
                   <mat-form-field appearance="outline" floatLabel="always" class="w-full"
-                    [class.opacity-60]="!isCarbonEnabled(element.id)">
+                    [class.opacity-60]="!isCarbonEnabled(element.tempId)">
                     <mat-label>Buscar sensor</mat-label>
-                    <input matInput [matAutocomplete]="auto" [formControl]="getSensorFormControl(element.id)"
-                      [disabled]="!isCarbonEnabled(element.id)" placeholder="Buscar por ID Hardware"
+                    <input matInput [matAutocomplete]="auto" [formControl]="getSensorFormControl(element.tempId)"
+                      [disabled]="!isCarbonEnabled(element.tempId)" placeholder="Buscar por ID Hardware"
                       #trigger="matAutocompleteTrigger" />
 
                     <!-- Botón de limpieza -->
-                    <button matSuffix mat-icon-button *ngIf="getSensorFormControl(element.id).value"
-                      (click)="cleanValue(element.id, trigger)">
+                    <button matSuffix mat-icon-button *ngIf="getSensorFormControl(element.tempId).value"
+                      (click)="cleanValue(element.tempId, trigger)">
                       <span class="material-symbols-outlined">close_small</span>
                     </button>
 
-                    <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onOptionSelected(element.id, $event)">
-                      <mat-option *ngFor="let sensor of getFilteredSensores(element.id) | async"
+                    <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onOptionSelected(element.tempId, $event)">
+                      <mat-option *ngFor="let sensor of getFilteredSensores(element.tempId) | async"
                         [value]="sensor.id_hardware">
                         {{ displaySensorName(sensor) }}
                       </mat-option>
-                      <mat-option *ngIf="(getFilteredSensores(element.id) | async)?.length === 0" disabled>
+                      <mat-option *ngIf="(getFilteredSensores(element.tempId) | async)?.length === 0" disabled>
                         No hay sensores disponibles
                       </mat-option>
                     </mat-autocomplete>
 
-                    <mat-icon matSuffix *ngIf="!getSensorFormControl(element.id).value">
+                    <mat-icon matSuffix *ngIf="!getSensorFormControl(element.tempId).value">
                       <span class="material-symbols-outlined">search</span>
                     </mat-icon>
                   </mat-form-field>

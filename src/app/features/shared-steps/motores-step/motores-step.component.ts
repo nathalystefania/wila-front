@@ -22,7 +22,7 @@ import { NextOnEnterDirective } from '@core/directives/next-on-enter.directive';
 import { motorConfigValidator } from './motor-config.validator';
 
 class GroupErrorStateMatcher implements ErrorStateMatcher {
-  constructor(private readonly errorKey: string) {}
+  constructor(private readonly errorKey: string) { }
 
   isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
     if (!control) return false;
@@ -81,8 +81,8 @@ export class MotoresStepComponent implements OnInit, OnboardingStep {
     }
 
     this.loadingMotores = true;
-  const anillosExistentes = this.state.getAnillosDraft() ?? [];
-  const carbonesExistentes = this.state.getCarbonesDraft() ?? [];
+    const anillosExistentes = this.state.getAnillosDraft() ?? [];
+    const carbonesExistentes = this.state.getCarbonesDraft() ?? [];
 
     this.loadSub?.unsubscribe();
     this.loadSub = this.catalogoService.getMotoresByEmpresaDivision(empresaId, divisionId).pipe(
@@ -113,6 +113,20 @@ export class MotoresStepComponent implements OnInit, OnboardingStep {
     });
   }
 
+  private createAnilloTempId(
+    motorId: string,
+    numeroAnillo: number
+  ): string {
+    return `motor-${motorId}-anillo-${numeroAnillo}`;
+  }
+
+  private createCarbonTempId(
+    anilloTempId: string,
+    numeroCarbon: number
+  ): string {
+    return `${anilloTempId}-carbon-${numeroCarbon}`;
+  }
+
   private initConfiguracionForms(motores: MotorCatalogo[], anillos: AnillosDraft[], carbones: CarbonesDraft[]) {
     this.motoresConfiguracion.clear();
 
@@ -140,7 +154,7 @@ export class MotoresStepComponent implements OnInit, OnboardingStep {
     const anillosMotor = anillos.filter(item => item.motor_id === motor.id);
     const primerAnillo = anillosMotor[0];
     const carbonesPrimerAnillo = primerAnillo
-      ? carbones.filter(item => item.anillo_id === primerAnillo.id)
+      ? carbones.filter(item => item.anilloTempId === primerAnillo.tempId)
       : [];
     const primerCarbon = carbonesPrimerAnillo[0];
 
@@ -180,9 +194,9 @@ export class MotoresStepComponent implements OnInit, OnboardingStep {
         [Validators.required, Validators.min(0), Validators.max(100)]
       ],
     },
-    {
-      validators: motorConfigValidator
-    });
+      {
+        validators: motorConfigValidator
+      });
   }
 
   selectMotor(index: number): void {
@@ -211,32 +225,63 @@ export class MotoresStepComponent implements OnInit, OnboardingStep {
     const anillosDraft: AnillosDraft[] = [];
     const carbonesDraft: CarbonesDraft[] = [];
 
-    this.motoresDisponibles.forEach((motorBase, index) => {
-      const config = motoresConfig[index];
-      const motorId = motorBase.id?.trim() || `M-${index + 1}`;
-      const motorCodigo = motorBase.codigo?.trim() || `M-${index + 1}`;
-      const cantidadAnillos = Number(config.num_anillos) || 0;
-      const carbonesPorAnillo = Number(config.carbones_por_anillo) || 0;
+    this.motoresDisponibles.forEach((motor, motorIndex) => {
+      const config = motoresConfig[motorIndex];
 
-      for (let anilloIndex = 0; anilloIndex < cantidadAnillos; anilloIndex++) {
-        const anilloId = this.createDraftId('ANI-FRONT-');
-        anillosDraft.push({
-          id: anilloId,
-          identificador: `Anillo ${anilloIndex + 1}`,
-          motor_id: motorId,
-        });
+      const cantidadAnillos = Number(config.num_anillos);
+      const carbonesPorAnillo = Number(config.carbones_por_anillo);
 
-        for (let carbonIndex = 0; carbonIndex < carbonesPorAnillo; carbonIndex++) {
-          carbonesDraft.push({
-            anillo_id: anilloId,
-            id: this.createDraftId('CAR'),
-            identificador: `Carbon-${carbonIndex + 1}-${motorCodigo}-A${anilloIndex + 1}`,
-            largo_inicial: Number(config.largo_inicial) || 0,
-            largo_prealarma: Number(config.largo_prealarma) || 0,
-            largo_alarma: Number(config.largo_alarma) || 0,
-            nivel_bateria_aviso: Number(config.nivel_bateria_aviso) || 0,
-            nivel_bateria_minimo: Number(config.nivel_bateria_minimo) || 0,
-          });
+      for (
+        let anilloIndex = 0;
+        anilloIndex < cantidadAnillos;
+        anilloIndex++
+      ) {
+        const numeroAnillo = anilloIndex + 1;
+
+        const anilloTempId = this.createAnilloTempId(
+          motor.id,
+          numeroAnillo
+        );
+
+        const anilloDraft: AnillosDraft = {
+          tempId: anilloTempId,
+          identificador: `Anillo ${numeroAnillo}`,
+          motor_id: motor.id,
+        };
+
+        anillosDraft.push(anilloDraft);
+
+        for (
+          let carbonIndex = 0;
+          carbonIndex < carbonesPorAnillo;
+          carbonIndex++
+        ) {
+          const numeroCarbon = carbonIndex + 1;
+
+          const carbonTempId = this.createCarbonTempId(
+            anilloTempId,
+            numeroCarbon
+          );
+
+          const carbonDraft: CarbonesDraft = {
+            tempId: carbonTempId,
+            anilloTempId: anilloTempId,
+
+            identificador: `Carbón ${numeroCarbon}`,
+
+            largo_inicial: Number(config.largo_inicial),
+            largo_prealarma: Number(config.largo_prealarma),
+            largo_alarma: Number(config.largo_alarma),
+
+            nivel_bateria_aviso: Number(
+              config.nivel_bateria_aviso
+            ),
+            nivel_bateria_minimo: Number(
+              config.nivel_bateria_minimo
+            ),
+          };
+
+          carbonesDraft.push(carbonDraft);
         }
       }
     });

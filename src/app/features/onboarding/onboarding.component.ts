@@ -41,7 +41,7 @@ import { VersionService } from '@services/version.service';
 export class OnboardingComponent implements OnInit, AfterViewInit {
 
   versionService = inject(VersionService);
-  
+
   currentStep = 0;
   readonly maxStep = 4;
 
@@ -108,40 +108,40 @@ export class OnboardingComponent implements OnInit, AfterViewInit {
   private forceButtonStateUpdate() {
     // Primero forzar detección de cambios para asegurar que el template se renderice
     this.cdr.detectChanges();
-    
+
     const timeouts = [0, 50, 100, 200, 500]; // Agregué timeout inmediato
-    
+
     timeouts.forEach(delay => {
       setTimeout(() => {
         // Forzar detección de cambios antes de verificar ViewChild
         this.cdr.detectChanges();
-        
+
         // Verificar si los ViewChild están disponibles antes de continuar
         if (!this.areViewChildrenReady()) {
           return;
         }
-        
-        
+
+
         // Verificación especial: si estamos en paso 0 pero ya autenticado, actualizar paso
         if (this.currentStep === 0 && this.authService.isAuthenticated()) {
           const newStep = this.determineCurrentStep();
           this.setCurrentStep(newStep);
           this.updateStepStates();
         }
-        
+
         this.updateCanContinueState();
         this.cdr.detectChanges();
       }, delay);
     });
-    
+
     // Verificación final después de todos los timeouts
     setTimeout(() => {
       this.cdr.detectChanges(); // Forzar detección de cambios una vez más
-      
+
       if (!this.areViewChildrenReady()) {
         return;
       }
-      
+
       this.updateCanContinueState();
       this.cdr.detectChanges();
     }, 1000);
@@ -152,7 +152,7 @@ export class OnboardingComponent implements OnInit, AfterViewInit {
     const empresaReady = this.empresaStep !== undefined;
     const motoresReady = this.motoresStep !== undefined;
     const asignacionReady = this.asignacionStep !== undefined;
-    
+
     // Al menos el componente del paso actual debe estar listo
     switch (this.currentStep) {
       case 0: return authReady;
@@ -188,23 +188,23 @@ export class OnboardingComponent implements OnInit, AfterViewInit {
     }
 
     const activeStep = this.getActiveStep();
-    
+
     if (!activeStep) {
       this.canCurrentStepContinue = false;
       return;
     }
-    
+
     if ('canContinue' in activeStep && typeof activeStep.canContinue === 'function') {
       try {
         const canContinue = activeStep.canContinue();
         const previousState = this.canCurrentStepContinue;
         this.canCurrentStepContinue = canContinue;
-        
+
         if (activeStep.constructor.name === 'AuthStepComponent') {
           console.log(`🔐 Auth - form valid: ${(activeStep as any).form?.valid}`);
           console.log(`🔐 Auth - loading: ${(activeStep as any).loading}`);
         }
-        
+
       } catch (error) {
         console.error('❌ Error calling canContinue:', error);
         this.canCurrentStepContinue = false;
@@ -249,7 +249,7 @@ export class OnboardingComponent implements OnInit, AfterViewInit {
     if (this.currentStep > 1) {
       const newStep = this.currentStep - 1;
       this.setCurrentStep(newStep);
-      
+
       this.updateStepStates();
     }
   }
@@ -258,7 +258,7 @@ export class OnboardingComponent implements OnInit, AfterViewInit {
   onStepStateChange() {
     // Forzar detección de cambios para asegurar que ViewChild estén disponibles
     this.cdr.detectChanges();
-    
+
     // Verificar si los ViewChild están listos
     if (this.areViewChildrenReady()) {
       this.updateCanContinueState();
@@ -272,7 +272,7 @@ export class OnboardingComponent implements OnInit, AfterViewInit {
         this.cdr.detectChanges();
       }, 50);
     }
-    
+
     this.cdr.detectChanges();
   }
 
@@ -292,15 +292,15 @@ export class OnboardingComponent implements OnInit, AfterViewInit {
   onStepChange(event: StepperSelectionEvent) {
     // Solo permitir navegación a pasos que estén disponibles
     const targetStep = event.selectedIndex;
-    
+
     // Prevenir loop infinito - no hacer nada si ya estamos en el paso target
     if (this.currentStep === targetStep) {
       return;
     }
-    
+
     if (this.canNavigateToStep(targetStep)) {
       this.setCurrentStep(targetStep);
-      
+
       this.updateStepStates();
     } else {
       // Revertir al paso actual si no puede navegar
@@ -328,19 +328,19 @@ export class OnboardingComponent implements OnInit, AfterViewInit {
 
   private getActiveStep(): OnboardingStep | null {
     switch (this.currentStep) {
-      case 0: 
+      case 0:
         const authStep = this.authStep ?? null;
         return authStep;
-      case 1: 
+      case 1:
         const empresaStep = this.empresaStep ?? null;
         return empresaStep;
-      case 2: 
+      case 2:
         const motoresStep = this.motoresStep ?? null;
         return motoresStep;
-      case 3: 
+      case 3:
         const asignacionStep = this.asignacionStep ?? null;
         return asignacionStep;
-      default: 
+      default:
         return null;
     }
   }
@@ -352,7 +352,7 @@ export class OnboardingComponent implements OnInit, AfterViewInit {
     try {
       if (this.currentStep === 4) {
         await this.persistFinalDrafts();
-        this.router.navigate(['/dashboard']);
+        await this.router.navigate(['/dashboard']);
         return;
       }
 
@@ -360,11 +360,11 @@ export class OnboardingComponent implements OnInit, AfterViewInit {
       if (!step) return;
 
       await step.commit();
-      
+
       if (this.currentStep < this.maxStep) {
         const newStep = this.currentStep + 1;
         this.setCurrentStep(newStep);
-        
+
         this.updateStepStates();
       }
     } catch (e: any) {
@@ -394,62 +394,32 @@ export class OnboardingComponent implements OnInit, AfterViewInit {
     const carbones = this.onboardingState.getCarbonesDraft() ?? [];
     const asignaciones = this.onboardingState.getAsignacionDraft() ?? [];
 
+    if (anillos.length === 0) {
+      throw new Error('No existen anillos para guardar.');
+    }
+
+    if (carbones.length === 0) {
+      throw new Error('No existen carbones para guardar.');
+    }
+
     try {
-      for (const [index, anillo] of anillos.entries()) {
-        const payload = {
-          id: anillo.id,
-          identificador: anillo.identificador,
-          motor_id: anillo.motor_id,
-        };
-        console.debug('Persisting anillo payload', { index, payload });
-        try {
-          await firstValueFrom(this.catalogoService.saveAnillo(payload));
-        } catch (error) {
-          console.error('Failed to persist anillo', { index, payload, error });
-          throw error;
-        }
-      }
+      const result = await firstValueFrom(
+        this.catalogoService.guardarConfiguracionOnboarding({
+          anillos,
+          carbones,
+          asignaciones,
+        })
+      );
 
-      for (const [index, carbon] of carbones.entries()) {
-        const payload = {
-          anillo_id: carbon.anillo_id,
-          id: carbon.id,
-          identificador: carbon.identificador,
-          largo_alarma: carbon.largo_alarma,
-          largo_inicial: carbon.largo_inicial,
-          largo_prealarma: carbon.largo_prealarma,
-          nivel_bateria_aviso: carbon.nivel_bateria_aviso,
-          nivel_bateria_minimo: carbon.nivel_bateria_minimo,
-        };
-        console.debug('Persisting carbon payload', { index, payload });
-        try {
-          await firstValueFrom(this.catalogoService.saveCarbon(payload));
-        } catch (error) {
-          console.error('Failed to persist carbon', { index, payload, error });
-          throw error;
-        }
-      }
-
-      for (const [index, asignacion] of asignaciones.entries()) {
-        const payload = {
-          carbon_id: asignacion.carbon_id,
-          sensor_id: asignacion.sensor_id,
-        };
-        console.debug('Persisting asignacion payload', { index, payload });
-        try {
-          await firstValueFrom(this.catalogoService.instalarSensor(payload));
-        } catch (error) {
-          console.error('Failed to persist asignacion', { index, payload, error });
-          throw error;
-        }
-      }
+      console.debug('Configuración guardada correctamente', result);
     } catch (error) {
-      console.error('Error persisting final drafts:', {
+      console.error('Error al guardar la configuración final:', {
         anillosCount: anillos.length,
         carbonesCount: carbones.length,
         asignacionesCount: asignaciones.length,
         error,
       });
+
       throw error;
     }
   }

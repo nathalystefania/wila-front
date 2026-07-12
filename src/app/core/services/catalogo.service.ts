@@ -1,8 +1,44 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, forkJoin, map, of } from 'rxjs';
-import { EmpresaApi, DivisionApi, AreaApi, EquipoApi, MotorApi, MotorCatalogo, SensorApi, AnillosDraft, CarbonesDraft, AsignacionDraft } from '../models/catalogo.models';
+import {
+    Observable,
+    concatMap,
+    forkJoin,
+    from,
+    map,
+    of,
+    reduce,
+    toArray,
+} from 'rxjs';
+import {
+    EmpresaApi,
+    DivisionApi,
+    AreaApi,
+    EquipoApi,
+    MotorApi,
+    MotorCatalogo,
+    SensorApi,
+    CreateAnilloRequest,
+    AnilloResponse,
+    CreateCarbonRequest,
+    CarbonResponse,
+    AsignacionDraft,
+    AnillosDraft,
+    CarbonesDraft,
+} from '../models/catalogo.models';
 import { ApiService } from './api.service';
 
+
+export interface OnboardingPersistenceData {
+    anillos: AnillosDraft[];
+    carbones: CarbonesDraft[];
+    asignaciones: AsignacionDraft[];
+}
+
+export interface OnboardingPersistenceResult {
+    anillosCreados: AnilloResponse[];
+    carbonesCreados: CarbonResponse[];
+    sensoresInstalados: number;
+}
 
 @Injectable({ providedIn: 'root' })
 export class CatalogoService {
@@ -32,16 +68,28 @@ export class CatalogoService {
         return this.api.get<SensorApi[]>('/api/sensores');
     }
 
-    saveAnillo(anillo: AnillosDraft): Observable<AnillosDraft> {
-        return this.api.post<AnillosDraft>('/api/anillos', anillo);
+    saveAnillo(
+        anillo: CreateAnilloRequest
+    ): Observable<AnilloResponse> {
+        return this.api.post<AnilloResponse>('/api/anillos', anillo);
     }
 
-    saveCarbon(carbon: CarbonesDraft): Observable<CarbonesDraft> {
-        return this.api.post<CarbonesDraft>('/api/carbones', carbon);
+    saveCarbon(
+        carbon: CreateCarbonRequest
+    ): Observable<CarbonResponse> {
+        return this.api.post<CarbonResponse>('/api/carbones', carbon);
     }
 
-    instalarSensor(asignacion: AsignacionDraft): Observable<unknown> {
-        return this.api.post<unknown>('/api/sensores/instalar', asignacion);
+    instalarSensor(
+        asignacion: {
+            carbon_id: string;
+            sensor_id: string;
+        }
+    ): Observable<unknown> {
+        return this.api.post<unknown>(
+            '/api/sensores/instalar',
+            asignacion
+        );
     }
 
     getSensoresByOcupado(ocupado: boolean): Observable<SensorApi[]> {
@@ -184,6 +232,84 @@ export class CatalogoService {
                     .filter((motor): motor is MotorCatalogo & { empresa: string } => motor !== null)
                     .sort((a, b) => a.codigo.localeCompare(b.codigo, undefined, { numeric: true, sensitivity: 'base' }));
             })
+        );
+    }
+
+    guardarConfiguracionOnboarding(
+        data: OnboardingPersistenceData
+    ): Observable<OnboardingPersistenceResult> {
+        const anillosCreados: AnilloResponse[] = [];
+        const carbonesCreados: CarbonResponse[] = [];
+        let sensoresInstalados = 0;
+
+        return from(data.anillos).pipe(
+            concatMap(anilloDraft => {
+                const anilloRequest: CreateAnilloRequest = {
+                    identificador: anilloDraft.identificador,
+                    motor_id: anilloDraft.motor_id,
+                };
+
+                return this.saveAnillo(anilloRequest).pipe(
+                    concatMap(anilloCreado => {
+                        anillosCreados.push(anilloCreado);
+
+                        const carbonesDelAnillo = data.carbones.filter(
+                            carbon => carbon.anilloTempId === anilloDraft.tempId
+                        );
+
+                        return from(carbonesDelAnillo).pipe(
+                            concatMap(carbonDraft => {
+                                const carbonRequest: CreateCarbonRequest = {
+                                    anillo_id: anilloCreado.id,
+                                    identificador: carbonDraft.identificador,
+                                    largo_alarma: carbonDraft.largo_alarma,
+                                    largo_inicial: carbonDraft.largo_inicial,
+                                    largo_prealarma: carbonDraft.largo_prealarma,
+                                    nivel_bateria_aviso:
+                                        carbonDraft.nivel_bateria_aviso,
+                                    nivel_bateria_minimo:
+                                        carbonDraft.nivel_bateria_minimo,
+                                };
+
+                                return this.saveCarbon(carbonRequest).pipe(
+                                    concatMap(carbonCreado => {
+                                        carbonesCreados.push(carbonCreado);
+
+                                        const asignacion = data.asignaciones.find(
+                                            item =>
+                                                item.carbonTempId === carbonDraft.tempId
+                                        );
+
+                                        if (
+                                            !asignacion ||
+                                            asignacion.sensor_id === '0'
+                                        ) {
+                                            return of(carbonCreado);
+                                        }
+
+                                        return this.instalarSensor({
+                                            carbon_id: carbonCreado.id,
+                                            sensor_id: asignacion.sensor_id,
+                                        }).pipe(
+                                            map(() => {
+                                                sensoresInstalados++;
+                                                return carbonCreado;
+                                            })
+                                        );
+                                    })
+                                );
+                            }),
+                            toArray()
+                        );
+                    })
+                );
+            }),
+            toArray(),
+            map(() => ({
+                anillosCreados,
+                carbonesCreados,
+                sensoresInstalados,
+            }))
         );
     }
 }

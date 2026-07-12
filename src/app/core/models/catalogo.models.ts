@@ -1,10 +1,10 @@
-export interface AnillosApi {
+export interface AnilloResponse {
     id: string;
     identificador: string;
     motor_id: string;
 }
 
-export interface CarbonesApi {
+export interface CarbonResponse {
     anillo_id: string;
     id: string;
     identificador: string;
@@ -13,6 +13,21 @@ export interface CarbonesApi {
     largo_prealarma: number;
     nivel_bateria_aviso: number;
     nivel_bateria_minimo: number;
+}
+
+export interface CreateAnilloRequest {
+  identificador: string;
+  motor_id: string;
+}
+
+export interface CreateCarbonRequest {
+  anillo_id: string;
+  identificador: string;
+  largo_alarma: number;
+  largo_inicial: number;
+  largo_prealarma: number;
+  nivel_bateria_aviso: number;
+  nivel_bateria_minimo: number;
 }
 
 export interface EmpresaApi {
@@ -100,11 +115,24 @@ export interface EmpresaSelectionDraft {
     divisionId: string | null;
 }
 
-export interface AnillosDraft extends AnillosApi {}
+export interface AnillosDraft {
+  tempId: string;
+  identificador: string;
+  motor_id: string;
+}
 
-export interface CarbonesDraft extends CarbonesApi {}
+export interface CarbonesDraft {
+  tempId: string;
+  anilloTempId: string;
+  identificador: string;
+  largo_alarma: number;
+  largo_inicial: number;
+  largo_prealarma: number;
+  nivel_bateria_aviso: number;
+  nivel_bateria_minimo: number;
+}
 
 export interface AsignacionDraft {
-  carbon_id: string;
+  carbonTempId: string;
   sensor_id: string;
 }
