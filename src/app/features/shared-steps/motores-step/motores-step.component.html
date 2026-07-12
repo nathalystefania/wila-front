@@ -7,13 +7,6 @@
     </p>
   </div>
 
-  @if (loading) {
-  <div class="text-center py-4">
-    <mat-spinner class="mx-auto"></mat-spinner>
-    <p class="mt-2 text-gray-600">Guardando motores...</p>
-  </div>
-  }
-
   @if (loadingMotores) {
   <div class="text-center py-8">
     <mat-spinner class="mx-auto mb-4" diameter="32"></mat-spinner>
@@ -27,9 +20,9 @@
   </div>
   }
 
-  @if (!loadingMotores && !loading && !error) {
+  @if (!loadingMotores && !error) {
 
-  <mat-tab-group mat-stretch-tabs="false" mat-align-tabs="start"
+  <mat-tab-group mat-stretch-tabs="false" mat-align-tabs="start" (selectedIndexChange)="selectMotor($event)"
     class="w-full min-w-0 rounded-xl border border-outline/20 bg-surface-container-highest text-on-background">
 
     @for (motor of motoresDisponibles; track motor.codigo; let i = $index) {

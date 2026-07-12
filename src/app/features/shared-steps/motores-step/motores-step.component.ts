@@ -1,6 +1,6 @@
 import { Component, OnInit, Output, EventEmitter, inject, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormArray, FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, FormControl, FormGroupDirective, NgForm, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Subscription, finalize } from 'rxjs';
 
 import { MatExpansionModule } from '@angular/material/expansion';
@@ -45,7 +45,7 @@ class GroupErrorStateMatcher implements ErrorStateMatcher {
   templateUrl: './motores-step.component.html',
   styleUrl: './motores-step.component.scss',
 })
-export class MotoresStepComponent implements OnInit, OnboardingStep {
+export class MotoresStepComponent implements OnInit, OnDestroy, OnboardingStep {
   private fb = inject(FormBuilder);
   private state = inject(OnboardingStateService);
   private catalogoService = inject(CatalogoService);
@@ -58,7 +58,6 @@ export class MotoresStepComponent implements OnInit, OnboardingStep {
   private loadSub?: Subscription;
 
   error = '';
-  loading = false;
   loadingMotores = false;
   readonly prealarmaMatcher = new GroupErrorStateMatcher('prealarmaMayorIgualInicial');
   readonly alarmaMatcher = new GroupErrorStateMatcher('alarmaMayorIgualPrealarma');
@@ -203,12 +202,8 @@ export class MotoresStepComponent implements OnInit, OnboardingStep {
     this.selectedMotorIndex = index;
   }
 
-  get selectedMotorForm(): FormGroup {
-    return this.motoresConfiguracion.at(this.selectedMotorIndex) as FormGroup;
-  }
-
   canContinue(): boolean {
-    return !this.loading && !this.loadingMotores && this.motoresDisponibles.length > 0 && this.formConfiguracion.valid;
+    return !this.loadingMotores && this.motoresDisponibles.length > 0 && this.formConfiguracion.valid;
   }
 
   async commit(): Promise<void> {
@@ -288,20 +283,6 @@ export class MotoresStepComponent implements OnInit, OnboardingStep {
 
     this.state.setAnillosDraft(anillosDraft);
     this.state.setCarbonesDraft(carbonesDraft);
-  }
-
-  private createDraftId(prefix: string): string {
-    const uniquePart = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-      ? crypto.randomUUID()
-      : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-
-    return `${prefix}-${uniquePart}`;
-  }
-
-  getMotorCodigoByIndex(index: number): string {
-    const motor = this.motoresDisponibles[index];
-    if (!motor) return `Motor ${index + 1}`;
-    return `${motor.codigo} - ${motor.nombre ?? `Motor ${index + 1}`}`;
   }
 
   isMotorConfigCompleted(index: number): boolean {

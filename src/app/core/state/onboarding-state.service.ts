@@ -16,14 +16,14 @@ export interface AuthDraft {
 export class OnboardingStateService {
   private readonly storageKey = 'onboarding_state';
   private platformId = inject(PLATFORM_ID);
-  
+
   private state: {
     authDraft?: AuthDraft;
     empresaDraft?: EmpresaSelectionDraft;
     anillosDraft?: AnillosDraft[];
     carbonesDraft?: CarbonesDraft[];
-    carbonDraft?: string[];
     asignacionDraft?: AsignacionDraft[];
+    assignmentDialogShown?: boolean;
   } = {};
 
   private get isBrowser(): boolean {
@@ -104,20 +104,6 @@ export class OnboardingStateService {
     return this.state.carbonesDraft ?? null;
   }
 
-  // IDs de carbones en onboarding
-  setcarbonDraft(ids: string[] | null) {
-    if (ids === null) {
-      delete this.state.carbonDraft;
-    } else {
-      this.state.carbonDraft = ids;
-    }
-    this.saveToStorage();
-  }
-
-  getcarbonDraft(): string[] {
-    return this.state.carbonDraft ?? [];
-  }
-
   setAsignacionDraft(asignaciones: AsignacionDraft[] | null) {
     if (asignaciones === null) {
       delete this.state.asignacionDraft;
@@ -129,6 +115,15 @@ export class OnboardingStateService {
 
   getAsignacionDraft(): AsignacionDraft[] | null {
     return this.state.asignacionDraft ?? null;
+  }
+
+  setAssignmentDialogShown(shown: boolean): void {
+    this.state.assignmentDialogShown = shown;
+    this.saveToStorage();
+  }
+
+  getAssignmentDialogShown(): boolean {
+    return this.state.assignmentDialogShown ?? false;
   }
 
   clear() {

@@ -6,7 +6,6 @@ import {
     from,
     map,
     of,
-    reduce,
     toArray,
 } from 'rxjs';
 import {
@@ -89,12 +88,6 @@ export class CatalogoService {
         return this.api.post<unknown>(
             '/api/sensores/instalar',
             asignacion
-        );
-    }
-
-    getSensoresByOcupado(ocupado: boolean): Observable<SensorApi[]> {
-        return this.getSensores().pipe(
-            map(sensores => sensores.filter(sensor => sensor.ocupado === ocupado))
         );
     }
 

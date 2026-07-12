@@ -18,8 +18,7 @@
 
   <!-- Motors Tabs -->
   <mat-tab-group *ngIf="motors.length > 0" mat-stretch-tabs="false" mat-align-tabs="start"
-    class="rounded-xl border border-outline/20 bg-surface-container-highest text-on-background"
-    (selectedIndexChange)="onMotorTabChange($event)">
+    class="rounded-xl border border-outline/20 bg-surface-container-highest text-on-background">
     <mat-tab *ngFor="let motor of motors; let i = index" [label]="motor.codigo">
       <ng-template mat-tab-label>
         <p class="uppercase font-bold text-base">Motor <span>{{ motor.codigo }}</span></p>
@@ -85,7 +84,7 @@
                     <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onOptionSelected(element.tempId, $event)">
                       <mat-option *ngFor="let sensor of getFilteredSensores(element.tempId) | async"
                         [value]="sensor.id_hardware">
-                        {{ displaySensorName(sensor) }}
+                        {{ sensor.id_hardware }}
                       </mat-option>
                       <mat-option *ngIf="(getFilteredSensores(element.tempId) | async)?.length === 0" disabled>
                         No hay sensores disponibles
@@ -106,18 +105,18 @@
               <ng-container matColumnDef="lock">
                 <th mat-header-cell *matHeaderCellDef></th>
                 <td mat-cell *matCellDef="let element">
-                  @if (isCarbonEnabled(element.id)) {
+                  @if (isCarbonEnabled(element.tempId)) {
                   <button type="button" class="custom-btn-fab text-primary"
-                    [matTooltip]="'No asociar sensor al carbón ' + element.id"
-                    [aria-label]="'No asociar sensor al carbón ' + element.id"
-                    (click)="setCarbonEnabled(element.id, false)">
+                    [matTooltip]="'No asociar sensor al carbón ' + element.tempId"
+                    [aria-label]="'No asociar sensor al carbón ' + element.tempId"
+                    (click)="setCarbonEnabled(element.tempId, false)">
                     <span class="material-symbols-outlined">sensors_krx_off</span>
                   </button>
                   } @else {
                   <button type="button" class="custom-btn-fab text-secondary"
-                    [matTooltip]="'Asociar sensor al carbón ' + element.id"
-                    [aria-label]="'Asociar sensor al carbón ' + element.id"
-                    (click)="setCarbonEnabled(element.id, true)">
+                    [matTooltip]="'Asociar sensor al carbón ' + element.tempId"
+                    [aria-label]="'Asociar sensor al carbón ' + element.tempId"
+                    (click)="setCarbonEnabled(element.tempId, true)">
                     <span class="material-symbols-outlined">sensors_krx</span>
                   </button>
                   }
@@ -126,7 +125,7 @@
 
               <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
               <tr mat-row *matRowDef="let row; columns: displayedColumns;"
-                [class.opacity-70]="!isCarbonEnabled(row.id)"></tr>
+                [class.opacity-70]="!isCarbonEnabled(row.tempId)"></tr>
             </table>
 
             <div class="grid grid-flow-row auto-rows-max px-4">
