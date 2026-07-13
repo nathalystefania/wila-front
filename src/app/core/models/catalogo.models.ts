@@ -136,3 +136,8 @@ export interface AsignacionDraft {
   carbonTempId: string;
   sensor_id: string;
 }
+
+export interface CompanyContext {
+  empresaId: string;
+  divisionId: string | null;
+}

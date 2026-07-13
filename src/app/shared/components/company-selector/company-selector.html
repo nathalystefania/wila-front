@@ -1,0 +1,38 @@
+<mat-form-field appearance="outline" class="company-selector">
+
+    <mat-label>Empresa</mat-label>
+
+    <mat-select [value]="empresaIdSeleccionada" [disabled]="loading || empresas.length === 0" (selectionChange)="
+      onEmpresaChange($event.value)
+    ">
+
+        @for (
+        empresa of empresas;
+        track empresa.id
+        ) {
+        <mat-option [value]="empresa.id">
+            {{ empresa.nombre }}
+        </mat-option>
+        }
+
+    </mat-select>
+
+    @if (loading) {
+    <mat-hint>
+        Cargando empresas…
+    </mat-hint>
+    }
+
+    @if (!loading && empresas.length === 0) {
+    <mat-hint>
+        No hay empresas configuradas.
+    </mat-hint>
+    }
+
+    @if (error) {
+    <mat-hint class="text-error">
+        {{ error }}
+    </mat-hint>
+    }
+
+</mat-form-field>

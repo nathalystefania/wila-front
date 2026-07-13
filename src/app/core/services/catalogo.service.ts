@@ -51,6 +51,12 @@ export class CatalogoService {
         return this.api.get<DivisionApi[]>('/api/divisiones');
     }
 
+    getDivisionesCompletas(): Observable<DivisionApi[]> {
+        return this.api.get<DivisionApi[]>(
+            '/api/divisiones?solo_completas=true'
+        );
+    }
+
     getAreas(): Observable<AreaApi[]> {
         return this.api.get<AreaApi[]>('/api/areas');
     }
@@ -280,26 +286,10 @@ export class CatalogoService {
                                             return of(carbonCreado);
                                         }
 
-                                        // return this.instalarSensor({
-                                        //     carbon_id: carbonCreado.id,
-                                        //     sensor_id: asignacion.sensor_id,
-                                        // }).pipe(
-                                        //     map(() => {
-                                        //         sensoresInstalados++;
-                                        //         return carbonCreado;
-                                        //     })
-                                        // );
                                         const instalacionPayload = {
                                             carbon_id: carbonCreado.id,
                                             sensor_id: asignacion.sensor_id,
                                         };
-
-                                        console.debug('Instalando sensor', {
-                                            carbonDraftTempId: carbonDraft.tempId,
-                                            carbonCreado,
-                                            asignacion,
-                                            instalacionPayload,
-                                        });
 
                                         return this.instalarSensor(
                                             instalacionPayload

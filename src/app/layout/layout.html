@@ -7,16 +7,7 @@
         </div>
         <ul class="sidebar--menu flex-1">
             <li>
-                <form>
-                    <mat-form-field appearance="outline" floatLabel="always" class="w-full">
-                        <mat-label>Cliente</mat-label>
-                        <mat-select formControlName="empresaId">
-                            @for (empresa of empresas; track empresa) {
-                            <mat-option [value]="empresa.id">{{ empresa.nombre }}</mat-option>
-                            }
-                        </mat-select>
-                    </mat-form-field>
-                </form>
+                <app-company-selector />
             </li>
             <li>
                 <a routerLink="/dashboard" routerLinkActive="active" class="flex items-center gap-2">

@@ -17,6 +17,7 @@ import { ConfigurationCompleteComponent } from '../shared-steps/configuration-co
 import { AuthService } from '@services/auth.service';
 import { OnboardingStateService } from '@core/state/onboarding-state.service';
 import { CatalogoService } from '@services/catalogo.service';
+import { CompanyContextService } from '@core/state/company-context.service';
 
 import { VersionService } from '@services/version.service';
 
@@ -62,6 +63,7 @@ export class OnboardingComponent implements OnInit, AfterViewInit {
   private onboardingState = inject(OnboardingStateService);
   private catalogoService = inject(CatalogoService);
   private router = inject(Router);
+  private readonly companyContext = inject(CompanyContextService);
 
   @ViewChild(AuthStepComponent) authStep?: AuthStepComponent;
   @ViewChild(EmpresaStepComponent) empresaStep?: EmpresaStepComponent;
@@ -352,7 +354,30 @@ export class OnboardingComponent implements OnInit, AfterViewInit {
     try {
       if (this.currentStep === 4) {
         await this.persistFinalDrafts();
-        await this.router.navigate(['/dashboard']);
+
+        const empresaDraft =
+          this.onboardingState.getEmpresaDraft();
+
+        if (!empresaDraft?.empresaId) {
+          throw new Error(
+            'No se encontró la empresa seleccionada.'
+          );
+        }
+
+        this.companyContext.setContext({
+          empresaId: empresaDraft.empresaId,
+
+          // El dashboard será por empresa completa,
+          // no solamente por la división del onboarding.
+          divisionId: null,
+        });
+
+        await this.router.navigate([
+          '/dashboard',
+        ]);
+
+        this.onboardingState.clear();
+
         return;
       }
 
