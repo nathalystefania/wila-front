@@ -21,6 +21,13 @@ export const routes: Routes = [
     ]
   },
   {
+    path: 'settings',
+    component: Layout,
+    loadChildren: () =>
+      import('./features/settings/settings.routes')
+        .then(m => m.SETTINGS_ROUTES)
+  },
+  {
     path: '**',
     redirectTo: ''
   }

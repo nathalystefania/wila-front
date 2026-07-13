@@ -25,7 +25,7 @@
                 </a>
             </li>
             <li>
-                <a routerLink="/settings" class="flex items-center gap-2">
+                <a routerLink="/settings" routerLinkActive="active" class="flex items-center gap-2">
                     <span class="material-symbols-outlined">build_circle</span>
                     <span>Configuración</span>
                 </a>
@@ -42,7 +42,7 @@
         </ul>
     </div>
 
-    <div class="px-8 py-4 flex flex-col ml-auto relative layout-wide" [class.collapsed]="isCollapsed">
+    <div class="px-8 py-4 flex flex-col flex-1 ml-auto min-h-screen relative layout-wide" [class.collapsed]="isCollapsed">
         <header class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-4">
             <!-- breadcrumbs -->
             <div class="flex items-center gap-2">

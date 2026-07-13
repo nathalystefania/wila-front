@@ -81,7 +81,8 @@
                       <span class="material-symbols-outlined">close_small</span>
                     </button>
 
-                    <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onOptionSelected(element.tempId, $event)">
+                    <mat-autocomplete #auto="matAutocomplete"
+                      (optionSelected)="onOptionSelected(element.tempId, $event)">
                       <mat-option *ngFor="let sensor of getFilteredSensores(element.tempId) | async"
                         [value]="sensor.id_hardware">
                         {{ sensor.id_hardware }}
@@ -132,18 +133,20 @@
               <mat-chip-set aria-label="Dog selection">
                 @if (getAsignadosCount(anillo) > 0) {
                 <mat-chip>
-                  {{ getAsignadosCount(anillo) }} {{ getAsignadosCount(anillo) === 1 ? 'carbón asignado' : 'carbones asignados' }}
+                  {{ getAsignadosCount(anillo) }} {{ getAsignadosCount(anillo) === 1 ? 'carbón asignado' : 'carbones
+                  asignados' }}
                 </mat-chip>
                 }
                 @if (getDisabledCount(anillo) > 0) {
                 <mat-chip>
-                  {{ getDisabledCount(anillo) }} {{ getDisabledCount(anillo) === 1 ? 'carbón deshabilitado' : 'carbones deshabilitados' }}
+                  {{ getDisabledCount(anillo) }} {{ getDisabledCount(anillo) === 1 ? 'carbón deshabilitado' : 'carbones
+                  deshabilitados' }}
                 </mat-chip>
                 }
                 @if (getSinAsignarCount(anillo) > 0) {
-                  <mat-chip>
-                    {{ getSinAsignarCount(anillo) }} {{ getSinAsignarCount(anillo) === 1 ? 'pendiente' : 'pendientes' }}
-                  </mat-chip>
+                <mat-chip>
+                  {{ getSinAsignarCount(anillo) }} {{ getSinAsignarCount(anillo) === 1 ? 'pendiente' : 'pendientes' }}
+                </mat-chip>
                 }
               </mat-chip-set>
 

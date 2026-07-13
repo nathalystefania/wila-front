@@ -1,179 +1,128 @@
 <!-- KPI SUMMARY ROW -->
 <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-
     <!-- Card 1: Total -->
-    <div class="bg-surface-container rounded-lg border-1 border-outline/20 border-l-6 border-l-state-critical p-5 flex justify-between items-stretch">
-        <div class="flex flex-col">
-            <span class="text-l4 font-bold text-state-normal uppercase tracking-wider mb-3">Total escobillas</span>
-            <span class="text-4xl font-extrabold text-state-normal leading-none">{{ kpis.total }}</span>
-            <span class="text-l4 font-semibold text-state-normal uppercase tracking-wide mt-1">Configuradas</span>
-        </div>
-        <div class="flex flex-col self-end">
-            <div class="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-state-normal text-state-normal">
-                <span class="material-symbols-outlined !text-[36px] text-on-surface">settings</span>
+    <div class="bg-surface-container text-normal rounded-lg border-1 border-outline/20 border-l-6 border-l-state-critical p-5 flex justify-between items-stretch">
+        <div class="flex flex-col flex-1">
+            <div class="flex flex-row">
+                <span class="text-xl font-bold uppercase tracking-wider mb-3">
+                    Total escobillas
+                </span>
+            </div>
+            <div class="flex flex-row">
+                <div class="flex flex-col flex-1 items-start justify-center">
+                    <span class="text-5xl font-bold leading-none">0</span>
+                </div>
+                <div class="flex flex-col items-center justify-center rounded-full">
+                    <span class="material-symbols-outlined !text-[3.5rem]">settings</span>
+                </div>
+            </div>
+            <div class="flex flex-row">
+                <span class="text-lg font-regular uppercase tracking-wide mt-1">Configuradas</span>
             </div>
         </div>
     </div>
 
-    <!-- Card 2: Normal -->
-    <div class="bg-surface-container rounded-lg border-1 border-outline/20 border-l-6 border-l-state-critical p-5 flex justify-between items-stretch">
-        <div class="flex flex-col">
-            <span class="text-l4 font-bold text-state-normal uppercase tracking-wider mb-3">Estado normal</span>
-            <span class="text-4xl font-extrabold text-state-normal leading-none">{{ kpis.normal }}</span>
-            <span class="text-l4 font-semibold text-state-normal uppercase tracking-wide mt-1">Escobillas</span>
-        </div>
-        <div class="flex flex-col self-end">
-            <div class="flex items-center justify-center w-16 h-16 rounded-full bg-state-normal text-state-normal">
-                <span class="material-symbols-outlined !text-[36px] text-on-surface">check_circle</span>
+    <!-- Card 2: Sincronizados -->
+    <div class="bg-surface-container text-normal rounded-lg border-1 border-outline/20 border-l-6 border-l-state-critical p-5 flex justify-between items-stretch">
+        <div class="flex flex-col flex-1">
+            <div class="flex flex-row">
+                <span class="text-xl font-bold uppercase tracking-wider mb-3">
+                    Sincronizados
+                </span>
+            </div>
+            <div class="flex flex-row">
+                <div class="flex flex-col flex-1 items-start justify-center">
+                    <span class="text-5xl font-bold leading-none">0</span>
+                </div>
+                <div class="flex flex-col items-center justify-center rounded-full">
+                    <span class="material-symbols-outlined !text-[3.5rem]">check_circle</span>
+                </div>
+            </div>
+            <div class="flex flex-row">
+                <span class="text-lg font-regular uppercase tracking-wide mt-1">Carbones</span>
             </div>
         </div>
     </div>
 
-    <!-- Card 3: Warning -->
-    <div class="bg-surface-container rounded-lg border-1 border-outline/20 border-l-6 border-l-state-critical p-5 flex justify-between items-center">
-        <div class="flex flex-col">
-            <span class="text-l4 font-bold text-state-warning uppercase tracking-wider mb-1">Emergencia P1</span>
-            <span class="text-4xl font-extrabold text-state-warning leading-none">{{ kpis.warning }}</span>
-            <span class="text-l4 font-semibold text-state-warning uppercase tracking-wide mt-1"></span>
-        </div>
-        <div class="flex flex-col self-end">
-            <div class="flex items-center justify-center w-16 h-16 rounded-full bg-state-warning text-state-warning">
-                <span class="material-symbols-outlined !text-[36px] text-on-surface">warning</span>
+    <!-- Card 3: Warning P1 -->
+    <div class="state--warning bg-surface-container text-normal rounded-lg border-1 border-outline/20 border-l-6 border-l-state-warning p-5 flex justify-between items-stretch">
+        <div class="flex flex-col flex-1">
+            <div class="flex flex-row">
+                <span class="text-xl font-bold uppercase tracking-wider mb-3">
+                    Emergencia P1
+                </span>
             </div>
+            <div class="flex flex-row">
+                <div class="flex flex-col flex-1 items-start justify-center">
+                    <span class="text-5xl font-bold leading-none">0</span>
+                </div>
+                <div class="flex flex-col items-center justify-center rounded-full">
+                    <span class="material-symbols-outlined !text-[3.5rem]">warning</span>
+                </div>
+            </div>
+            <!-- <div class="flex flex-row">
+                <span class="text-lg font-regular uppercase tracking-wide mt-1">Configuradas</span>
+            </div> -->
         </div>
     </div>
 
-    <!-- Card 4: Critical -->
-    <div class="bg-surface-container rounded-lg border-1 border-outline/20 border-l-6 border-l-state-critical p-5 flex justify-between items-center">
-        <div class="flex flex-col">
-            <span class="text-l4 font-bold text-state-critical uppercase tracking-wider mb-1">Crítico P2</span>
-            <span class="text-4xl font-extrabold text-state-critical leading-none">{{ kpis.critical }}</span>
-            <span class="text-l4 font-semibold text-state-critical uppercase tracking-wide mt-1"></span>
-        </div>
-        <div class="flex flex-col self-end">
-            <div class="flex items-center justify-center w-16 h-16 rounded-full bg-state-critical text-state-critical">
-                <span class="material-symbols-outlined !text-[36px] text-on-surface">timer</span>
+    <!-- Card 4: Critical P2 -->
+    <div class="state--critical bg-surface-container text-normal rounded-lg border-1 border-outline/20 border-l-6 border-l-state-critical p-5 flex justify-between items-stretch">
+        <div class="flex flex-col flex-1">
+            <div class="flex flex-row">
+                <span class="text-xl font-bold uppercase tracking-wider mb-3">
+                    Crítico P2
+                </span>
             </div>
+            <div class="flex flex-row">
+                <div class="flex flex-col flex-1 items-start justify-center">
+                    <span class="text-5xl font-bold leading-none">0</span>
+                </div>
+                <div class="flex flex-col items-center justify-center rounded-full">
+                    <span class="material-symbols-outlined !text-[3.5rem]">error</span>
+                </div>
+            </div>
+            <!-- <div class="flex flex-row">
+                <span class="text-lg font-regular uppercase tracking-wide mt-1">Configuradas</span>
+            </div> -->
         </div>
     </div>
 </section>
 
 <!-- TWO-COLUMN LAYOUT -->
-<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-8">
 
     <!-- LEFT COLUMN: Estado de motores -->
-    <section class="lg:col-span-7 xl:col-span-8 bg-surface-container rounded-lg p-6 flex flex-col">
-        <!-- Header -->
-        <div class="flex flex-wrap justify-between items-center gap-4 pb-4 border-b border-gray-100">
-            <div class="flex items-center gap-2 text-on-surface font-semibold text-xl">
-                <span class="material-symbols-outlined text-on-surface align-middle !text-[32px]">settings</span>
-                Estado de motores <span id="G_MOTOR_COUNT" class="font-medium text-sm ml-2">(9
-                    motores)</span>
-            </div>
-            <button matButton="outlined" id="BTN_TOGGLE_PARAMS" onclick="toggleParametersMetrics()"
-                aria-expanded="false">
-                Ver parámetros de operación
-            </button>
-        </div>
-
-        <!-- Parameters Metrics Grid -->
-        <div id="PARAM_METRICS_GRID" class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6" style="display:none">
-            <!-- Metric 1 -->
-            <div
-                class="bg-white rounded border-top border-gray-200 p-4 border-t-4 border-primary flex flex-col justify-between shadow-sm">
-                <div class="text-lg/6 font-semibold text-on-surface">Longitud nominal</div>
-                <div class="text-2xl font-extrabold text-on-surface mt-auto flex items-baseline gap-1">
-                    <span id="VAL_NOM">80</span> <span class="text-sm font-bold text-on-surface">MM</span>
-                </div>
-            </div>
-            <!-- Metric 2 -->
-            <div
-                class="bg-white rounded border-top border-gray-200 p-4 border-t-4 border-primary flex flex-col justify-between shadow-sm">
-                <div class="text-lg/6 font-semibold text-on-surface">Vida útil</div>
-                <div class="text-2xl font-extrabold text-on-surface mt-auto flex items-baseline gap-1" id="VAL_UL">
-                    44 <span class="text-sm font-bold text-on-surface">MM (55%)</span>
-                </div>
-            </div>
-            <!-- Metric 3 -->
-            <div
-                class="bg-white rounded border-top border-gray-200 p-4 border-t-4 border-primary flex flex-col justify-between shadow-sm">
-                <div class="text-lg/6 font-semibold text-on-surface">Umbral alerta desgaste</div>
-                <div class="text-2xl font-extrabold text-on-surface mt-auto flex items-baseline gap-1" id="VAL_THY">
-                    48 <span class="text-sm font-bold text-on-surface">MM (60%)</span>
-                </div>
-            </div>
-            <!-- Metric 4 -->
-            <div
-                class="bg-white rounded border-top border-gray-200 p-4 border-t-4 border-primary flex flex-col justify-between shadow-sm">
-                <div class="text-lg/6 font-semibold text-on-surface">Umbral crítico desgaste</div>
-                <div class="text-2xl font-extrabold text-on-surface mt-auto flex items-baseline gap-1" id="VAL_THR">
-                    24 <span class="text-sm font-bold text-on-surface">MM (30%)</span>
-                </div>
-            </div>
-            <!-- Metric 5 -->
-            <div
-                class="bg-white rounded border-top border-gray-200 p-4 border-t-4 border-primary flex flex-col justify-between shadow-sm">
-                <div class="text-lg/6 font-semibold text-on-surface">Alerta temperatura</div>
-                <div class="text-2xl font-extrabold text-on-surface mt-auto flex items-baseline gap-1">
-                    <span id="VAL_TTY">80</span> <span class="text-sm font-bold text-on-surface">°C</span>
-                </div>
-            </div>
-            <!-- Metric 6 -->
-            <div
-                class="bg-white rounded border-top border-gray-200 p-4 border-t-4 border-primary flex flex-col justify-between shadow-sm">
-                <div class="text-lg/6 font-semibold text-on-surface">Crítico temperatura</div>
-                <div class="text-2xl font-extrabold text-on-surface mt-auto flex items-baseline gap-1">
-                    <span id="VAL_TTR">110</span> <span class="text-sm font-bold text-on-surface">°C</span>
-                </div>
-            </div>
-            <!-- Metric 7 -->
-            <div
-                class="bg-white rounded border-top border-gray-200 p-4 border-t-4 border-primary flex flex-col justify-between shadow-sm">
-                <div class="text-lg/6 font-semibold text-on-surface">Batería baja</div>
-                <div class="text-2xl font-extrabold text-on-surface mt-auto flex items-baseline gap-1">
-                    <span id="VAL_TB">20</span> <span class="text-sm font-bold text-on-surface">%</span>
-                </div>
-            </div>
-            <!-- Metric 8 -->
-            <div
-                class="bg-white rounded border-top border-gray-200 p-4 border-t-4 border-primary flex flex-col justify-between shadow-sm">
-                <div class="text-sm font-bold text-on-surface uppercase tracking-wider leading-tight">
-                    Esperando señal</div>
-                <div class="text-2xl font-extrabold text-on-surface mt-auto flex items-baseline gap-1">
-                    &lt; <span id="VAL_SN">8</span> <span class="text-sm font-bold text-on-surface">H SIN
-                        SEÑAL</span>
-                </div>
-            </div>
-        </div>
-
+    <section class="lg:col-span-7 xl:col-span-8 bg-surface-container rounded-lg border-1 border-outline/20 flex flex-col">
         <!-- Motors Table -->
-        <div class="overflow-x-auto mt-6">
-            <table class="w-full text-left border-collapse min-w-[650px]">
+        <div class="overflow-x-auto">
+            <table class="table-default w-full text-left border-collapse min-w-[650px]">
                 <thead>
-                    <tr class="bg-inverse-primary text-primary-fixed">
-                        <th class="py-3 px-4 font-semibold text-lg tracking-wider border-b border-gray-200 rounded-l">
+                    <tr class="">
+                        <th class="rounded-l">
                             Motor</th>
-                        <th class="py-3 px-4 font-semibold text-lg tracking-wider border-b border-gray-200">
+                        <th class="">
                             Promedio MM</th>
-                        <th class="py-3 px-4 font-semibold text-lg tracking-wider border-b border-gray-200">
+                        <th class="">
                             Desgaste</th>
-                        <th class="py-3 px-4 font-semibold text-lg tracking-wider border-b border-gray-200 text-center">
+                        <th class="text-center">
                             Temp. máx</th>
-                        <th class="py-3 px-4 font-semibold text-lg tracking-wider border-b border-gray-200 text-center">
+                        <th class="text-center">
                             Batería min.</th>
-                        <th class="py-3 px-4 font-semibold text-lg tracking-wider border-b border-gray-200 text-center">
+                        <th class="text-center">
                             Alarmas</th>
-                        <th
-                            class="py-3 px-4 font-semibold text-lg tracking-wider border-b border-gray-200 rounded-r text-right">
+                        <th class="rounded-r">
                         </th>
                     </tr>
                 </thead>
-                <tbody class="" id="G_MTBL">
-                    <tr class="bg-surface-container-high hover:bg-surface-container-high-50/50 transition-colors">
-                        <td class="py-3 px-4 font-medium text-inverse-surface"><strong class="font-bold">SAG-01</strong>
-                            <span class="text-sm text-inverse-surface font-medium ml-1">SAG 3F×5</span>
+                <tbody class="">
+                    <tr>
+                        <td class="">
+                            <strong class="font-bold">SAG-01</strong>
                         </td>
-                        <td class="py-3 px-4 font-medium text-inverse-surface">63.9 mm</td>
+                        <td class="">
+                            63.9 mm
+                        </td>
                         <td class="py-3 px-4">
                             <div class="flex items-center gap-3">
                                 <div class="w-24 bg-surface-variant rounded-full h-2">
@@ -181,50 +130,23 @@
                                 </div><span class="text-sm text-inverse-surface font-medium">55%</span>
                             </div>
                         </td>
-                        <td class="py-3 px-4 text-center"><span
-                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-md font-medium bg-state-normal text-on-state-normal">54°C</span>
+                        <td class="text-center">
+                            54°C
                         </td>
-                        <td class="py-3 px-4 text-center"><span
-                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-md font-medium bg-state-normal text-on-state-normal">61%</span>
+                        <td class="text-center">
+                            61%
                         </td>
-                        <td class="py-3 px-4 text-center"><span
+                        <td class="text-center">
+                            <span
                                 class="inline-flex items-center px-2.5 py-0.5 rounded-full text-md font-medium bg-state-warning text-on-state-normal">1
-                                P3</span></td>
-                        <td class="py-3 px-4 text-right"><span
+                                P3</span>
+                        </td>
+                        <td class="text-right">
+                            <span
                                 class="material-symbols-outlined text-inverse-surface cursor-pointer hover:text-primary transition-colors text-[32px] align-middle"
-                                onclick="showDet('SAG-01')">search</span></td>
+                                onclick="showDet('SAG-01')">search</span>
+                        </td>
                     </tr>
-                    <tr class="bg-surface-container-high hover:bg-surface-container-high-50/50 transition-colors">
-                        <td class="py-3 px-4 font-medium text-inverse-surface"><strong class="font-bold">SAG-02</strong>
-                            <span class="text-sm text-inverse-surface font-medium ml-1">SAG 3F×5</span>
-                        </td>
-                        <td class="py-3 px-4 font-medium text-inverse-surface">63.9 mm</td>
-                        <td class="py-3 px-4">
-                            <div class="flex items-center gap-3">
-                                <div class="w-24 bg-surface-variant rounded-full h-2">
-                                    <div class="bf neu h-2 rounded-full" style="width:5%"></div>
-                                </div><span class="text-sm text-inverse-surface font-medium">5%</span>
-                            </div>
-                        </td>
-                        <td class="py-3 px-4 text-center"><span
-                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-md font-medium bg-state-critical text-on-state-normal">154°C</span>
-                        </td>
-                        <td class="py-3 px-4 text-center"><span
-                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-md font-medium bg-state-critical text-on-state-normal">6%</span>
-                        </td>
-                        <td class="py-3 px-4 text-center">
-                            <span class="mb-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-md font-medium bg-state-critical text-on-state-normal">
-                                1 P3
-                            </span>
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-md font-medium bg-state-warning text-on-state-normal">
-                                3 P1
-                            </span>
-                        </td>
-                        <td class="py-3 px-4 text-right"><span
-                                class="material-symbols-outlined text-inverse-surface cursor-pointer hover:text-primary transition-colors text-[32px] align-middle"
-                                onclick="showDet('SAG-02')">search</span></td>
-                    </tr>
-
                 </tbody>
             </table>
         </div>

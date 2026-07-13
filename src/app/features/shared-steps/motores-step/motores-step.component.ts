@@ -113,10 +113,10 @@ export class MotoresStepComponent implements OnInit, OnDestroy, OnboardingStep {
   }
 
   private createAnilloTempId(
-    motorId: string,
+    motorCodigo: string,
     numeroAnillo: number
   ): string {
-    return `motor-${motorId}-anillo-${numeroAnillo}`;
+    return `motor-${motorCodigo}-anillo-${numeroAnillo}`;
   }
 
   private createCarbonTempId(
@@ -234,7 +234,7 @@ export class MotoresStepComponent implements OnInit, OnDestroy, OnboardingStep {
         const numeroAnillo = anilloIndex + 1;
 
         const anilloTempId = this.createAnilloTempId(
-          motor.id,
+          motor.codigo,
           numeroAnillo
         );
 

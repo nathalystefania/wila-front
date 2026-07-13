@@ -280,10 +280,30 @@ export class CatalogoService {
                                             return of(carbonCreado);
                                         }
 
-                                        return this.instalarSensor({
+                                        // return this.instalarSensor({
+                                        //     carbon_id: carbonCreado.id,
+                                        //     sensor_id: asignacion.sensor_id,
+                                        // }).pipe(
+                                        //     map(() => {
+                                        //         sensoresInstalados++;
+                                        //         return carbonCreado;
+                                        //     })
+                                        // );
+                                        const instalacionPayload = {
                                             carbon_id: carbonCreado.id,
                                             sensor_id: asignacion.sensor_id,
-                                        }).pipe(
+                                        };
+
+                                        console.debug('Instalando sensor', {
+                                            carbonDraftTempId: carbonDraft.tempId,
+                                            carbonCreado,
+                                            asignacion,
+                                            instalacionPayload,
+                                        });
+
+                                        return this.instalarSensor(
+                                            instalacionPayload
+                                        ).pipe(
                                             map(() => {
                                                 sensoresInstalados++;
                                                 return carbonCreado;

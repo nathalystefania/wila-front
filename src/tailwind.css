@@ -46,6 +46,10 @@
   --color-inverse-primary: var(--mat-sys-inverse-primary);
   --color-primary-fixed: var(--mat-sys-primary-fixed);
   --color-on-primary-fixed: var(--mat-sys-on-primary-fixed);
+
+  --color-normal: #9aa3ad;
+  --color-warning: #f2b705;
+  --color-critical: #d25855;
   
   /* Modern font settings synced with Material Typography */
   --font-sans: "Inter", sans-serif;

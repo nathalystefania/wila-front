@@ -58,6 +58,9 @@ html {
   --color-scrollbar-thumb: #334155;
   scrollbar-color: var(--color-scrollbar-thumb) var(--color-scrollbar-track);
 
+  --color-normal: #9aa3ad;
+  --color-warning: #f2b705;
+  --color-critical: #d25855;
 
   // @include mat.all-component-themes($app-theme);
   @include mat.theme-overrides((corner-small: 4px,
@@ -121,6 +124,9 @@ html {
     ));
   @include mat.chips-overrides((container-shape-radius: 2rem,
     ));
+  @include mat.snack-bar-overrides((
+    supporting-text-size: 1.1rem,
+  ));
 }
 
 // Apply light theme overrides
@@ -180,7 +186,7 @@ body {
     }
 
     @media screen and (max-width: 830px) {
-      margin-right: 0px!important;
+      margin-right: 0px !important;
     }
   }
 
@@ -188,7 +194,7 @@ body {
     font-size: 1.1rem;
     white-space: break-spaces;
     word-break: break-word;
-    
+
     @media screen and (max-width: 1280px) {
       font-size: 1rem;
     }
@@ -215,6 +221,7 @@ body {
   transform: translateZ(0);
   backface-visibility: hidden;
 }
+
 .mat-form-field-invalid {
   margin-bottom: 1rem;
 }
@@ -246,10 +253,34 @@ body {
 
 .mat-step-label {
   @media screen and (max-width: 830px) {
-    display: none!important;
+    display: none !important;
   }
 }
 
 .mat-drawer-content {
   transition: none !important;
+}
+
+.snackbar-error {
+  .mdc-snackbar__surface.mat-mdc-snackbar-surface {
+    background-color: var(--mat-sys-secondary-container);
+    color: var(--mat-sys-on-secondary-container);
+
+    .mat-mdc-button.mat-mdc-snack-bar-action:not(:disabled).mat-unthemed{
+      color: var(--mat-sys-error);
+    }
+  }
+}
+
+// STATES
+.state {
+  &--warning {
+    color: var(--color-warning);
+    border-left-color: var(--color-warning);
+  }
+
+  &--critical {
+    color: var(--color-critical);
+    border-left-color: var(--color-critical);
+  }
 }

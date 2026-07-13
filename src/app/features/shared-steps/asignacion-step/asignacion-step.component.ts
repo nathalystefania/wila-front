@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Output, EventEmitter, inject, ChangeDetectorRef, Inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, Output, EventEmitter, inject, ChangeDetectorRef, Inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Subject, Observable, firstValueFrom, merge } from 'rxjs';
@@ -16,6 +16,7 @@ import { MatAutocompleteModule, MatAutocompleteTrigger } from '@angular/material
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog, MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatSnackBar, MatSnackBarHorizontalPosition, MatSnackBarVerticalPosition } from '@angular/material/snack-bar';
 
 import { OnboardingStep } from '@models/onboarding.models';
 import { AnillosDraft, AsignacionDraft, CarbonesDraft, MotorCatalogo, SensorApi } from '@models/catalogo.models';
@@ -75,6 +76,19 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
   private sensorAssignmentChanged$ = new Subject<void>();
   private dialog = inject(MatDialog);
 
+  private _snackBar = inject(MatSnackBar);
+  horizontalPosition = signal<MatSnackBarHorizontalPosition>('start');
+  verticalPosition = signal<MatSnackBarVerticalPosition>('bottom');
+
+  openSnackBar(message: string, action: string) {
+    this._snackBar.open(message, action, {
+      duration: 10000,
+      panelClass: ['snackbar-error'],
+      horizontalPosition: 'center',
+      verticalPosition: 'top',
+    });
+  }
+
   ngOnInit() {
     this.openAssignmentDialog();
     this.loadMotores();
@@ -85,7 +99,7 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
     if (this.state.getAssignmentDialogShown()) {
       return;
     }
-    
+
     this.dialog.open(AssignmentDialogComponent, {
       minWidth: '90vw',
       height: '95vh',
@@ -126,7 +140,6 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
       this.motors = motoresApi.filter(motor => configuredMotorIds.has(motor.id));
       this.buildAnillosData(anillosDraft);
       this.buildCarbonesData(carbonesDraft);
-      this.restoreAsignacionDraft();
 
       this.stateChange.emit();
     } catch (err: any) {
@@ -213,9 +226,13 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
         continue;
       }
 
+      const sensor = this.sensoresDisponibles.find(
+        item => item.id === asignacion.sensor_id
+      );
+
       this.sensorAssignmentByCarbonId[asignacion.carbonTempId] = asignacion.sensor_id;
-      this.getSensorFormControl(asignacion.carbonTempId).setValue(asignacion.sensor_id, {
-        emitEvent: false,
+      this.getSensorFormControl( asignacion.carbonTempId ).setValue(sensor?.id_hardware ?? '', {
+          emitEvent: false,
       });
     }
 
@@ -234,6 +251,7 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
       next: (sensores) => {
         // Filtrar solo sensores disponibles. Algunos backends envian ocupado como string.
         this.sensoresDisponibles = sensores.filter(s => this.isSensorDisponible(s));
+        this.restoreAsignacionDraft();
         this.loadingSensores = false;
         // Fuerza recalculo de todas las listas del autocomplete con los datos recien cargados.
         this.sensorAssignmentChanged$.next();
@@ -319,15 +337,16 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
       return;
     }
 
-    if (this.isSensorAssignedToAnotherCarbon(carbonId, sensor.id_hardware)) {
-      this.error = `El sensor ${sensor.id_hardware} ya está asignado a otro carbón.`;
+    if (this.isSensorAssignedToAnotherCarbon(carbonId, sensor.id)) {
+      // this.error = `El sensor ${sensor.id_hardware} ya está asignado a otro carbón.`;
+      this.openSnackBar(`El sensor ${sensor.id_hardware} ya está asignado a otro carbón.`, 'Cerrar');
       this.getSensorFormControl(carbonId).setValue('');
       this.cdr.detectChanges();
       return;
     }
 
     this.error = null;
-    this.sensorAssignmentByCarbonId[carbonId] = sensor.id_hardware;
+    this.sensorAssignmentByCarbonId[carbonId] = sensor.id;
     this.getSensorFormControl(carbonId).setValue(sensor.id_hardware);
     this.sensorAssignmentChanged$.next();
     this.stateChange.emit();
@@ -381,9 +400,9 @@ export class AsignacionStepComponent implements OnInit, OnDestroy, OnboardingSte
     return !raw;
   }
 
-  private isSensorAssignedToAnotherCarbon(carbonId: string, hardwareId: string): boolean {
+  private isSensorAssignedToAnotherCarbon(carbonId: string, sensorId: string): boolean {
     return Object.entries(this.sensorAssignmentByCarbonId)
-      .some(([id, assigned]) => id !== carbonId && assigned === hardwareId);
+      .some(([id, assigned]) => id !== carbonId && assigned === sensorId);
   }
 
   getAnillosByMotor(motor: MotorCatalogo): AnillosDraft[] {
@@ -530,7 +549,7 @@ export class AssignmentDialogComponent {
   constructor(
     public dialogRef: MatDialogRef<AssignmentDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: any
-  ) {}
+  ) { }
 
   onConfirm(): void {
     this.dialogRef.close(true);
