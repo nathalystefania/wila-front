@@ -141,3 +141,67 @@ export interface CompanyContext {
   empresaId: string;
   divisionId: string | null;
 }
+
+export interface TelemetriaApi {
+  id: string;
+  sensor_id: string;
+  carbon_id: string;
+
+  longitud: number | null;
+  desgaste: number | null;
+  temperatura: number | null;
+  porcentaje_bateria: number | null;
+
+  aceleracion: number | null;
+  angulo: number | null;
+  vibracion: number | null;
+
+  fecha_medicion: string;
+}
+
+export interface MotorDashboardRow {
+  motorId: string;
+  codigo: string;
+  nombre: string;
+
+  promedioLongitud: number | null;
+  promedioDesgaste: number | null;
+  temperaturaMaxima: number | null;
+  bateriaMinima: number | null;
+
+  cantidadAlarmas: number;
+  alarmasCriticas: number;
+  alarmasAdvertencia: number;
+
+  esCritico: boolean;
+  tieneAdvertencias: boolean;
+}
+
+export type AlarmaSeveridad =  | 'Critica' | 'Advertencia';
+
+export type AlarmaEstado = | 'Activa'  | 'Resuelta';
+
+export interface AlarmaApi {
+  id: string;
+
+  empresa_id: string;
+  motor_id: string;
+  carbon_id: string;
+  sensor_id: string;
+
+  titulo: string;
+  descripcion: string;
+  tipo: string;
+
+  severidad: AlarmaSeveridad;
+  estado: AlarmaEstado;
+
+  valor_detectado: string | null;
+  valor_umbral: string | null;
+
+  fecha_creacion: string;
+  fecha_resolucion: string | null;
+
+  reconocida_en: string | null;
+  reconocida_por: string | null;
+}

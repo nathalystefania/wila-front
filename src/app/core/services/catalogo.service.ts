@@ -23,6 +23,8 @@ import {
     AsignacionDraft,
     AnillosDraft,
     CarbonesDraft,
+    TelemetriaApi,
+    AlarmaApi,
 } from '../models/catalogo.models';
 import { ApiService } from './api.service';
 
@@ -313,6 +315,36 @@ export class CatalogoService {
                 carbonesCreados,
                 sensoresInstalados,
             }))
+        );
+    }
+
+    getAnillos(): Observable<AnilloResponse[]> {
+        return this.api.get<AnilloResponse[]>(
+            '/api/anillos'
+        );
+    }
+
+    getCarbones(): Observable<CarbonResponse[]> {
+        return this.api.get<CarbonResponse[]>(
+            '/api/carbones'
+        );
+    }
+
+    getTelemetria(): Observable<TelemetriaApi[]> {
+        return this.api.get<TelemetriaApi[]>(
+            '/api/telemetria'
+        );
+    }
+
+    getAlarmas(): Observable<AlarmaApi[]> {
+        return this.api.get<AlarmaApi[]>(
+            '/api/alarmas'
+        );
+    }
+
+    getAlarmasActivas(): Observable<AlarmaApi[]> {
+        return this.api.get<AlarmaApi[]>(
+            '/api/alarmas?estado=Activa'
         );
     }
 }
