@@ -7,12 +7,18 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatPaginator, MatPaginatorIntl, MatPaginatorModule } from '@angular/material/paginator';
 import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 
 import { CompanyContextService } from '@core/state/company-context.service';
 import { DashboardService } from '@services/dashboard.service';
 import { MotorDashboardRow } from '@models/catalogo.models';
 import { CustomPaginatorIntl } from '@shared/classes/custom-paginator-intl';
+
+export type DashboardFilter =
+  | 'all'
+  | 'critical'
+  | 'warning'
+  | 'no-alarms';
 
 @Component({
   selector: 'app-dashboard-home',
@@ -23,7 +29,7 @@ import { CustomPaginatorIntl } from '@shared/classes/custom-paginator-intl';
     MatTableModule,
     MatSortModule,
     MatPaginatorModule,
-    MatCheckboxModule,
+    MatButtonToggleModule,
   ],
   templateUrl: './dashboard-home.html',
   styleUrl: './dashboard-home.scss',
@@ -35,20 +41,11 @@ import { CustomPaginatorIntl } from '@shared/classes/custom-paginator-intl';
 export class DashboardHome
   implements OnInit, AfterViewInit, OnDestroy {
 
-  private readonly companyContext =
-    inject(CompanyContextService);
-
-  private readonly dashboardService =
-    inject(DashboardService);
-
-  private readonly router =
-    inject(Router);
-
-  private readonly cdr =
-    inject(ChangeDetectorRef);
-
-  private readonly destroy$ =
-    new Subject<void>();
+  private readonly companyContext = inject(CompanyContextService);
+  private readonly dashboardService = inject(DashboardService);
+  private readonly router = inject(Router);
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroy$ = new Subject<void>();
 
   readonly displayedColumns: string[] = [
     'motor',
@@ -65,7 +62,11 @@ export class DashboardHome
       []
     );
 
-  soloCriticos = false;
+  currentFilter: DashboardFilter = 'all';
+  totalMotores = 0;
+  totalCriticos = 0;
+  totalAdvertencias = 0;
+  totalSinAlarmas = 0;
 
   loadingMotores = false;
   errorMotores = '';
@@ -163,30 +164,41 @@ export class DashboardHome
   }
 
   private configurarFiltro(): void {
-    this.dataSource.filterPredicate =
-      (
-        motor: MotorDashboardRow,
-        filtro: string
-      ): boolean => {
-        if (filtro === 'criticos') {
-          return motor.esCritico;
-        }
+    this.dataSource.filterPredicate = (
+      motor: MotorDashboardRow,
+      filtro: string
+    ): boolean => {
 
-        return true;
-      };
+      switch (filtro) {
+
+        case 'critical':
+          return motor.alarmasCriticas > 0;
+
+        case 'warning':
+          return (
+            motor.alarmasCriticas === 0 &&
+            motor.alarmasAdvertencia > 0
+          );
+
+        case 'no-alarms':
+          return motor.cantidadAlarmas === 0;
+
+        default:
+          return true;
+      }
+    };
   }
 
-  onSoloCriticosChange(
-    checked: boolean
-  ): void {
-    this.soloCriticos = checked;
+  setFilter(filter: DashboardFilter): void {
+
+    this.currentFilter = filter;
 
     this.dataSource.filter =
-      checked ? 'criticos' : '';
+      filter === 'all'
+        ? ''
+        : filter;
 
-    if (this.dataSource.paginator) {
-      this.dataSource.paginator.firstPage();
-    }
+    this.paginator?.firstPage();
   }
 
   private cargarMotores(
@@ -208,11 +220,12 @@ export class DashboardHome
       .subscribe({
         next: motores => {
           this.dataSource.data = motores;
+          this.calcularTotales(motores);
 
           this.dataSource.filter =
-            this.soloCriticos
-              ? 'criticos'
-              : '';
+            this.currentFilter === 'all'
+              ? 'critical'
+              : this.currentFilter;
 
           if (this.paginator) {
             this.paginator.firstPage();
@@ -235,6 +248,26 @@ export class DashboardHome
           this.cdr.markForCheck();
         },
       });
+  }
+
+  private calcularTotales(
+    motores: MotorDashboardRow[]
+  ): void {
+    this.totalMotores = motores.length;
+
+    this.totalCriticos = motores.filter(
+      motor => motor.alarmasCriticas > 0
+    ).length;
+
+    this.totalAdvertencias = motores.filter(
+      motor =>
+        motor.alarmasCriticas === 0 &&
+        motor.alarmasAdvertencia > 0
+    ).length;
+
+    this.totalSinAlarmas = motores.filter(
+      motor => motor.cantidadAlarmas === 0
+    ).length;
   }
 
   verDetalle(

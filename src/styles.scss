@@ -127,6 +127,9 @@ html {
   @include mat.snack-bar-overrides((
     supporting-text-size: 1.1rem,
   ));
+  @include mat.paginator-overrides((
+    container-text-size: 1.1rem,
+  ));
 }
 
 // Apply light theme overrides

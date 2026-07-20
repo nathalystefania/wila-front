@@ -26,3 +26,8 @@ export interface AlertaReciente {
   estado: 'normal' | 'warning' | 'critical';
   alarma: string;
 }
+
+export interface InstalacionSensorApi {
+  carbon_id: string;
+  sensor_id: string | null;
+}
