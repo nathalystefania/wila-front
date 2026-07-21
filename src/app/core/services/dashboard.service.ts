@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, forkJoin, map } from 'rxjs';
 import { CatalogoService } from '@services/catalogo.service';
-import { MotorDashboardRow, TelemetriaApi } from '@models/catalogo.models';
+import { DashboardHomeData, MotorDashboardRow, SensorApi, TelemetriaApi } from '@models/catalogo.models';
 
 @Injectable({ providedIn: 'root', })
 export class DashboardService {
@@ -10,62 +10,124 @@ export class DashboardService {
 
     getMotoresDashboard(
         empresaId: string
-    ): Observable<MotorDashboardRow[]> {
+    ): Observable<DashboardHomeData> {
         return forkJoin({
-            motores: this.catalogoService
-                .getMotoresByEmpresaDivision(
-                    empresaId,
-                    ''
-                ),
-            anillos: this.catalogoService.getAnillos(),
-            carbones: this.catalogoService.getCarbones(),
-            telemetria: this.catalogoService.getTelemetria(),
-            alarmas: this.catalogoService.getAlarmasActivas(),
+            motores:
+                this.catalogoService
+                    .getMotoresByEmpresaDivision(
+                        empresaId,
+                        ''
+                    ),
+
+            anillos:
+                this.catalogoService.getAnillos(),
+
+            carbones:
+                this.catalogoService.getCarbones(),
+
+            sensores:
+                this.catalogoService.getSensores(),
+
+            telemetria:
+                this.catalogoService.getTelemetria(),
+
+            alarmas:
+                this.catalogoService.getAlarmas(),
         }).pipe(
-            map(
-                ({
-                    motores,
-                    anillos,
-                    carbones,
-                    telemetria,
-                    alarmas,
-                }) => {
-                    const ultimaTelemetria =
-                        this.obtenerUltimaLecturaPorSensor(
-                            telemetria
-                        );
+            map(({
+                motores,
+                anillos,
+                carbones,
+                sensores,
+                telemetria,
+                alarmas,
+            }) => {
+                const ultimaTelemetria =
+                    this.obtenerUltimaLecturaPorSensor(
+                        telemetria
+                    );
 
-                    return motores.map(motor => {
+                const alarmasEmpresa = alarmas.filter(
+                    alarma =>
+                        alarma.empresa_id === empresaId
+                );
 
-                        const alarmasMotor = alarmas.filter(
-                            alarma => alarma.motor_id === motor.id
-                        );
+                const alarmasActivasEmpresa =
+                    alarmasEmpresa.filter(
+                        alarma =>
+                            alarma.estado === 'Activa'
+                    );
 
-                        const alarmasCriticas = alarmasMotor.filter(
-                            alarma => alarma.severidad === 'Critica'
-                        ).length;
-
-                        const alarmasAdvertencia = alarmasMotor.filter(
-                            alarma => alarma.severidad === 'Advertencia'
-                        ).length;
-
-                        const idsAnillosMotor = new Set(
-                            anillos
-                                .filter(
-                                    anillo =>
-                                        anillo.motor_id === motor.id
+                const alarmasRecientes =
+                    [...alarmasEmpresa]
+                        .sort(
+                            (a, b) =>
+                                this.toTimestamp(
+                                    b.fecha_creacion
+                                ) -
+                                this.toTimestamp(
+                                    a.fecha_creacion
                                 )
-                                .map(anillo => anillo.id)
-                        );
+                        )
+                        .slice(0, 10);
 
-                        const idsCarbonesMotor = new Set(
-                            carbones
-                                .filter(carbon =>
-                                    idsAnillosMotor.has(
-                                        carbon.anillo_id
+                const idsCarbonesSincronizados =
+                    this.obtenerIdsCarbonesSincronizados(
+                        sensores
+                    );
+
+                const idsCarbonesEmpresa =
+                    new Set<string>();
+
+                const motoresDashboard: MotorDashboardRow[] =
+                    motores.map(motor => {
+                        const alarmasMotor =
+                            alarmasActivasEmpresa.filter(
+                                alarma => alarma.motor_id === motor.id
+                            );
+
+                        const alarmasCriticas =
+                            alarmasMotor.filter(
+                                alarma =>
+                                    alarma.severidad ===
+                                    'Critica'
+                            ).length;
+
+                        const alarmasAdvertencia =
+                            alarmasMotor.filter(
+                                alarma =>
+                                    alarma.severidad ===
+                                    'Advertencia'
+                            ).length;
+
+                        const idsAnillosMotor =
+                            new Set(
+                                anillos
+                                    .filter(
+                                        anillo =>
+                                            anillo.motor_id ===
+                                            motor.id
                                     )
+                                    .map(anillo => anillo.id)
+                            );
+
+                        const idsCarbonesMotor =
+                            new Set(
+                                carbones
+                                    .filter(carbon =>
+                                        idsAnillosMotor.has(
+                                            carbon.anillo_id
+                                        )
+                                    )
+                                    .map(carbon => carbon.id)
+                            );
+
+                        
+                        idsCarbonesMotor.forEach(
+                            carbonId =>
+                                idsCarbonesEmpresa.add(
+                                    carbonId
                                 )
-                                .map(carbon => carbon.id)
                         );
 
                         const telemetriaMotor =
@@ -75,7 +137,7 @@ export class DashboardService {
                                         lectura.carbon_id
                                     )
                             );
-
+                        
                         return {
                             motorId: motor.id,
                             codigo: motor.codigo,
@@ -84,14 +146,16 @@ export class DashboardService {
                             promedioLongitud:
                                 this.calcularPromedio(
                                     telemetriaMotor.map(
-                                        lectura => lectura.longitud
+                                        lectura =>
+                                            lectura.longitud
                                     )
                                 ),
 
                             promedioDesgaste:
                                 this.calcularPromedio(
                                     telemetriaMotor.map(
-                                        lectura => lectura.desgaste
+                                        lectura =>
+                                            lectura.desgaste
                                     )
                                 ),
 
@@ -107,20 +171,65 @@ export class DashboardService {
                                 this.calcularMinimo(
                                     telemetriaMotor.map(
                                         lectura =>
-                                            lectura.porcentaje_bateria
+                                            lectura
+                                                .porcentaje_bateria
                                     )
                                 ),
 
-                            cantidadAlarmas: alarmasMotor.length,
+                            cantidadAlarmas:
+                                alarmasMotor.length,
+
                             alarmasCriticas,
                             alarmasAdvertencia,
 
-                            esCritico: alarmasCriticas > 0,
-                            tieneAdvertencias: alarmasAdvertencia > 0,
+                            esCritico:
+                                alarmasCriticas > 0,
+
+                            tieneAdvertencias:
+                                alarmasAdvertencia > 0,
                         };
                     });
-                }
-            )
+
+                const totalCarbones =
+                    idsCarbonesEmpresa.size;
+
+                const totalCarbonesSincronizados =
+                    Array.from(
+                        idsCarbonesEmpresa
+                    ).filter(carbonId =>
+                        idsCarbonesSincronizados.has(
+                            carbonId
+                        )
+                    ).length;
+
+                return {
+                    motores: motoresDashboard,
+                    totalCarbones,
+                    totalCarbonesSincronizados,
+                    alarmasRecientes,
+                };
+            })
+        );
+    }
+
+    private obtenerIdsCarbonesSincronizados(
+        sensores: SensorApi[]
+    ): Set<string> {
+        return new Set(
+            sensores
+                .map(
+                    sensor =>
+                        sensor.carbon_id_actual
+                )
+                .filter(
+                    (
+                        carbonId
+                    ): carbonId is string =>
+                        carbonId !== null &&
+                        carbonId !== undefined &&
+                        carbonId.trim() !== '' &&
+                        carbonId.trim() !== '0'
+                )
         );
     }
 
@@ -132,7 +241,9 @@ export class DashboardService {
 
         for (const lectura of telemetria) {
             const lecturaActual =
-                ultimaPorSensor.get(lectura.sensor_id);
+                ultimaPorSensor.get(
+                    lectura.sensor_id
+                );
 
             if (
                 !lecturaActual ||
@@ -159,15 +270,19 @@ export class DashboardService {
         valores: Array<number | null>
     ): number | null {
         const numeros =
-            this.obtenerNumerosValidos(valores);
+            this.obtenerNumerosValidos(
+                valores
+            );
 
         if (numeros.length === 0) {
             return null;
         }
 
         const total = numeros.reduce(
-            (acumulado, valor) =>
-                acumulado + valor,
+            (
+                acumulado,
+                valor
+            ) => acumulado + valor,
             0
         );
 
@@ -178,7 +293,9 @@ export class DashboardService {
         valores: Array<number | null>
     ): number | null {
         const numeros =
-            this.obtenerNumerosValidos(valores);
+            this.obtenerNumerosValidos(
+                valores
+            );
 
         return numeros.length
             ? Math.max(...numeros)
@@ -189,7 +306,9 @@ export class DashboardService {
         valores: Array<number | null>
     ): number | null {
         const numeros =
-            this.obtenerNumerosValidos(valores);
+            this.obtenerNumerosValidos(
+                valores
+            );
 
         return numeros.length
             ? Math.min(...numeros)
@@ -206,14 +325,19 @@ export class DashboardService {
         );
     }
 
-    private toTimestamp(fecha: string): number {
-        const normalizada = fecha.replace(
-            /(\.\d{3})\d+/,
-            '$1'
-        );
+    private toTimestamp(
+        fecha: string
+    ): number {
+        const normalizada =
+            fecha.replace(
+                /(\.\d{3})\d+/,
+                '$1'
+            );
 
         const timestamp =
-            new Date(normalizada).getTime();
+            new Date(
+                normalizada
+            ).getTime();
 
         return Number.isFinite(timestamp)
             ? timestamp

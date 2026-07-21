@@ -1,46 +1,17 @@
 import { Injectable, inject } from '@angular/core';
-import {
-    Observable,
-    concatMap,
-    forkJoin,
-    from,
-    map,
-    of,
-    toArray,
-} from 'rxjs';
-import {
-    EmpresaApi,
-    DivisionApi,
-    AreaApi,
-    EquipoApi,
-    MotorApi,
-    MotorCatalogo,
-    SensorApi,
-    CreateAnilloRequest,
-    AnilloResponse,
-    CreateCarbonRequest,
-    CarbonResponse,
-    AsignacionDraft,
-    AnillosDraft,
-    CarbonesDraft,
-    TelemetriaApi,
-    AlarmaApi,
-} from '../models/catalogo.models';
+import { Observable, concatMap, forkJoin, from, map, of, toArray } from 'rxjs';
+import { EmpresaApi, DivisionApi, AreaApi, EquipoApi, MotorApi, MotorCatalogo, SensorApi, CreateAnilloRequest, AnilloResponse, CreateCarbonRequest, CarbonResponse, AsignacionDraft, AnillosDraft, CarbonesDraft, TelemetriaApi, AlarmaApi } from '../models/catalogo.models';
 import { ApiService } from './api.service';
-
-
 export interface OnboardingPersistenceData {
     anillos: AnillosDraft[];
     carbones: CarbonesDraft[];
     asignaciones: AsignacionDraft[];
 }
-
 export interface OnboardingPersistenceResult {
     anillosCreados: AnilloResponse[];
     carbonesCreados: CarbonResponse[];
     sensoresInstalados: number;
 }
-
 @Injectable({ providedIn: 'root' })
 export class CatalogoService {
     private api = inject(ApiService);

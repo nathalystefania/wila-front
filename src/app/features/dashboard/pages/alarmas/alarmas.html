@@ -1,0 +1,84 @@
+<section class="flex flex-col gap-6">
+    <header class="flex items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold">
+                Alarmas
+            </h1>
+
+            <p class="text-on-surface-variant">
+                Historial de alarmas de la empresa seleccionada
+            </p>
+        </div>
+
+        <button matButton="outlined" type="button" (click)="volverDashboard()">
+            Volver al dashboard
+        </button>
+    </header>
+
+    @if (loading) {
+    <div class="flex justify-center py-12">
+        <mat-spinner diameter="36" />
+    </div>
+    } @else if (error) {
+    <div class="py-12 text-center text-error">
+        {{ error }}
+    </div>
+    } @else if (
+    alarmas.length === 0
+    ) {
+    <div class="bg-surface-container rounded-lg p-8 text-center">
+        No hay alarmas registradas.
+    </div>
+    } @else {
+    <div class="flex flex-col gap-4">
+        @for (
+        alarma of alarmas;
+        track alarma.id
+        ) {
+        <article class="bg-surface-container rounded-lg border border-outline/20 border-l-[6px] p-5"
+            [class.border-l-state-critical]="
+            alarma.severidad === 'Critica'
+          " [class.border-l-state-warning]="
+            alarma.severidad === 'Advertencia'
+          ">
+            <div class="flex justify-between gap-4">
+                <div>
+                    <div class="flex gap-2 items-center flex-wrap">
+                        <span class="tag" [class.tag-critical]="
+                    alarma.severidad === 'Critica'
+                  " [class.tag-warning]="
+                    alarma.severidad === 'Advertencia'
+                  ">
+                            {{ alarma.severidad }}
+                        </span>
+
+                        <span class="tag">
+                            {{ alarma.estado }}
+                        </span>
+
+                        <span class="text-sm text-on-surface-variant">
+                            {{
+                            alarma.fecha_creacion
+                            | date:'dd/MM/yyyy HH:mm'
+                            }}
+                        </span>
+                    </div>
+
+                    <h2 class="text-lg font-bold mt-3">
+                        {{ alarma.titulo }}
+                    </h2>
+
+                    <p class="text-on-surface-variant mt-1">
+                        {{ alarma.descripcion }}
+                    </p>
+                </div>
+
+                <button matButton="outlined" type="button" (click)="verMotor(alarma)">
+                    Ver motor
+                </button>
+            </div>
+        </article>
+        }
+    </div>
+    }
+</section>

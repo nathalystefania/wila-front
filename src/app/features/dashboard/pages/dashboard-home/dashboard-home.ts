@@ -11,7 +11,7 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 
 import { CompanyContextService } from '@core/state/company-context.service';
 import { DashboardService } from '@services/dashboard.service';
-import { MotorDashboardRow } from '@models/catalogo.models';
+import { MotorDashboardRow, AlarmaApi, } from '@models/catalogo.models';
 import { CustomPaginatorIntl } from '@shared/classes/custom-paginator-intl';
 
 export type DashboardFilter =
@@ -67,6 +67,10 @@ export class DashboardHome
   totalCriticos = 0;
   totalAdvertencias = 0;
   totalSinAlarmas = 0;
+  totalCarbones = 0;
+  totalCarbonesSincronizados = 0;
+
+  alarmasRecientes: AlarmaApi[] = [];
 
   loadingMotores = false;
   errorMotores = '';
@@ -96,6 +100,15 @@ export class DashboardHome
 
       if (!empresaId) {
         this.dataSource.data = [];
+
+        this.totalCarbones = 0;
+        this.totalCarbonesSincronizados = 0;
+
+        this.totalMotores = 0;
+        this.totalCriticos = 0;
+        this.totalAdvertencias = 0;
+        this.totalSinAlarmas = 0;
+
         this.errorMotores =
           'Selecciona una empresa para visualizar sus motores.';
 
@@ -218,18 +231,30 @@ export class DashboardHome
         })
       )
       .subscribe({
-        next: motores => {
-          this.dataSource.data = motores;
-          this.calcularTotales(motores);
+        next: dashboard => {
+          this.dataSource.data =
+            dashboard.motores;
+
+          this.totalCarbones =
+            dashboard.totalCarbones;
+
+          this.totalCarbonesSincronizados =
+            dashboard
+              .totalCarbonesSincronizados;
+
+          this.alarmasRecientes =
+            dashboard.alarmasRecientes;
+
+          this.calcularTotales(
+            dashboard.motores
+          );
 
           this.dataSource.filter =
             this.currentFilter === 'all'
-              ? 'critical'
+              ? ''
               : this.currentFilter;
 
-          if (this.paginator) {
-            this.paginator.firstPage();
-          }
+          this.paginator?.firstPage();
 
           this.cdr.markForCheck();
         },
@@ -241,6 +266,10 @@ export class DashboardHome
           );
 
           this.dataSource.data = [];
+          this.totalCarbones = 0;
+          this.totalCarbonesSincronizados = 0;
+
+          this.alarmasRecientes = [];
 
           this.errorMotores =
             'No se pudieron cargar los datos de los motores.';
@@ -274,8 +303,14 @@ export class DashboardHome
     motor: MotorDashboardRow
   ): void {
     this.router.navigate([
-      '/dashboard/motores',
+      '/dashboard/motor',
       motor.motorId,
+    ]);
+  }
+
+  verTodasLasAlarmas(): void {
+    this.router.navigate([
+      '/dashboard/alarmas'
     ]);
   }
 
