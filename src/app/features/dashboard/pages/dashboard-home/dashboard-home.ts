@@ -1,7 +1,17 @@
-import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild, effect, inject } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+  effect,
+  inject,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { Subject, finalize, Subscription, takeUntil } from 'rxjs';
+import { Subject, Subscription, takeUntil } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
@@ -11,14 +21,10 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 
 import { CompanyContextService } from '@core/state/company-context.service';
 import { DashboardService } from '@services/dashboard.service';
-import { MotorDashboardRow, AlarmaApi, } from '@models/catalogo.models';
+import { MotorDashboardRow, AlarmaApi } from '@models/catalogo.models';
 import { CustomPaginatorIntl } from '@shared/classes/custom-paginator-intl';
 
-export type DashboardFilter =
-  | 'all'
-  | 'critical'
-  | 'warning'
-  | 'no-alarms';
+export type DashboardFilter = 'all' | 'critical' | 'warning' | 'no-alarms';
 
 @Component({
   selector: 'app-dashboard-home',
@@ -34,20 +40,16 @@ export type DashboardFilter =
   templateUrl: './dashboard-home.html',
   styleUrl: './dashboard-home.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [
-    { provide: MatPaginatorIntl, useClass: CustomPaginatorIntl }
-  ],
+  providers: [{ provide: MatPaginatorIntl, useClass: CustomPaginatorIntl }],
 })
-export class DashboardHome
-  implements OnInit, AfterViewInit, OnDestroy {
-
+export class DashboardHome implements OnInit, AfterViewInit, OnDestroy {
   private readonly companyContext = inject(CompanyContextService);
   private readonly dashboardService = inject(DashboardService);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroy$ = new Subject<void>();
 
-  private dashboardSub?: Subscription;
+  private dashboardSubscription?: Subscription;
 
   readonly displayedColumns: string[] = [
     'motor',
@@ -55,14 +57,20 @@ export class DashboardHome
     'promedioDesgaste',
     'temperaturaMaxima',
     'bateriaMinima',
-    'cantidadAlarmas',
+    'alarmas',
     'acciones',
   ];
 
-  dataSource =
-    new MatTableDataSource<MotorDashboardRow>(
-      []
-    );
+  readonly dataSource = new MatTableDataSource<MotorDashboardRow>([]);
+
+  loading = false;
+  errorMessage = '';
+
+  @ViewChild(MatPaginator)
+  paginator?: MatPaginator;
+
+  @ViewChild(MatSort)
+  sort?: MatSort;
 
   currentFilter: DashboardFilter = 'all';
   totalMotores = 0;
@@ -77,30 +85,18 @@ export class DashboardHome
   loadingMotores = false;
   errorMotores = '';
 
-  private paginator?: MatPaginator;
-
-  @ViewChild(MatPaginator)
-  set matPaginator(paginator: MatPaginator | undefined) {
-    this.paginator = paginator;
-
-    if (paginator) {
-      this.dataSource.paginator = paginator;
-    }
-  }
-
-  @ViewChild(MatSort)
-  set matSort(sort: MatSort | undefined) {
-    if (sort) {
-      this.dataSource.sort = sort;
-    }
-  }
-
   constructor() {
     effect(() => {
-      const empresaId =
-        this.companyContext.empresaId();
+      const empresaId = this.companyContext.empresaId();
+
+      this.dashboardSubscription?.unsubscribe();
+
+      this.dataSource.data = [];
+      this.errorMessage = '';
 
       if (!empresaId) {
+        this.loading = false;
+
         this.dataSource.data = [];
 
         this.totalCarbones = 0;
@@ -111,14 +107,13 @@ export class DashboardHome
         this.totalAdvertencias = 0;
         this.totalSinAlarmas = 0;
 
-        this.errorMotores =
-          'Selecciona una empresa para visualizar sus motores.';
+        this.errorMotores = 'Selecciona una empresa para visualizar sus motores.';
 
         this.cdr.markForCheck();
         return;
       }
 
-      this.cargarMotores(empresaId);
+      this.cargarTabla(empresaId);
     });
   }
 
@@ -127,19 +122,78 @@ export class DashboardHome
   }
 
   ngAfterViewInit(): void {
+    if (this.paginator) {
+      this.dataSource.paginator = this.paginator;
+    }
+
+    if (this.sort) {
+      this.dataSource.sort = this.sort;
+    }
+
     this.configurarOrdenamiento();
-    this.configurarFiltro();
   }
 
-  private configurarOrdenamiento(): void {
-    this.dataSource.sortingDataAccessor =
-      (
-        motor: MotorDashboardRow,
-        columna: string
+  private cargarTabla(
+    empresaId: string
+  ): void {
+    this.loading = true;
+    this.errorMessage = '';
+
+    this.dashboardSubscription =
+      this.dashboardService
+        .getMotoresConfiguradosTiempoReal(
+          empresaId
+        )
+        .pipe(
+          takeUntil(
+            this.destroy$
+          )
+        )
+        .subscribe({
+          next: motores => {
+            this.dataSource.data = [
+              ...motores,
+            ];
+
+            this.loading = false;
+            this.errorMessage = '';
+
+            this.cdr.markForCheck();
+          },
+
+          error: error => {
+            console.error(
+              'Error cargando la tabla del dashboard',
+              error
+            );
+
+            this.dataSource.data = [];
+            this.loading = false;
+
+            this.errorMessage =
+              'No se pudieron cargar los motores configurados.';
+
+            this.cdr.markForCheck();
+          },
+        });
+  }
+
+  private configurarOrdenamiento():
+    void {
+    this.dataSource
+      .sortingDataAccessor = (
+        motor:
+          MotorDashboardRow,
+
+        columna:
+          string
       ): string | number => {
         switch (columna) {
           case 'motor':
-            return motor.codigo.toLowerCase();
+            return (
+              motor.codigo ||
+              motor.nombre
+            ).toLowerCase();
 
           case 'promedioLongitud':
             return this.valorOrdenable(
@@ -161,10 +215,8 @@ export class DashboardHome
               motor.bateriaMinima
             );
 
-          case 'cantidadAlarmas':
-            return this.valorOrdenable(
-              motor.cantidadAlarmas
-            );
+          case 'alarmas':
+            return motor.cantidadAlarmas;
 
           default:
             return '';
@@ -175,55 +227,62 @@ export class DashboardHome
   private valorOrdenable(
     valor: number | null
   ): number {
-    return valor ?? Number.NEGATIVE_INFINITY;
+    return (
+      valor ??
+      Number.NEGATIVE_INFINITY
+    );
   }
 
-  private configurarFiltro(): void {
-    this.dataSource.filterPredicate = (
-      motor: MotorDashboardRow,
-      filtro: string
-    ): boolean => {
-
-      switch (filtro) {
-
-        case 'critical':
-          return motor.alarmasCriticas > 0;
-
-        case 'warning':
-          return (
-            motor.alarmasCriticas === 0 &&
-            motor.alarmasAdvertencia > 0
-          );
-
-        case 'no-alarms':
-          return motor.cantidadAlarmas === 0;
-
-        default:
-          return true;
-      }
-    };
+  verDetalle(
+    motor:
+      MotorDashboardRow
+  ): void {
+    this.router.navigate([
+      '/dashboard/motor',
+      motor.motorId,
+    ]);
   }
+
+  ngOnDestroy(): void {
+    this.dashboardSubscription
+      ?.unsubscribe();
+
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  // private configurarFiltro(): void {
+  //   this.dataSource.filterPredicate = (motor: MotorDashboardRow, filtro: string): boolean => {
+  //     switch (filtro) {
+  //       case 'critical':
+  //         return motor.alarmasCriticas > 0;
+
+  //       case 'warning':
+  //         return motor.alarmasCriticas === 0 && motor.alarmasAdvertencia > 0;
+
+  //       case 'no-alarms':
+  //         return motor.cantidadAlarmas === 0;
+
+  //       default:
+  //         return true;
+  //     }
+  //   };
+  // }
 
   setFilter(filter: DashboardFilter): void {
-
     this.currentFilter = filter;
 
-    this.dataSource.filter =
-      filter === 'all'
-        ? ''
-        : filter;
+    this.dataSource.filter = filter === 'all' ? '' : filter;
 
     // this.paginator?.firstPage();
   }
 
-  private cargarMotores(
-    empresaId: string
-  ): void {
-    this.dashboardSub?.unsubscribe();
-    this.paginator?.firstPage();
+  // private cargarMotores(empresaId: string): void {
+  //   this.dashboardSub?.unsubscribe();
+  //   this.paginator?.firstPage();
 
-    this.loadingMotores = true;
-    this.errorMotores = '';
+  //   this.loadingMotores = true;
+  //   this.errorMotores = '';
 
     // this.dashboardService
     //   .getMotoresDashboard(empresaId)
@@ -283,100 +342,55 @@ export class DashboardHome
     //     },
     //   });
 
-    this.dashboardSub =
-      this.dashboardService
-        .getDashboardTiempoReal(
-          empresaId,
-          5000
-        )
-        .pipe(
-          takeUntil(this.destroy$)
-        )
-        .subscribe({
-          next: dashboard => {
-            this.dataSource.data =
-              dashboard.motores;
+  //   this.dashboardSub = this.dashboardService
+  //     .getDashboardTiempoReal(empresaId, 5000)
+  //     .pipe(takeUntil(this.destroy$))
+  //     .subscribe({
+  //       next: (dashboard) => {
+  //         this.dataSource.data = dashboard.motores;
 
-            this.totalCarbones =
-              dashboard.totalCarbones;
+  //         this.totalCarbones = dashboard.totalCarbones;
 
-            this.totalCarbonesSincronizados =
-              dashboard
-                .totalCarbonesSincronizados;
+  //         this.totalCarbonesSincronizados = dashboard.totalCarbonesSincronizados;
 
-            this.alarmasRecientes =
-              dashboard.alarmasRecientes;
+  //         this.alarmasRecientes = dashboard.alarmasRecientes;
 
-            this.calcularTotales(
-              dashboard.motores
-            );
+  //         this.calcularTotales(dashboard.motores);
 
-            this.dataSource.filter =
-              this.currentFilter === 'all'
-                ? ''
-                : this.currentFilter;
+  //         this.dataSource.filter = this.currentFilter === 'all' ? '' : this.currentFilter;
 
-            this.loadingMotores = false;
-            this.errorMotores = '';
+  //         this.loadingMotores = false;
+  //         this.errorMotores = '';
 
-            this.cdr.markForCheck();
-          },
+  //         this.cdr.markForCheck();
+  //       },
 
-          error: error => {
-            console.error(
-              'Error actualizando dashboard',
-              error
-            );
+  //       error: (error) => {
+  //         console.error('Error actualizando dashboard', error);
 
-            this.loadingMotores = false;
+  //         this.loadingMotores = false;
 
-            this.errorMotores =
-              'No se pudieron actualizar los datos del dashboard.';
+  //         this.errorMotores = 'No se pudieron actualizar los datos del dashboard.';
 
-            this.cdr.markForCheck();
-          },
-        });
-  }
+  //         this.cdr.markForCheck();
+  //       },
+  //     });
+  // }
 
-  private calcularTotales(
-    motores: MotorDashboardRow[]
-  ): void {
+  private calcularTotales(motores: MotorDashboardRow[]): void {
     this.totalMotores = motores.length;
 
-    this.totalCriticos = motores.filter(
-      motor => motor.alarmasCriticas > 0
-    ).length;
+    this.totalCriticos = motores.filter((motor) => motor.alarmasCriticas > 0).length;
 
     this.totalAdvertencias = motores.filter(
-      motor =>
-        motor.alarmasCriticas === 0 &&
-        motor.alarmasAdvertencia > 0
+      (motor) => motor.alarmasCriticas === 0 && motor.alarmasAdvertencia > 0,
     ).length;
 
-    this.totalSinAlarmas = motores.filter(
-      motor => motor.cantidadAlarmas === 0
-    ).length;
-  }
-
-  verDetalle(
-    motor: MotorDashboardRow
-  ): void {
-    this.router.navigate([
-      '/dashboard/motor',
-      motor.motorId,
-    ]);
+    this.totalSinAlarmas = motores.filter((motor) => motor.cantidadAlarmas === 0).length;
   }
 
   verTodasLasAlarmas(): void {
-    this.router.navigate([
-      '/dashboard/alarmas'
-    ]);
+    this.router.navigate(['/dashboard/alarmas']);
   }
 
-  ngOnDestroy(): void {
-    this.dashboardSub?.unsubscribe();
-
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
 }

@@ -214,3 +214,36 @@ export interface DashboardHomeData {
 
     alarmasRecientes: AlarmaApi[];
 }
+
+export interface CarbonTelemetriaDetalle {
+  carbon: CarbonResponse;
+
+  ultimaTelemetria: TelemetriaApi | null;
+
+  cantidadLecturas: number;
+
+  promedioLongitud: number | null;
+  promedioDesgaste: number | null;
+  temperaturaMaxima: number | null;
+  bateriaMinima: number | null;
+}
+
+export interface AnilloMotorDetalle {
+  anillo: AnilloResponse;
+  carbones: CarbonTelemetriaDetalle[];
+}
+
+export interface MotorDetalle {
+  motor: MotorCatalogo;
+
+  anillos: AnilloMotorDetalle[];
+
+  totalAnillos: number;
+  totalCarbones: number;
+  carbonesConTelemetria: number;
+
+  promedioLongitud: number | null;
+  promedioDesgaste: number | null;
+  temperaturaMaxima: number | null;
+  bateriaMinima: number | null;
+}
