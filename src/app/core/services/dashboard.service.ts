@@ -1,7 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, forkJoin, map, switchMap, timer, } from 'rxjs';
 import { CatalogoService } from '@services/catalogo.service';
+<<<<<<< HEAD
 import { AlarmaApi, AnilloResponse, CarbonResponse, DashboardHomeData, MotorCatalogo, MotorDashboardRow, SensorApi, TelemetriaApi } from '@models/catalogo.models';
+=======
+import { MotorDashboardRow, TelemetriaApi } from '@models/catalogo.models';
+>>>>>>> parent of 268b766 (feat: alarmas provisionales)
 
 interface DashboardStructureData {
     motores: MotorCatalogo[];
@@ -21,30 +25,19 @@ export class DashboardService {
 
     getMotoresDashboard(
         empresaId: string
-    ): Observable<DashboardHomeData> {
+    ): Observable<MotorDashboardRow[]> {
         return forkJoin({
-            motores:
-                this.catalogoService
-                    .getMotoresByEmpresaDivision(
-                        empresaId,
-                        ''
-                    ),
-
-            anillos:
-                this.catalogoService.getAnillos(),
-
-            carbones:
-                this.catalogoService.getCarbones(),
-
-            sensores:
-                this.catalogoService.getSensores(),
-
-            telemetria:
-                this.catalogoService.getTelemetria(),
-
-            alarmas:
-                this.catalogoService.getAlarmas(),
+            motores: this.catalogoService
+                .getMotoresByEmpresaDivision(
+                    empresaId,
+                    ''
+                ),
+            anillos: this.catalogoService.getAnillos(),
+            carbones: this.catalogoService.getCarbones(),
+            telemetria: this.catalogoService.getTelemetria(),
+            alarmas: this.catalogoService.getAlarmasActivas(),
         }).pipe(
+<<<<<<< HEAD
             map(({
                 motores,
                 anillos,
@@ -88,6 +81,107 @@ export class DashboardService {
                         carbonId.trim() !== '' &&
                         carbonId.trim() !== '0'
                 )
+=======
+            map(
+                ({
+                    motores,
+                    anillos,
+                    carbones,
+                    telemetria,
+                    alarmas,
+                }) => {
+                    const ultimaTelemetria =
+                        this.obtenerUltimaLecturaPorSensor(
+                            telemetria
+                        );
+
+                    return motores.map(motor => {
+
+                        const alarmasMotor = alarmas.filter(
+                            alarma => alarma.motor_id === motor.id
+                        );
+
+                        const alarmasCriticas = alarmasMotor.filter(
+                            alarma => alarma.severidad === 'Critica'
+                        ).length;
+
+                        const alarmasAdvertencia = alarmasMotor.filter(
+                            alarma => alarma.severidad === 'Advertencia'
+                        ).length;
+
+                        const idsAnillosMotor = new Set(
+                            anillos
+                                .filter(
+                                    anillo =>
+                                        anillo.motor_id === motor.id
+                                )
+                                .map(anillo => anillo.id)
+                        );
+
+                        const idsCarbonesMotor = new Set(
+                            carbones
+                                .filter(carbon =>
+                                    idsAnillosMotor.has(
+                                        carbon.anillo_id
+                                    )
+                                )
+                                .map(carbon => carbon.id)
+                        );
+
+                        const telemetriaMotor =
+                            ultimaTelemetria.filter(
+                                lectura =>
+                                    idsCarbonesMotor.has(
+                                        lectura.carbon_id
+                                    )
+                            );
+
+                        return {
+                            motorId: motor.id,
+                            codigo: motor.codigo,
+                            nombre: motor.nombre,
+
+                            promedioLongitud:
+                                this.calcularPromedio(
+                                    telemetriaMotor.map(
+                                        lectura => lectura.longitud
+                                    )
+                                ),
+
+                            promedioDesgaste:
+                                this.calcularPromedio(
+                                    telemetriaMotor.map(
+                                        lectura => lectura.desgaste
+                                    )
+                                ),
+
+                            temperaturaMaxima:
+                                this.calcularMaximo(
+                                    telemetriaMotor.map(
+                                        lectura =>
+                                            lectura.temperatura
+                                    )
+                                ),
+
+                            bateriaMinima:
+                                this.calcularMinimo(
+                                    telemetriaMotor.map(
+                                        lectura =>
+                                            lectura.porcentaje_bateria
+                                    )
+                                ),
+
+                            cantidadAlarmas: alarmasMotor.length,
+                            alarmasCriticas,
+                            alarmasAdvertencia,
+
+                            esCritico: alarmasCriticas > 0,
+                            tieneAdvertencias: alarmasAdvertencia > 0,
+                        };
+                    });
+                }
+            )
+>>>>>>> parent of 268b766 (feat: alarmas provisionales)
         );
     }
 
@@ -108,9 +202,13 @@ export class DashboardService {
             }
 
             const lecturaActual =
+<<<<<<< HEAD
                 ultimaPorSensor.get(
                     sensorId
                 );
+=======
+                ultimaPorSensor.get(lectura.sensor_id);
+>>>>>>> parent of 268b766 (feat: alarmas provisionales)
 
             if (
                 !lecturaActual ||
@@ -137,19 +235,15 @@ export class DashboardService {
         valores: Array<number | null>
     ): number | null {
         const numeros =
-            this.obtenerNumerosValidos(
-                valores
-            );
+            this.obtenerNumerosValidos(valores);
 
         if (numeros.length === 0) {
             return null;
         }
 
         const total = numeros.reduce(
-            (
-                acumulado,
-                valor
-            ) => acumulado + valor,
+            (acumulado, valor) =>
+                acumulado + valor,
             0
         );
 
@@ -160,9 +254,7 @@ export class DashboardService {
         valores: Array<number | null>
     ): number | null {
         const numeros =
-            this.obtenerNumerosValidos(
-                valores
-            );
+            this.obtenerNumerosValidos(valores);
 
         return numeros.length
             ? Math.max(...numeros)
@@ -173,9 +265,7 @@ export class DashboardService {
         valores: Array<number | null>
     ): number | null {
         const numeros =
-            this.obtenerNumerosValidos(
-                valores
-            );
+            this.obtenerNumerosValidos(valores);
 
         return numeros.length
             ? Math.min(...numeros)
@@ -192,19 +282,14 @@ export class DashboardService {
         );
     }
 
-    private toTimestamp(
-        fecha: string
-    ): number {
-        const normalizada =
-            fecha.replace(
-                /(\.\d{3})\d+/,
-                '$1'
-            );
+    private toTimestamp(fecha: string): number {
+        const normalizada = fecha.replace(
+            /(\.\d{3})\d+/,
+            '$1'
+        );
 
         const timestamp =
-            new Date(
-                normalizada
-            ).getTime();
+            new Date(normalizada).getTime();
 
         return Number.isFinite(timestamp)
             ? timestamp

@@ -4,10 +4,9 @@
 @use './assets/themes/light-mc.css' as light-medium-contrast;
 @use './assets/themes/light-hc.css' as light-high-contrast;
 
-// @use './assets/themes/dark.css' as dark;
-// @use './assets/themes/dark-mc.css' as dark-medium-contrast;
-@use './assets/themes/dark-mc.css' as dark;
-// @use './assets/themes/dark-hc.css' as dark-high-contrast;
+@use './assets/themes/dark.css' as dark;
+@use './assets/themes/dark-mc.css' as dark-medium-contrast;
+@use './assets/themes/dark-hc.css' as dark-high-contrast;
 
 @use './tailwind.css';
 @use './assets/scss/global';
