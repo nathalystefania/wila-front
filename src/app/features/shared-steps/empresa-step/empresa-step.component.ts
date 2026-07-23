@@ -120,7 +120,7 @@ export class EmpresaStepComponent implements OnInit, OnDestroy, OnboardingStep {
 
     this.divisionesSub?.unsubscribe();
     this.divisionesSub = this.catalogoService
-      .getDivisionesConMotoresByEmpresaId(empresaId)
+      .getDivisionesConMotoresByEmpresaId(empresaId, true)
       .subscribe({
         next: divisiones => {
           this.divisiones = divisiones;

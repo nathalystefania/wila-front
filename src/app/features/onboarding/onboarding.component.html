@@ -13,14 +13,14 @@
           <ng-template matStepperIcon="done">
             <span class="material-symbols-outlined">check</span>
           </ng-template>
-          <mat-step [completed]="isAuthStepCompleted" [editable]="false">
+          <!-- <mat-step [completed]="isAuthStepCompleted" [editable]="false">
             <ng-template matStepLabel>
               <div class="step-label">
                 <div class="title">Inicio de sesión</div>
-                <!-- <div class="subtitle">Crear usuario y guardar la configuración.</div> -->
+                <div class="subtitle">Crear usuario y guardar la configuración.</div>
               </div>
             </ng-template>
-          </mat-step>
+          </mat-step> -->
 
           <mat-step [completed]="isEmpresaStepCompleted" [editable]="isEmpresaStepCompleted">
             <ng-template matStepLabel>
@@ -68,23 +68,23 @@
     <!-- Columna derecha: contenido -->
     <div class="w-[calc(100%-88px)] tablet:w-3/4 p-8 flex flex-col justify-between min-h-screen ml-auto relative">
       <div class="flex items-center justify-stretch h-full pb-12">
-        @if (currentStep === 0) {
+        <!-- @if (currentStep === 0) {
         <app-auth-step class="w-full" (stateChange)="onStepStateChange()"></app-auth-step>
-        }
+        } -->
 
-        @if (currentStep === 1) {
+        @if (currentStep === 0) {
         <app-empresa-step class="w-full" (stateChange)="onStepStateChange()"></app-empresa-step>
         }
 
-        @if (currentStep === 2) {
+        @if (currentStep === 1) {
         <app-motores-step class="w-full" (stateChange)="onStepStateChange()"></app-motores-step>
         }
 
-        @if (currentStep === 3) {
+        @if (currentStep === 2) {
         <app-asignacion-step class="w-full" (stateChange)="onStepStateChange()"></app-asignacion-step>
         }
 
-        @if (currentStep === 4) {
+        @if (currentStep === 3) {
         <app-configuration-complete class="w-full"></app-configuration-complete>
         }
       </div>
@@ -92,7 +92,7 @@
 
       <div class="fixed bottom-0 right-0 w-3/4 bg-background px-8 py-4 z-50">
         <div class="flex justify-between w-full [&>*:only-child]:mx-auto">
-          @if (currentStep > 1) {
+          @if (currentStep > 0) {
           <button matButton="outlined" type="button" class="!min-w-52" (click)="back()" [disabled]="currentStep === 0">
             <span class="material-symbols-outlined">arrow_left_alt</span>
             Volver
@@ -102,8 +102,8 @@
           <button matButton="filled" type="button" class="btn-secondary btn-icon-right"
             [ngClass]="currentStep === 0 ? 'first-step w-2/3' : ''" (click)="nextClicked()"
             [disabled]="loadingNext || !canCurrentStepContinue">
-            @if (currentStep > 0 && currentStep < 4) { {{ loadingNext ? 'Guardando...' : 'Guardar y continuar' }} }
-              @else if (currentStep===4) { {{ loadingNext ? 'Cargando...' : 'Confirmar e ir al Dashboard' }} } @else { {{
+            @if (currentStep >= 0 && currentStep < 3) { {{ loadingNext ? 'Guardando...' : 'Guardar y continuar' }} }
+              @else if (currentStep===3) { {{ loadingNext ? 'Cargando...' : 'Confirmar e ir al Dashboard' }} } @else { {{
               loadingNext ? 'Cargando...' : 'Empecemos' }} } <span *ngIf="currentStep > 0"
               class="material-symbols-outlined">arrow_right_alt</span>
           </button>

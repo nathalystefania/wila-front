@@ -87,12 +87,13 @@ export class CatalogoService {
     }
 
     getDivisionesConMotoresByEmpresaId(
-        empresaId: string
+        empresaId: string,
+        soloPendientes = false
     ): Observable<DivisionApi[]> {
         if (!empresaId) return of([]);
 
         return forkJoin({
-            divisiones: this.getDivisiones(),
+            divisiones: soloPendientes ? this.getDivisionesCompletas() : this.getDivisiones(),
             areas: this.getAreas(),
             equipos: this.getEquipos(),
             motores: this.getMotores(),
@@ -308,14 +309,51 @@ export class CatalogoService {
     }
 
     getAlarmas(): Observable<AlarmaApi[]> {
-        return this.api.get<AlarmaApi[]>(
-            '/api/alarmas'
-        );
+        return this.api
+            .get<AlarmaApi[]>('/api/alarmas')
+            .pipe(
+                map(alarmas =>
+                    alarmas.map(alarma => ({
+                        ...alarma,
+                        severidad: this.normalizarSeveridad(
+                            alarma.severidad
+                        ),
+                    }))
+                )
+            );
     }
 
     getAlarmasActivas(): Observable<AlarmaApi[]> {
         return this.api.get<AlarmaApi[]>(
             '/api/alarmas?estado=Activa'
         );
+    }
+
+    private normalizarSeveridad(
+        severidad: string  
+    ): 'Critica' | 'Advertencia' {
+
+        if (!severidad) {
+            return 'Advertencia';
+        }
+
+        const valor = severidad
+            .normalize('NFD')
+            .replace(/\p{Diacritic}/gu, '')
+            .trim()
+            .toLowerCase();
+
+        switch (valor) {
+            case 'critica':
+            case 'critico':
+                return 'Critica';
+
+            case 'advertencia':
+            case 'warning':
+                return 'Advertencia';
+
+            default:
+                return 'Advertencia';
+        }
     }
 }

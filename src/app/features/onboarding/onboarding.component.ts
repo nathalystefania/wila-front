@@ -9,7 +9,7 @@ import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
 import { OnboardingStep } from '@models/onboarding.models';
-import { AuthStepComponent } from '../shared-steps/auth-step/auth-step.component';
+// import { AuthStepComponent } from '../shared-steps/auth-step/auth-step.component';
 import { EmpresaStepComponent } from '../shared-steps/empresa-step/empresa-step.component';
 import { MotoresStepComponent } from '../shared-steps/motores-step/motores-step.component';
 import { AsignacionStepComponent } from '../shared-steps/asignacion-step/asignacion-step.component';
@@ -25,7 +25,7 @@ import { VersionService } from '@services/version.service';
   selector: 'app-onboarding',
   imports: [
     CommonModule,
-    AuthStepComponent,
+    // AuthStepComponent,
     EmpresaStepComponent,
     MotoresStepComponent,
     AsignacionStepComponent,
@@ -44,14 +44,14 @@ export class OnboardingComponent implements OnInit, AfterViewInit {
   versionService = inject(VersionService);
 
   currentStep = 0;
-  readonly maxStep = 4;
+  readonly maxStep = 3;
 
   loadingNext = false;
   nextError = '';
   showExplanation = false;
 
   // Propiedades cacheadas para evitar ExpressionChangedAfterItHasBeenCheckedError
-  isAuthStepCompleted = false;
+  isAuthStepCompleted = true;
   isEmpresaStepCompleted = false;
   isMotoresStepCompleted = false;
   isAsignacionStepCompleted = false;
@@ -65,7 +65,7 @@ export class OnboardingComponent implements OnInit, AfterViewInit {
   private router = inject(Router);
   private readonly companyContext = inject(CompanyContextService);
 
-  @ViewChild(AuthStepComponent) authStep?: AuthStepComponent;
+  // @ViewChild(AuthStepComponent) authStep?: AuthStepComponent;
   @ViewChild(EmpresaStepComponent) empresaStep?: EmpresaStepComponent;
   @ViewChild(MotoresStepComponent) motoresStep?: MotoresStepComponent;
   @ViewChild(AsignacionStepComponent) asignacionStep?: AsignacionStepComponent;
@@ -124,13 +124,6 @@ export class OnboardingComponent implements OnInit, AfterViewInit {
         }
 
 
-        // Verificación especial: si estamos en paso 0 pero ya autenticado, actualizar paso
-        if (this.currentStep === 0 && this.authService.isAuthenticated()) {
-          const newStep = this.determineCurrentStep();
-          this.setCurrentStep(newStep);
-          this.updateStepStates();
-        }
-
         this.updateCanContinueState();
         this.cdr.detectChanges();
       }, delay);
@@ -150,17 +143,17 @@ export class OnboardingComponent implements OnInit, AfterViewInit {
   }
 
   private areViewChildrenReady(): boolean {
-    const authReady = this.authStep !== undefined;
+    // const authReady = this.authStep !== undefined;
     const empresaReady = this.empresaStep !== undefined;
     const motoresReady = this.motoresStep !== undefined;
     const asignacionReady = this.asignacionStep !== undefined;
 
     // Al menos el componente del paso actual debe estar listo
     switch (this.currentStep) {
-      case 0: return authReady;
-      case 1: return empresaReady;
-      case 2: return motoresReady;
-      case 3: return asignacionReady;
+      // case 0: return authReady;
+      case 0: return empresaReady;
+      case 1: return motoresReady;
+      case 2: return asignacionReady;
       default: return false;
     }
   }
@@ -171,8 +164,8 @@ export class OnboardingComponent implements OnInit, AfterViewInit {
     const anillos = this.onboardingState.getAnillosDraft();
     const carbones = this.onboardingState.getCarbonesDraft();
     this.isMotoresStepCompleted = !!(anillos && anillos.length > 0 && carbones && carbones.length > 0);
-    this.isAsignacionStepCompleted = this.currentStep >= 4;
-    this.isConfigurationCompleteStepCompleted = this.currentStep >= 4;
+    this.isAsignacionStepCompleted = this.currentStep >= 3;
+    this.isConfigurationCompleteStepCompleted = this.currentStep >= 3;
   }
 
   private updateStepStates() {
@@ -184,7 +177,7 @@ export class OnboardingComponent implements OnInit, AfterViewInit {
   }
 
   private updateCanContinueState() {
-    if (this.currentStep === 4) {
+    if (this.currentStep === 3) {
       this.canCurrentStepContinue = true;
       return;
     }
@@ -223,32 +216,32 @@ export class OnboardingComponent implements OnInit, AfterViewInit {
       return 0;
     }
 
-    // Si está autenticado pero no tiene empresa draft, ir al paso 1 (empresa)
+    // Si está autenticado pero no tiene empresa draft, ir al paso 0 (empresa)
     const empresaDraft = this.onboardingState.getEmpresaDraft();
     if (!empresaDraft?.empresaId) {
-      return 1;
+      return 0;
     }
 
-    // Si tiene empresa pero no tiene motores configurados, ir al paso 2 (motores)
+    // Si tiene empresa pero no tiene motores configurados, ir al paso 1 (motores)
     const anillos = this.onboardingState.getAnillosDraft();
     const carbones = this.onboardingState.getCarbonesDraft();
     if (!anillos || anillos.length === 0 || !carbones || carbones.length === 0) {
+      return 1;
+    }
+
+    // Si tiene motores pero no tiene asignación, ir al paso 2 (asignación)
+    const asignaciones = this.onboardingState.getAsignacionDraft();
+    if (!asignaciones || asignaciones.length === 0) {
       return 2;
     }
 
-    // Si tiene motores pero no tiene asignación, ir al paso 3 (asignación)
-    const asignaciones = this.onboardingState.getAsignacionDraft();
-    if (!asignaciones || asignaciones.length === 0) {
-      return 3;
-    }
-
-    // Si tiene todo, ir al paso 4 (revisión/siguiente)
-    return 4;
+    // Si tiene todo, ir al paso 3 (revisión/siguiente)
+    return 3;
   }
 
   back() {
     // Comportamiento normal: retroceder al paso anterior
-    if (this.currentStep > 1) {
+    if (this.currentStep > 0) {
       const newStep = this.currentStep - 1;
       this.setCurrentStep(newStep);
 
@@ -319,27 +312,26 @@ export class OnboardingComponent implements OnInit, AfterViewInit {
 
   private canNavigateToStep(step: number): boolean {
     switch (step) {
-      case 0: return false; // No puede ir a auth
-      case 1: return this.isAuthStepCompleted; // Necesita estar autenticado
-      case 2: return this.isEmpresaStepCompleted; // Necesita tener empresa
-      case 3: return this.isMotoresStepCompleted; // Necesita tener revisión completada
-      case 4: return this.isAsignacionStepCompleted; // Necesita tener asignación completada
+      case 0: return true; // Paso inicial (empresa)
+      case 1: return this.isEmpresaStepCompleted; // Necesita tener empresa
+      case 2: return this.isMotoresStepCompleted; // Necesita tener motores configurados
+      case 3: return this.isAsignacionStepCompleted; // Necesita tener asignación completada
       default: return false; // Pasos futuros no disponibles aún
     }
   }
 
   private getActiveStep(): OnboardingStep | null {
     switch (this.currentStep) {
+      // case 0:
+        // const authStep = this.authStep ?? null;
+        // return authStep;
       case 0:
-        const authStep = this.authStep ?? null;
-        return authStep;
-      case 1:
         const empresaStep = this.empresaStep ?? null;
         return empresaStep;
-      case 2:
+      case 1:
         const motoresStep = this.motoresStep ?? null;
         return motoresStep;
-      case 3:
+      case 2:
         const asignacionStep = this.asignacionStep ?? null;
         return asignacionStep;
       default:
@@ -352,7 +344,7 @@ export class OnboardingComponent implements OnInit, AfterViewInit {
     this.loadingNext = true;
 
     try {
-      if (this.currentStep === 4) {
+      if (this.currentStep === 3) {
         await this.persistFinalDrafts();
 
         const empresaDraft =

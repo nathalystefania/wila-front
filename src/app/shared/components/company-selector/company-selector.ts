@@ -136,8 +136,20 @@ export class CompanySelectorComponent
       return;
     }
 
-    this.empresaIdSeleccionada = null;
-    this.companyContext.clearContext();
+    const primeraEmpresa = this.empresas[0];
+
+    if (!primeraEmpresa) {
+      this.empresaIdSeleccionada = null;
+      this.companyContext.clearContext();
+      return;
+    }
+
+    this.empresaIdSeleccionada = primeraEmpresa.id;
+
+    this.companyContext.setContext({
+      empresaId: primeraEmpresa.id,
+      divisionId: null,
+    });
   }
 
   onEmpresaChange(empresaId: string): void {

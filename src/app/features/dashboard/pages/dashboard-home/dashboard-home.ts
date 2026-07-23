@@ -1,7 +1,7 @@
 import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { Subject, finalize, takeUntil } from 'rxjs';
+import { Subject, finalize, Subscription, takeUntil } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
@@ -46,6 +46,8 @@ export class DashboardHome
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroy$ = new Subject<void>();
+
+  private dashboardSub?: Subscription;
 
   readonly displayedColumns: string[] = [
     'motor',
@@ -211,72 +213,129 @@ export class DashboardHome
         ? ''
         : filter;
 
-    this.paginator?.firstPage();
+    // this.paginator?.firstPage();
   }
 
   private cargarMotores(
     empresaId: string
   ): void {
+    this.dashboardSub?.unsubscribe();
+    this.paginator?.firstPage();
+
     this.loadingMotores = true;
     this.errorMotores = '';
 
-    this.dashboardService
-      .getMotoresDashboard(empresaId)
-      .pipe(
-        takeUntil(this.destroy$),
+    // this.dashboardService
+    //   .getMotoresDashboard(empresaId)
+    //   .pipe(
+    //     takeUntil(this.destroy$),
 
-        finalize(() => {
-          this.loadingMotores = false;
-          this.cdr.markForCheck();
-        })
-      )
-      .subscribe({
-        next: dashboard => {
-          this.dataSource.data =
-            dashboard.motores;
+    //     finalize(() => {
+    //       this.loadingMotores = false;
+    //       this.cdr.markForCheck();
+    //     })
+    //   )
+    //   .subscribe({
+    //     next: dashboard => {
+    //       this.dataSource.data =
+    //         dashboard.motores;
 
-          this.totalCarbones =
-            dashboard.totalCarbones;
+    //       this.totalCarbones =
+    //         dashboard.totalCarbones;
 
-          this.totalCarbonesSincronizados =
-            dashboard
-              .totalCarbonesSincronizados;
+    //       this.totalCarbonesSincronizados =
+    //         dashboard
+    //           .totalCarbonesSincronizados;
 
-          this.alarmasRecientes =
-            dashboard.alarmasRecientes;
+    //       this.alarmasRecientes =
+    //         dashboard.alarmasRecientes;
 
-          this.calcularTotales(
-            dashboard.motores
-          );
+    //       this.calcularTotales(
+    //         dashboard.motores
+    //       );
 
-          this.dataSource.filter =
-            this.currentFilter === 'all'
-              ? ''
-              : this.currentFilter;
+    //       this.dataSource.filter =
+    //         this.currentFilter === 'all'
+    //           ? ''
+    //           : this.currentFilter;
 
-          this.paginator?.firstPage();
+    //       this.paginator?.firstPage();
 
-          this.cdr.markForCheck();
-        },
+    //       this.cdr.markForCheck();
+    //     },
 
-        error: error => {
-          console.error(
-            'Error cargando tabla de motores',
-            error
-          );
+    //     error: error => {
+    //       console.error(
+    //         'Error cargando tabla de motores',
+    //         error
+    //       );
 
-          this.dataSource.data = [];
-          this.totalCarbones = 0;
-          this.totalCarbonesSincronizados = 0;
+    //       this.dataSource.data = [];
+    //       this.totalCarbones = 0;
+    //       this.totalCarbonesSincronizados = 0;
 
-          this.alarmasRecientes = [];
+    //       this.alarmasRecientes = [];
 
-          this.errorMotores =
-            'No se pudieron cargar los datos de los motores.';
+    //       this.errorMotores =
+    //         'No se pudieron cargar los datos de los motores.';
 
-          this.cdr.markForCheck();
-        },
-      });
+    //       this.cdr.markForCheck();
+    //     },
+    //   });
+
+    this.dashboardSub =
+      this.dashboardService
+        .getDashboardTiempoReal(
+          empresaId,
+          5000
+        )
+        .pipe(
+          takeUntil(this.destroy$)
+        )
+        .subscribe({
+          next: dashboard => {
+            this.dataSource.data =
+              dashboard.motores;
+
+            this.totalCarbones =
+              dashboard.totalCarbones;
+
+            this.totalCarbonesSincronizados =
+              dashboard
+                .totalCarbonesSincronizados;
+
+            this.alarmasRecientes =
+              dashboard.alarmasRecientes;
+
+            this.calcularTotales(
+              dashboard.motores
+            );
+
+            this.dataSource.filter =
+              this.currentFilter === 'all'
+                ? ''
+                : this.currentFilter;
+
+            this.loadingMotores = false;
+            this.errorMotores = '';
+
+            this.cdr.markForCheck();
+          },
+
+          error: error => {
+            console.error(
+              'Error actualizando dashboard',
+              error
+            );
+
+            this.loadingMotores = false;
+
+            this.errorMotores =
+              'No se pudieron actualizar los datos del dashboard.';
+
+            this.cdr.markForCheck();
+          },
+        });
   }
 
   private calcularTotales(
@@ -315,6 +374,8 @@ export class DashboardHome
   }
 
   ngOnDestroy(): void {
+    this.dashboardSub?.unsubscribe();
+
     this.destroy$.next();
     this.destroy$.complete();
   }
