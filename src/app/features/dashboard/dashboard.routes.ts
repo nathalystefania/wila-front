@@ -12,5 +12,14 @@ export const DASHBOARD_ROUTES: Routes = [
     loadComponent: () =>
       import('./pages/motor-detail/motor-detail')
         .then(m => m.MotorDetail)
-  }
+  },
+  {
+    path: 'alarmas',
+    loadComponent: () =>
+      import(
+        './pages/alarmas/alarmas'
+      ).then(
+        m => m.Alarmas
+      ),
+  },
 ];

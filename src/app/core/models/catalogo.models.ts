@@ -16,18 +16,18 @@ export interface CarbonResponse {
 }
 
 export interface CreateAnilloRequest {
-  identificador: string;
-  motor_id: string;
+    identificador: string;
+    motor_id: string;
 }
 
 export interface CreateCarbonRequest {
-  anillo_id: string;
-  identificador: string;
-  largo_alarma: number;
-  largo_inicial: number;
-  largo_prealarma: number;
-  nivel_bateria_aviso: number;
-  nivel_bateria_minimo: number;
+    anillo_id: string;
+    identificador: string;
+    largo_alarma: number;
+    largo_inicial: number;
+    largo_prealarma: number;
+    nivel_bateria_aviso: number;
+    nivel_bateria_minimo: number;
 }
 
 export interface EmpresaApi {
@@ -80,7 +80,7 @@ export interface SensorApi {
     nombre: string;
     estado: string;
     ocupado: boolean;
-    carbon_id_actual?: string;
+    carbon_id_actual?: string | null;
 }
 
 export interface MotorCatalogo {
@@ -116,92 +116,134 @@ export interface EmpresaSelectionDraft {
 }
 
 export interface AnillosDraft {
-  tempId: string;
-  identificador: string;
-  motor_id: string;
+    tempId: string;
+    identificador: string;
+    motor_id: string;
 }
 
 export interface CarbonesDraft {
-  tempId: string;
-  anilloTempId: string;
-  identificador: string;
-  largo_alarma: number;
-  largo_inicial: number;
-  largo_prealarma: number;
-  nivel_bateria_aviso: number;
-  nivel_bateria_minimo: number;
+    tempId: string;
+    anilloTempId: string;
+    identificador: string;
+    largo_alarma: number;
+    largo_inicial: number;
+    largo_prealarma: number;
+    nivel_bateria_aviso: number;
+    nivel_bateria_minimo: number;
 }
 
 export interface AsignacionDraft {
-  carbonTempId: string;
-  sensor_id: string;
+    carbonTempId: string;
+    sensor_id: string;
 }
 
 export interface CompanyContext {
-  empresaId: string;
-  divisionId: string | null;
+    empresaId: string;
+    divisionId: string | null;
 }
 
 export interface TelemetriaApi {
-  id: string;
-  sensor_id: string;
-  carbon_id: string;
+    id: string;
+    sensor_id: string;
+    carbon_id: string;
 
-  longitud: number | null;
-  desgaste: number | null;
-  temperatura: number | null;
-  porcentaje_bateria: number | null;
+    longitud: number | null;
+    desgaste: number | null;
+    temperatura: number | null;
+    porcentaje_bateria: number | null;
 
-  aceleracion: number | null;
-  angulo: number | null;
-  vibracion: number | null;
+    aceleracion: number | null;
+    angulo: number | null;
+    vibracion: number | null;
 
-  fecha_medicion: string;
+    fecha_medicion: string;
 }
 
 export interface MotorDashboardRow {
-  motorId: string;
-  codigo: string;
-  nombre: string;
+    motorId: string;
+    codigo: string;
+    nombre: string;
+
+    promedioLongitud: number | null;
+    promedioDesgaste: number | null;
+    temperaturaMaxima: number | null;
+    bateriaMinima: number | null;
+
+    cantidadAlarmas: number;
+    alarmasCriticas: number;
+    alarmasAdvertencia: number;
+
+    esCritico: boolean;
+    tieneAdvertencias: boolean;
+}
+
+export type AlarmaSeveridad = | 'Critica' | 'Advertencia';
+
+export type AlarmaEstado = | 'Activa' | 'Resuelta';
+
+export interface AlarmaApi {
+    id: string;
+
+    empresa_id: string;
+    motor_id: string;
+    carbon_id: string;
+    sensor_id: string;
+
+    titulo: string;
+    descripcion: string;
+    tipo: string;
+
+    severidad: AlarmaSeveridad;
+    estado: AlarmaEstado;
+
+    valor_detectado: string | null;
+    valor_umbral: string | null;
+
+    fecha_creacion: string;
+    fecha_resolucion: string | null;
+
+    reconocida_en: string | null;
+    reconocida_por: string | null;
+}
+
+export interface DashboardHomeData {
+    motores: MotorDashboardRow[];
+
+    totalCarbones: number;
+    totalCarbonesSincronizados: number;
+
+    alarmasRecientes: AlarmaApi[];
+}
+
+export interface CarbonTelemetriaDetalle {
+  carbon: CarbonResponse;
+
+  ultimaTelemetria: TelemetriaApi | null;
+
+  cantidadLecturas: number;
 
   promedioLongitud: number | null;
   promedioDesgaste: number | null;
   temperaturaMaxima: number | null;
   bateriaMinima: number | null;
-
-  cantidadAlarmas: number;
-  alarmasCriticas: number;
-  alarmasAdvertencia: number;
-
-  esCritico: boolean;
-  tieneAdvertencias: boolean;
 }
 
-export type AlarmaSeveridad =  | 'Critica' | 'Advertencia';
+export interface AnilloMotorDetalle {
+  anillo: AnilloResponse;
+  carbones: CarbonTelemetriaDetalle[];
+}
 
-export type AlarmaEstado = | 'Activa'  | 'Resuelta';
+export interface MotorDetalle {
+  motor: MotorCatalogo;
 
-export interface AlarmaApi {
-  id: string;
+  anillos: AnilloMotorDetalle[];
 
-  empresa_id: string;
-  motor_id: string;
-  carbon_id: string;
-  sensor_id: string;
+  totalAnillos: number;
+  totalCarbones: number;
+  carbonesConTelemetria: number;
 
-  titulo: string;
-  descripcion: string;
-  tipo: string;
-
-  severidad: AlarmaSeveridad;
-  estado: AlarmaEstado;
-
-  valor_detectado: string | null;
-  valor_umbral: string | null;
-
-  fecha_creacion: string;
-  fecha_resolucion: string | null;
-
-  reconocida_en: string | null;
-  reconocida_por: string | null;
+  promedioLongitud: number | null;
+  promedioDesgaste: number | null;
+  temperaturaMaxima: number | null;
+  bateriaMinima: number | null;
 }
