@@ -300,7 +300,14 @@ export class CatalogoService {
   }
 
   getAlarmasActivas(): Observable<AlarmaApi[]> {
-    return this.api.get<AlarmaApi[]>('/api/alarmas?estado=Activa');
+    return this.api.get<AlarmaApi[]>('/api/alarmas?estado=Activa').pipe(
+      map((alarmas) =>
+        alarmas.map((alarma) => ({
+          ...alarma,
+          severidad: this.normalizarSeveridad(alarma.severidad),
+        })),
+      ),
+    );
   }
 
   private normalizarSeveridad(severidad: string): 'Critica' | 'Advertencia' {

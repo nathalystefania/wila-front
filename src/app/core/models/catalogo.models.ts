@@ -205,45 +205,46 @@ export interface AlarmaApi {
     reconocida_en: string | null;
     reconocida_por: string | null;
 }
-
 export interface DashboardHomeData {
     motores: MotorDashboardRow[];
 
+    alarmasRecientes: AlarmaApi[];
+
+    totalAlarmasP1: number;
+    totalAlarmasP2: number;
+
     totalCarbones: number;
     totalCarbonesSincronizados: number;
-
-    alarmasRecientes: AlarmaApi[];
 }
-
 export interface CarbonTelemetriaDetalle {
-  carbon: CarbonResponse;
+    carbon: CarbonResponse;
 
-  ultimaTelemetria: TelemetriaApi | null;
+    ultimaTelemetria: TelemetriaApi | null;
 
-  cantidadLecturas: number;
+    cantidadLecturas: number;
 
-  promedioLongitud: number | null;
-  promedioDesgaste: number | null;
-  temperaturaMaxima: number | null;
-  bateriaMinima: number | null;
+    promedioLongitud: number | null;
+    promedioDesgaste: number | null;
+    temperaturaMaxima: number | null;
+    bateriaMinima: number | null;
 }
 
 export interface AnilloMotorDetalle {
-  anillo: AnilloResponse;
-  carbones: CarbonTelemetriaDetalle[];
+    anillo: AnilloResponse;
+    carbones: CarbonTelemetriaDetalle[];
 }
 
 export interface MotorDetalle {
-  motor: MotorCatalogo;
+    motor: MotorCatalogo;
 
-  anillos: AnilloMotorDetalle[];
+    anillos: AnilloMotorDetalle[];
 
-  totalAnillos: number;
-  totalCarbones: number;
-  carbonesConTelemetria: number;
+    totalAnillos: number;
+    totalCarbones: number;
+    carbonesConTelemetria: number;
 
-  promedioLongitud: number | null;
-  promedioDesgaste: number | null;
-  temperaturaMaxima: number | null;
-  bateriaMinima: number | null;
+    promedioLongitud: number | null;
+    promedioDesgaste: number | null;
+    temperaturaMaxima: number | null;
+    bateriaMinima: number | null;
 }
