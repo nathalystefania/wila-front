@@ -2,8 +2,10 @@
     <div
         class="sidebar flex flex-col h-screen w-1/8 bg-sys-surface-dim border-r-1 border-outline/30">
         <div class="p-4">
-            <img src="../assets/images/logo-wila.svg" alt="Logo Wila" class="logo-wila h-8 mx-auto" />
-            <img src="assets/images/isotipo-wila-light.svg" alt="Logo Wila" class="isotipo-wila block mx-auto w-10" />
+            <a href="/">
+                <img src="../assets/images/logo-wila.svg" alt="Logo Wila" class="logo-wila h-8 mx-auto" />
+                <img src="assets/images/isotipo-wila-light.svg" alt="Logo Wila" class="isotipo-wila block mx-auto w-10" />
+            </a>
         </div>
         <ul class="sidebar--menu flex-1">
             <li class="company-selector-container">
@@ -39,8 +41,8 @@
         </ul>
     </div>
 
-    <div class="px-8 py-4 flex flex-col flex-1 ml-auto min-h-screen relative layout-wide" [class.collapsed]="isCollapsed">
-        <header class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-4">
+    <div class="px-8 py-6 flex flex-col flex-1 ml-auto min-h-screen relative layout-wide" [class.collapsed]="isCollapsed">
+        <header class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6">
             <!-- breadcrumbs -->
             <div class="flex items-center gap-2">
                 <h1 class="font-semibold text-on-background">Dashboard</h1>
@@ -48,7 +50,7 @@
                 <h2 class="font-semibold text-on-background/50">Mediciones</h2>
             </div>
             
-            <div class="flex flex-wrap items-center gap-4 text-sm font-semibold">
+            <!-- <div class="flex flex-wrap items-center gap-4 text-sm font-semibold">
                 <div
                     class="flex items-center gap-2 text-on-background bg-background px-3 py-1.5 rounded-lg border border-white/10">
                     <span class="material-symbols-outlined">timelapse</span>
@@ -64,7 +66,7 @@
                         Pausar
                     </button>
                 </div>
-            </div>
+            </div> -->
         </header>
 
         <router-outlet></router-outlet>

@@ -5,12 +5,18 @@ import {
   AnilloMotorDetalle,
   CarbonResponse,
   CarbonTelemetriaDetalle,
+  EstadoDesgaste,
   MotorCatalogo,
   MotorDetalle,
   TelemetriaApi,
 } from '../models/catalogo.models';
 
 type ValorNumerico = number | string | null | undefined;
+
+interface DesgasteCalculado {
+  porcentaje: number;
+  estado: Exclude<EstadoDesgaste, 'sin-datos'>;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -94,6 +100,8 @@ export class MotorDetailService {
 
     const ultimaTelemetria = lecturasOrdenadas[0] ?? null;
 
+    const desgasteActual = this.calcularDesgasteCarbon(carbon, ultimaTelemetria?.longitud);
+
     return {
       carbon,
       ultimaTelemetria,
@@ -102,7 +110,9 @@ export class MotorDetailService {
 
       promedioLongitud: this.calcularPromedio(telemetria.map((lectura) => lectura.longitud)),
 
-      promedioDesgaste: this.calcularPromedio(telemetria.map((lectura) => lectura.desgaste)),
+      porcentajeDesgaste: desgasteActual?.porcentaje ?? null,
+
+      estadoDesgaste: desgasteActual?.estado ?? 'sin-datos',
 
       temperaturaMaxima: this.calcularMaximo(telemetria.map((lectura) => lectura.temperatura)),
 
@@ -131,6 +141,20 @@ export class MotorDetailService {
       .map((item) => item.ultimaTelemetria)
       .filter((lectura): lectura is TelemetriaApi => lectura !== null);
 
+    const desgastesActuales = carbonesDetalle
+      .filter((item) => item.porcentajeDesgaste !== null)
+      .map((item) => ({
+        porcentaje: item.porcentajeDesgaste as number,
+
+        estado: item.estadoDesgaste,
+      }));
+
+    const porcentajeDesgaste = this.calcularPromedio(
+      desgastesActuales.map((desgaste) => desgaste.porcentaje),
+    );
+
+    const estadoDesgaste = this.obtenerEstadoDesgasteMotor(desgastesActuales);
+
     return {
       motor,
       anillos,
@@ -148,7 +172,8 @@ export class MotorDetailService {
        */
       promedioLongitud: this.calcularPromedio(lecturasActuales.map((lectura) => lectura.longitud)),
 
-      promedioDesgaste: this.calcularPromedio(lecturasActuales.map((lectura) => lectura.desgaste)),
+      porcentajeDesgaste,
+      estadoDesgaste,
 
       temperaturaMaxima: this.calcularMaximo(
         lecturasActuales.map((lectura) => lectura.temperatura),
@@ -211,5 +236,83 @@ export class MotorDetailService {
 
   private normalizarId(valor: unknown): string {
     return String(valor ?? '').trim();
+  }
+
+  private calcularDesgasteCarbon(
+    carbon: CarbonResponse,
+    longitudActual: ValorNumerico,
+  ): DesgasteCalculado | null {
+    const largoInicial = this.convertirNumero(carbon.largo_inicial);
+
+    const largoPrealarma = this.convertirNumero(carbon.largo_prealarma);
+
+    const largoAlarma = this.convertirNumero(carbon.largo_alarma);
+
+    const longitud = this.convertirNumero(longitudActual);
+
+    if (largoInicial === null || largoInicial <= 0 || longitud === null) {
+      return null;
+    }
+
+    const porcentaje = this.limitarPorcentaje(((largoInicial - longitud) / largoInicial) * 100);
+
+    const porcentajeAdvertencia =
+      largoPrealarma === null
+        ? null
+        : this.limitarPorcentaje(((largoInicial - largoPrealarma) / largoInicial) * 100);
+
+    const porcentajeCritico =
+      largoAlarma === null
+        ? null
+        : this.limitarPorcentaje(((largoInicial - largoAlarma) / largoInicial) * 100);
+
+    let estado: DesgasteCalculado['estado'] = 'normal';
+
+    if (porcentajeCritico !== null && porcentaje >= porcentajeCritico) {
+      estado = 'critico';
+    } else if (porcentajeAdvertencia !== null && porcentaje >= porcentajeAdvertencia) {
+      estado = 'advertencia';
+    }
+
+    return {
+      porcentaje,
+      estado,
+    };
+  }
+
+  private obtenerEstadoDesgasteMotor(
+    desgastes: Array<{
+      porcentaje: number;
+      estado: EstadoDesgaste;
+    }>,
+  ): EstadoDesgaste {
+    if (desgastes.length === 0) {
+      return 'sin-datos';
+    }
+
+    if (desgastes.some((desgaste) => desgaste.estado === 'critico')) {
+      return 'critico';
+    }
+
+    if (desgastes.some((desgaste) => desgaste.estado === 'advertencia')) {
+      return 'advertencia';
+    }
+
+    return 'normal';
+  }
+
+  private convertirNumero(valor: ValorNumerico): number | null {
+    if (valor === null || valor === undefined || valor === '') {
+      return null;
+    }
+
+    const numero =
+      typeof valor === 'number' ? valor : Number(String(valor).trim().replace(',', '.'));
+
+    return Number.isFinite(numero) ? numero : null;
+  }
+
+  private limitarPorcentaje(porcentaje: number): number {
+    return Math.min(100, Math.max(0, porcentaje));
   }
 }

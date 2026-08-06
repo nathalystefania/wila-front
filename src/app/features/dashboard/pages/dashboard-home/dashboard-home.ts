@@ -54,7 +54,7 @@ export class DashboardHome implements OnInit, AfterViewInit, OnDestroy {
   readonly displayedColumns: string[] = [
     'motor',
     'promedioLongitud',
-    'promedioDesgaste',
+    'porcentajeDesgaste',
     'temperaturaMaxima',
     'bateriaMinima',
     'alarmas',
@@ -244,9 +244,9 @@ export class DashboardHome implements OnInit, AfterViewInit, OnDestroy {
               motor.promedioLongitud
             );
 
-          case 'promedioDesgaste':
+          case 'porcentajeDesgaste':
             return this.valorOrdenable(
-              motor.promedioDesgaste
+              motor.porcentajeDesgaste
             );
 
           case 'temperaturaMaxima':

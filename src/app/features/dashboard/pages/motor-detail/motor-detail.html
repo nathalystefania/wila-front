@@ -87,16 +87,55 @@
       </article>
 
       <article class="rounded-lg border border-outline/20 bg-surface-container p-5">
-        <span class="text-sm text-on-surface-variant"> Desgaste </span>
+        <span class="text-sm text-on-surface-variant"> Desgaste promedio </span>
 
-        <strong class="block mt-2 text-2xl">
-          @if (detalle.promedioDesgaste !== null) {
-            {{ detalle.promedioDesgaste | number: '1.1-2' }}
-            mm
-          } @else {
-            —
-          }
-        </strong>
+        @if (detalle.porcentajeDesgaste !== null) {
+          <div
+            class="wear-progress mt-3"
+            [class.wear-progress--normal]="detalle.estadoDesgaste === 'normal'"
+            [class.wear-progress--warning]="detalle.estadoDesgaste === 'advertencia'"
+            [class.wear-progress--critical]="detalle.estadoDesgaste === 'critico'"
+          >
+            <div class="wear-progress__header">
+              <strong class="text-2xl">
+                {{ detalle.porcentajeDesgaste | number: '1.0-1' }}
+                %
+              </strong>
+
+              <span class="wear-progress__status">
+                @switch (detalle.estadoDesgaste) {
+                  @case ('critico') {
+                    Crítico
+                  }
+
+                  @case ('advertencia') {
+                    Advertencia
+                  }
+
+                  @default {
+                    Normal
+                  }
+                }
+              </span>
+            </div>
+
+            <div
+              class="wear-progress__track"
+              role="progressbar"
+              aria-label="Porcentaje promedio de desgaste del motor"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              [attr.aria-valuenow]="detalle.porcentajeDesgaste"
+              [attr.aria-valuetext]="
+                (detalle.porcentajeDesgaste | number: '1.0-1') + '% de desgaste'
+              "
+            >
+              <div class="wear-progress__fill" [style.width.%]="detalle.porcentajeDesgaste"></div>
+            </div>
+          </div>
+        } @else {
+          <strong class="block mt-2 text-2xl"> — </strong>
+        }
       </article>
 
       <article class="rounded-lg border border-outline/20 bg-surface-container p-5">
@@ -216,15 +255,53 @@
 
                   <!-- Desgaste -->
                   <ng-container matColumnDef="desgaste">
-                    <th mat-header-cell *matHeaderCellDef>Desgaste actual</th>
+                    <th mat-header-cell *matHeaderCellDef>Desgaste</th>
 
                     <td mat-cell *matCellDef="let item">
-                      @if (
-                        item.ultimaTelemetria?.desgaste !== null &&
-                        item.ultimaTelemetria?.desgaste !== undefined
-                      ) {
-                        {{ item.ultimaTelemetria.desgaste | number: '1.1-2' }}
-                        mm
+                      @if (item.porcentajeDesgaste !== null) {
+                        <div
+                          class="wear-progress wear-progress--compact"
+                          [class.wear-progress--normal]="item.estadoDesgaste === 'normal'"
+                          [class.wear-progress--warning]="item.estadoDesgaste === 'advertencia'"
+                          [class.wear-progress--critical]="item.estadoDesgaste === 'critico'"
+                        >
+                          <div class="wear-progress__header">
+                            <span>
+                              {{ item.porcentajeDesgaste | number: '1.0-1' }}
+                              %
+                            </span>
+
+                            <span class="wear-progress__status">
+                              @switch (item.estadoDesgaste) {
+                                @case ('critico') {
+                                  Crítico
+                                }
+
+                                @case ('advertencia') {
+                                  Advertencia
+                                }
+
+                                @default {
+                                  Normal
+                                }
+                              }
+                            </span>
+                          </div>
+
+                          <div
+                            class="wear-progress__track"
+                            role="progressbar"
+                            [attr.aria-label]="'Desgaste del carbón ' + item.carbon.identificador"
+                            aria-valuemin="0"
+                            aria-valuemax="100"
+                            [attr.aria-valuenow]="item.porcentajeDesgaste"
+                          >
+                            <div
+                              class="wear-progress__fill"
+                              [style.width.%]="item.porcentajeDesgaste"
+                            ></div>
+                          </div>
+                        </div>
                       } @else {
                         —
                       }

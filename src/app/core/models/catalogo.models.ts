@@ -1,3 +1,9 @@
+export type EstadoDesgaste =
+  | 'normal'
+  | 'advertencia'
+  | 'critico'
+  | 'sin-datos';
+
 export interface AnilloResponse {
     id: string;
     identificador: string;
@@ -165,7 +171,9 @@ export interface MotorDashboardRow {
     nombre: string;
 
     promedioLongitud: number | null;
-    promedioDesgaste: number | null;
+    porcentajeDesgaste: number | null;
+    estadoDesgaste: EstadoDesgaste;
+
     temperaturaMaxima: number | null;
     bateriaMinima: number | null;
 
@@ -224,7 +232,9 @@ export interface CarbonTelemetriaDetalle {
     cantidadLecturas: number;
 
     promedioLongitud: number | null;
-    promedioDesgaste: number | null;
+    porcentajeDesgaste: number | null;
+    estadoDesgaste: EstadoDesgaste;
+
     temperaturaMaxima: number | null;
     bateriaMinima: number | null;
 }
@@ -244,7 +254,9 @@ export interface MotorDetalle {
     carbonesConTelemetria: number;
 
     promedioLongitud: number | null;
-    promedioDesgaste: number | null;
+    porcentajeDesgaste: number | null;
+    estadoDesgaste: EstadoDesgaste;
+    
     temperaturaMaxima: number | null;
     bateriaMinima: number | null;
 }
