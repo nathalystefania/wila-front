@@ -37,7 +37,7 @@
     </section>
   } @else if (detalle) {
     <!-- Datos estructurales del motor -->
-    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <section class="motor-detail grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <article class="rounded-lg border border-outline/20 bg-surface-container p-4">
         <span class="text-sm text-on-surface-variant"> Empresa </span>
 
@@ -90,49 +90,11 @@
         <span class="text-sm text-on-surface-variant"> Desgaste promedio </span>
 
         @if (detalle.porcentajeDesgaste !== null) {
-          <div
-            class="wear-progress mt-3"
-            [class.wear-progress--normal]="detalle.estadoDesgaste === 'normal'"
-            [class.wear-progress--warning]="detalle.estadoDesgaste === 'advertencia'"
-            [class.wear-progress--critical]="detalle.estadoDesgaste === 'critico'"
-          >
-            <div class="wear-progress__header">
-              <strong class="text-2xl">
-                {{ detalle.porcentajeDesgaste | number: '1.0-1' }}
-                %
-              </strong>
-
-              <span class="wear-progress__status">
-                @switch (detalle.estadoDesgaste) {
-                  @case ('critico') {
-                    Crítico
-                  }
-
-                  @case ('advertencia') {
-                    Advertencia
-                  }
-
-                  @default {
-                    Normal
-                  }
-                }
-              </span>
-            </div>
-
-            <div
-              class="wear-progress__track"
-              role="progressbar"
-              aria-label="Porcentaje promedio de desgaste del motor"
-              aria-valuemin="0"
-              aria-valuemax="100"
-              [attr.aria-valuenow]="detalle.porcentajeDesgaste"
-              [attr.aria-valuetext]="
-                (detalle.porcentajeDesgaste | number: '1.0-1') + '% de desgaste'
-              "
-            >
-              <div class="wear-progress__fill" [style.width.%]="detalle.porcentajeDesgaste"></div>
-            </div>
-          </div>
+          <app-status-progress
+            [value]="detalle.porcentajeDesgaste"
+            [state]="detalle.estadoDesgaste"
+            label="Porcentaje promedio de desgaste del motor"
+          />
         } @else {
           <strong class="block mt-2 text-2xl"> — </strong>
         }
@@ -154,14 +116,15 @@
       <article class="rounded-lg border border-outline/20 bg-surface-container p-5">
         <span class="text-sm text-on-surface-variant"> Batería mínima </span>
 
-        <strong class="block mt-2 text-2xl">
-          @if (detalle.bateriaMinima !== null) {
-            {{ detalle.bateriaMinima | number: '1.0-1' }}
-            %
-          } @else {
-            —
-          }
-        </strong>
+        @if (detalle.bateriaMinima !== null) {
+          <app-status-progress
+            [value]="detalle.bateriaMinima"
+            [state]="detalle.estadoBateria"
+            label="Batería mínima del motor"
+          />
+        } @else {
+          <strong class="block mt-2 text-2xl"> — </strong>
+        }
       </article>
     </section>
 
@@ -259,49 +222,12 @@
 
                     <td mat-cell *matCellDef="let item">
                       @if (item.porcentajeDesgaste !== null) {
-                        <div
-                          class="wear-progress wear-progress--compact"
-                          [class.wear-progress--normal]="item.estadoDesgaste === 'normal'"
-                          [class.wear-progress--warning]="item.estadoDesgaste === 'advertencia'"
-                          [class.wear-progress--critical]="item.estadoDesgaste === 'critico'"
-                        >
-                          <div class="wear-progress__header">
-                            <span>
-                              {{ item.porcentajeDesgaste | number: '1.0-1' }}
-                              %
-                            </span>
-
-                            <span class="wear-progress__status">
-                              @switch (item.estadoDesgaste) {
-                                @case ('critico') {
-                                  Crítico
-                                }
-
-                                @case ('advertencia') {
-                                  Advertencia
-                                }
-
-                                @default {
-                                  Normal
-                                }
-                              }
-                            </span>
-                          </div>
-
-                          <div
-                            class="wear-progress__track"
-                            role="progressbar"
-                            [attr.aria-label]="'Desgaste del carbón ' + item.carbon.identificador"
-                            aria-valuemin="0"
-                            aria-valuemax="100"
-                            [attr.aria-valuenow]="item.porcentajeDesgaste"
-                          >
-                            <div
-                              class="wear-progress__fill"
-                              [style.width.%]="item.porcentajeDesgaste"
-                            ></div>
-                          </div>
-                        </div>
+                        <app-status-progress
+                          [value]="item.porcentajeDesgaste"
+                          [state]="item.estadoDesgaste"
+                          [label]="'Desgaste del carbón ' + item.carbon.identificador"
+                          [compact]="true"
+                        />
                       } @else {
                         —
                       }
@@ -334,8 +260,12 @@
                         item.ultimaTelemetria?.porcentaje_bateria !== null &&
                         item.ultimaTelemetria?.porcentaje_bateria !== undefined
                       ) {
-                        {{ item.ultimaTelemetria.porcentaje_bateria | number: '1.0-1' }}
-                        %
+                        <app-status-progress
+                          [value]="item.ultimaTelemetria?.porcentaje_bateria ?? null"
+                          [state]="item.estadoBateria"
+                          [label]="'Batería del carbón ' + item.carbon.identificador"
+                          [compact]="true"
+                        />
                       } @else {
                         —
                       }

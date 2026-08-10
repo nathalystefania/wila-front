@@ -1,0 +1,70 @@
+@if (value() && value() !== null && state() !== 'sin-datos') {
+  <div
+    class="status-progress"
+    [class.status-progress--compact]="compact()"
+    [class.status-progress--normal]="state() === 'normal'"
+    [class.status-progress--warning]="state() === 'advertencia'"
+    [class.status-progress--critical]="state() === 'critico'"
+  >
+    @if (mode() === 'full') {
+      <div class="status-progress__header">
+        <span class="status-progress__value">
+          {{ value() | number: decimals() }}
+          {{ unit() }}
+        </span>
+
+        @if (showStatus()) {
+          <span class="status-progress__status">
+            @switch (state()) {
+              @case ('critico') {
+                Crítico
+              }
+
+              @case ('advertencia') {
+                Advertencia
+              }
+
+              @case ('normal') {
+                Normal
+              }
+            }
+          </span>
+        }
+      </div>
+
+      <div
+        class="status-progress__track"
+        role="progressbar"
+        [attr.aria-label]="label()"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        [attr.aria-valuenow]="value()"
+        [attr.aria-valuetext]="value() + unit() + ' - ' + state()"
+      >
+        <div class="status-progress__fill" [style.width.%]="value()"></div>
+      </div>
+    
+    } @else if (mode() === 'horizontal') {
+    
+        <div class="status-progress__horizontal">
+            <div
+                class="status-progress__track"
+                role="progressbar"
+                [attr.aria-label]="label()"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                [attr.aria-valuenow]="value()"
+                [attr.aria-valuetext]="value() + unit() + ' - ' + state()"
+            >
+                <div class="status-progress__fill" [style.width.%]="value()"></div>
+            </div>
+            <span class="status-progress__value">
+              {{ value() | number: decimals() }}
+              {{ unit() }}
+            </span>
+        </div>
+    }
+  </div>
+} @else {
+  <span class="text-on-surface-variant"> — </span>
+}

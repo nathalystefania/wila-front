@@ -4,6 +4,12 @@ export type EstadoDesgaste =
   | 'critico'
   | 'sin-datos';
 
+export type EstadoBateria =
+  | 'normal'
+  | 'advertencia'
+  | 'critico'
+  | 'sin-datos';
+
 export interface AnilloResponse {
     id: string;
     identificador: string;
@@ -236,7 +242,9 @@ export interface CarbonTelemetriaDetalle {
     estadoDesgaste: EstadoDesgaste;
 
     temperaturaMaxima: number | null;
+    
     bateriaMinima: number | null;
+    estadoBateria: EstadoBateria;
 }
 
 export interface AnilloMotorDetalle {
@@ -258,5 +266,7 @@ export interface MotorDetalle {
     estadoDesgaste: EstadoDesgaste;
     
     temperaturaMaxima: number | null;
+    
     bateriaMinima: number | null;
+    estadoBateria: EstadoBateria;
 }

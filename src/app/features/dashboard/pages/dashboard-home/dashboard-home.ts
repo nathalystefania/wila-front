@@ -23,6 +23,7 @@ import { CompanyContextService } from '@core/state/company-context.service';
 import { DashboardService } from '@services/dashboard.service';
 import { MotorDashboardRow, AlarmaApi } from '@models/catalogo.models';
 import { CustomPaginatorIntl } from '@shared/classes/custom-paginator-intl';
+import { StatusProgress } from '@shared/components/status-progress/status-progress';
 
 export type DashboardFilter = 'all' | 'critical' | 'warning' | 'no-alarms';
 
@@ -36,6 +37,7 @@ export type DashboardFilter = 'all' | 'critical' | 'warning' | 'no-alarms';
     MatSortModule,
     MatPaginatorModule,
     MatButtonToggleModule,
+    StatusProgress,
   ],
   templateUrl: './dashboard-home.html',
   styleUrl: './dashboard-home.scss',
@@ -129,9 +131,7 @@ export class DashboardHome implements OnInit, AfterViewInit, OnDestroy {
         return;
       }
 
-      this.cargarDashboard(
-        empresaId
-      );
+      this.cargarDashboard(empresaId);
     });
   }
 
@@ -144,152 +144,98 @@ export class DashboardHome implements OnInit, AfterViewInit, OnDestroy {
     this.configurarFiltro();
   }
 
-  private cargarDashboard(
-    empresaId: string
-  ): void {
+  private cargarDashboard(empresaId: string): void {
     this.loadingMotores = true;
     this.errorMotores = '';
 
-    this.dashboardSubscription =
-      this.dashboardService
-        .getDashboardTiempoReal(
-          empresaId
-        )
-        .pipe(
-          takeUntil(
-            this.destroy$
-          )
-        )
-        .subscribe({
-          next: dashboard => {
-            this.dataSource.data = [
-              ...dashboard.motores,
-            ];
+    this.dashboardSubscription = this.dashboardService
+      .getDashboardTiempoReal(empresaId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (dashboard) => {
+          this.dataSource.data = [...dashboard.motores];
 
-            this.alarmasRecientes = [
-              ...dashboard.alarmasRecientes,
-            ];
+          this.alarmasRecientes = [...dashboard.alarmasRecientes];
 
-            this.totalCriticos =
-              dashboard.totalAlarmasP2;
+          this.totalCriticos = dashboard.totalAlarmasP2;
 
-            this.totalAdvertencias =
-              dashboard.totalAlarmasP1;
+          this.totalAdvertencias = dashboard.totalAlarmasP1;
 
-            this.totalCarbones =
-              dashboard.totalCarbones;
+          this.totalCarbones = dashboard.totalCarbones;
 
-            this.totalCarbonesSincronizados =
-              dashboard
-                .totalCarbonesSincronizados;
+          this.totalCarbonesSincronizados = dashboard.totalCarbonesSincronizados;
 
-            /*
-             * Estos totales sirven para los filtros
-             * de motores, no para las cards P1/P2.
-             */
-            this.calcularTotalesMotores(
-              dashboard.motores
-            );
+          /*
+           * Estos totales sirven para los filtros
+           * de motores, no para las cards P1/P2.
+           */
+          this.calcularTotalesMotores(dashboard.motores);
 
-            this.dataSource.filter =
-              this.currentFilter === 'all'
-                ? ''
-                : this.currentFilter;
+          this.dataSource.filter = this.currentFilter === 'all' ? '' : this.currentFilter;
 
-            this.loadingMotores = false;
-            this.errorMotores = '';
+          this.loadingMotores = false;
+          this.errorMotores = '';
 
-            this.cdr.markForCheck();
-          },
+          this.cdr.markForCheck();
+        },
 
-          error: error => {
-            console.error(
-              'Error actualizando dashboard',
-              error
-            );
+        error: (error) => {
+          console.error('Error actualizando dashboard', error);
 
-            /*
-             * No limpiamos dataSource ni las alarmas,
-             * porque puede ser un 502 temporal.
-             */
-            this.loadingMotores = false;
+          /*
+           * No limpiamos dataSource ni las alarmas,
+           * porque puede ser un 502 temporal.
+           */
+          this.loadingMotores = false;
 
-            this.errorMotores =
-              'No se pudieron actualizar los datos del dashboard.';
+          this.errorMotores = 'No se pudieron actualizar los datos del dashboard.';
 
-            this.cdr.markForCheck();
-          },
-        });
+          this.cdr.markForCheck();
+        },
+      });
   }
 
-  private configurarOrdenamiento():
-    void {
-    this.dataSource
-      .sortingDataAccessor = (
-        motor:
-          MotorDashboardRow,
+  private configurarOrdenamiento(): void {
+    this.dataSource.sortingDataAccessor = (
+      motor: MotorDashboardRow,
 
-        columna:
-          string
-      ): string | number => {
-        switch (columna) {
-          case 'motor':
-            return (
-              motor.codigo ||
-              motor.nombre
-            ).toLowerCase();
+      columna: string,
+    ): string | number => {
+      switch (columna) {
+        case 'motor':
+          return (motor.codigo || motor.nombre).toLowerCase();
 
-          case 'promedioLongitud':
-            return this.valorOrdenable(
-              motor.promedioLongitud
-            );
+        case 'promedioLongitud':
+          return this.valorOrdenable(motor.promedioLongitud);
 
-          case 'porcentajeDesgaste':
-            return this.valorOrdenable(
-              motor.porcentajeDesgaste
-            );
+        case 'porcentajeDesgaste':
+          return this.valorOrdenable(motor.porcentajeDesgaste);
 
-          case 'temperaturaMaxima':
-            return this.valorOrdenable(
-              motor.temperaturaMaxima
-            );
+        case 'temperaturaMaxima':
+          return this.valorOrdenable(motor.temperaturaMaxima);
 
-          case 'bateriaMinima':
-            return this.valorOrdenable(
-              motor.bateriaMinima
-            );
+        case 'bateriaMinima':
+          return this.valorOrdenable(motor.bateriaMinima);
 
-          case 'alarmas':
-            return motor.cantidadAlarmas;
+        case 'alarmas':
+          return motor.cantidadAlarmas;
 
-          default:
-            return '';
-        }
-      };
+        default:
+          return '';
+      }
+    };
   }
 
-  private valorOrdenable(
-    valor: number | null
-  ): number {
-    return (
-      valor ??
-      Number.NEGATIVE_INFINITY
-    );
+  private valorOrdenable(valor: number | null): number {
+    return valor ?? Number.NEGATIVE_INFINITY;
   }
 
-  verDetalle(
-    motor:
-      MotorDashboardRow
-  ): void {
-    this.router.navigate([
-      '/dashboard/motor',
-      motor.motorId,
-    ]);
+  verDetalle(motor: MotorDashboardRow): void {
+    this.router.navigate(['/dashboard/motor', motor.motorId]);
   }
 
   ngOnDestroy(): void {
-    this.dashboardSubscription
-      ?.unsubscribe();
+    this.dashboardSubscription?.unsubscribe();
 
     this.dataSource.data = [];
     this.alarmasRecientes = [];
@@ -301,25 +247,16 @@ export class DashboardHome implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private configurarFiltro(): void {
-    this.dataSource.filterPredicate = (
-      motor: MotorDashboardRow,
-      filtro: string
-    ): boolean => {
+    this.dataSource.filterPredicate = (motor: MotorDashboardRow, filtro: string): boolean => {
       switch (filtro) {
         case 'critical':
-          return (
-            motor.alarmasCriticas > 0
-          );
+          return motor.alarmasCriticas > 0;
 
         case 'warning':
-          return (
-            motor.alarmasAdvertencia > 0
-          );
+          return motor.alarmasAdvertencia > 0;
 
         case 'no-alarms':
-          return (
-            motor.cantidadAlarmas === 0
-          );
+          return motor.cantidadAlarmas === 0;
 
         default:
           return true;
@@ -335,34 +272,19 @@ export class DashboardHome implements OnInit, AfterViewInit, OnDestroy {
     // this.paginator?.firstPage();
   }
 
-  private calcularTotalesMotores(
-    motores: MotorDashboardRow[]
-  ): void {
-    this.totalMotores =
-      motores.length;
+  private calcularTotalesMotores(motores: MotorDashboardRow[]): void {
+    this.totalMotores = motores.length;
 
-    this.motoresCriticos =
-      motores.filter(
-        motor =>
-          motor.alarmasCriticas > 0
-      ).length;
+    this.motoresCriticos = motores.filter((motor) => motor.alarmasCriticas > 0).length;
 
-    this.motoresConAdvertencias =
-      motores.filter(
-        motor =>
-          motor.alarmasCriticas === 0 &&
-          motor.alarmasAdvertencia > 0
-      ).length;
+    this.motoresConAdvertencias = motores.filter(
+      (motor) => motor.alarmasCriticas === 0 && motor.alarmasAdvertencia > 0,
+    ).length;
 
-    this.totalSinAlarmas =
-      motores.filter(
-        motor =>
-          motor.cantidadAlarmas === 0
-      ).length;
+    this.totalSinAlarmas = motores.filter((motor) => motor.cantidadAlarmas === 0).length;
   }
 
   verTodasLasAlarmas(): void {
     this.router.navigate(['/dashboard/alarmas']);
   }
-
 }

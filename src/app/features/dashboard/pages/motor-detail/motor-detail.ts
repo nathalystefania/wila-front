@@ -16,21 +16,20 @@ import { MatTableModule } from '@angular/material/table';
 import { MotorDetailService } from '@services/motor-detail.service';
 import { MotorDetalle } from '@models/catalogo.models';
 
+import { StatusProgress } from '@shared/components/status-progress/status-progress';
+
 @Component({
   selector: 'app-motor-detail',
-
   imports: [
     CommonModule,
     MatButtonModule,
     MatExpansionModule,
     MatProgressSpinnerModule,
     MatTableModule,
+    StatusProgress,
   ],
-
   templateUrl: './motor-detail.html',
-
   styleUrl: './motor-detail.scss',
-
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MotorDetail implements OnInit, OnDestroy {

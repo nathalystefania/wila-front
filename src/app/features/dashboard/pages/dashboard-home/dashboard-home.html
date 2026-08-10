@@ -167,33 +167,13 @@
 
             <td mat-cell *matCellDef="let motor">
               @if (motor.porcentajeDesgaste !== null) {
-                <div
-                  class="wear-progress"
-                  [class.wear-progress--normal]="motor.estadoDesgaste === 'normal'"
-                  [class.wear-progress--warning]="motor.estadoDesgaste === 'advertencia'"
-                  [class.wear-progress--critical]="motor.estadoDesgaste === 'critico'"
-                >
-                  <div
-                    class="wear-progress__track"
-                    role="progressbar"
-                    aria-label="Porcentaje de desgaste del motor"
-                    aria-valuemin="0"
-                    aria-valuemax="100"
-                    [attr.aria-valuenow]="motor.porcentajeDesgaste"
-                    [attr.aria-valuetext]="
-                      (motor.porcentajeDesgaste | number: '1.0-1') + '% de desgaste'
-                    "
-                  >
-                    <div
-                      class="wear-progress__fill"
-                      [style.width.%]="motor.porcentajeDesgaste"
-                    ></div>
-                  </div>
-                    <span>
-                      {{ motor.porcentajeDesgaste | number: '1.0-1' }}
-                      %
-                    </span>
-                </div>
+                <app-status-progress
+                  [value]="motor.porcentajeDesgaste"
+                  [state]="motor.estadoDesgaste"
+                  [label]="'Desgaste del motor ' + motor.nombre"
+                  [compact]="true"
+                  [showStatus]="false"
+                />
               } @else {
                 —
               }

@@ -3,6 +3,7 @@ import { Observable, forkJoin, map, of, switchMap } from 'rxjs';
 import { CatalogoService } from './catalogo.service';
 import {
   AnilloMotorDetalle,
+  EstadoBateria,
   CarbonResponse,
   CarbonTelemetriaDetalle,
   EstadoDesgaste,
@@ -102,6 +103,8 @@ export class MotorDetailService {
 
     const desgasteActual = this.calcularDesgasteCarbon(carbon, ultimaTelemetria?.longitud);
 
+    const estadoBateria = this.obtenerEstadoBateria(carbon, ultimaTelemetria?.porcentaje_bateria);
+
     return {
       carbon,
       ultimaTelemetria,
@@ -117,6 +120,8 @@ export class MotorDetailService {
       temperaturaMaxima: this.calcularMaximo(telemetria.map((lectura) => lectura.temperatura)),
 
       bateriaMinima: this.calcularMinimo(telemetria.map((lectura) => lectura.porcentaje_bateria)),
+
+      estadoBateria,
     };
   }
 
@@ -155,6 +160,41 @@ export class MotorDetailService {
 
     const estadoDesgaste = this.obtenerEstadoDesgasteMotor(desgastesActuales);
 
+    const carbonesConBateria = carbonesDetalle.filter(
+      (item) =>
+        item.ultimaTelemetria?.porcentaje_bateria !== null &&
+        item.ultimaTelemetria?.porcentaje_bateria !== undefined,
+    );
+
+    const carbonConMenorBateria = carbonesConBateria.reduce<CarbonTelemetriaDetalle | null>(
+      (menor, actual) => {
+        if (!menor) {
+          return actual;
+        }
+
+        const bateriaMenor = this.convertirNumero(menor.ultimaTelemetria?.porcentaje_bateria);
+
+        const bateriaActual = this.convertirNumero(actual.ultimaTelemetria?.porcentaje_bateria);
+
+        if (bateriaActual === null) {
+          return menor;
+        }
+
+        if (bateriaMenor === null || bateriaActual < bateriaMenor) {
+          return actual;
+        }
+
+        return menor;
+      },
+      null,
+    );
+
+    const bateriaMinima = carbonConMenorBateria
+      ? this.convertirNumero(carbonConMenorBateria.ultimaTelemetria?.porcentaje_bateria)
+      : null;
+
+    const estadoBateria = carbonConMenorBateria?.estadoBateria ?? 'sin-datos';
+
     return {
       motor,
       anillos,
@@ -179,9 +219,8 @@ export class MotorDetailService {
         lecturasActuales.map((lectura) => lectura.temperatura),
       ),
 
-      bateriaMinima: this.calcularMinimo(
-        lecturasActuales.map((lectura) => lectura.porcentaje_bateria),
-      ),
+      bateriaMinima,
+      estadoBateria,
     };
   }
 
@@ -314,5 +353,30 @@ export class MotorDetailService {
 
   private limitarPorcentaje(porcentaje: number): number {
     return Math.min(100, Math.max(0, porcentaje));
+  }
+
+  private obtenerEstadoBateria(
+    carbon: CarbonResponse,
+    porcentajeBateria: ValorNumerico,
+  ): EstadoBateria {
+    const bateria = this.convertirNumero(porcentajeBateria);
+
+    const aviso = this.convertirNumero(carbon.nivel_bateria_aviso);
+
+    const minimo = this.convertirNumero(carbon.nivel_bateria_minimo);
+
+    if (bateria === null) {
+      return 'sin-datos';
+    }
+
+    if (minimo !== null && bateria <= minimo) {
+      return 'critico';
+    }
+
+    if (aviso !== null && bateria <= aviso) {
+      return 'advertencia';
+    }
+
+    return 'normal';
   }
 }
