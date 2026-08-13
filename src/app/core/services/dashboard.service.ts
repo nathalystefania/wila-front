@@ -16,6 +16,7 @@ import {
 } from '@models/catalogo.models';
 
 import { POLLING_CONFIG } from '@core/config/polling.config';
+import { TelemetryStateService } from '@core/state/telemetry-state.service';
 
 interface DashboardApiData {
   motores: MotorCatalogo[];
@@ -39,6 +40,7 @@ type ValorNumerico = number | string | null | undefined;
 export class DashboardService {
   private readonly catalogoService = inject(CatalogoService);
   private readonly pollingConfig = inject(POLLING_CONFIG);
+  private readonly telemetryState = inject(TelemetryStateService);
 
   /**
    * Actualiza toda la tabla periódicamente.
@@ -107,6 +109,8 @@ export class DashboardService {
 
   private construirDashboard(empresaId: string, data: DashboardApiData): DashboardHomeData {
     const { motores, anillos, carbones, sensores, telemetria, alarmas } = data;
+
+    this.telemetryState.actualizarDesdeTelemetria(telemetria);
 
     const motorIdPorAnilloId = this.crearMotorPorAnillo(anillos);
 

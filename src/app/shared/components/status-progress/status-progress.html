@@ -1,12 +1,13 @@
-@if (value() && value() !== null && state() !== 'sin-datos') {
+@if (value() && value() !== null && state() !== 'sin-datos' || value() == 0) {
   <div
     class="status-progress"
+    [class]="'status-progress--' + size()"
     [class.status-progress--compact]="compact()"
     [class.status-progress--normal]="state() === 'normal'"
     [class.status-progress--warning]="state() === 'advertencia'"
     [class.status-progress--critical]="state() === 'critico'"
   >
-    @if (mode() === 'full') {
+    @if (mode() === 'full' || mode() === 'legend') {
       <div class="status-progress__header">
         <span class="status-progress__value">
           {{ value() | number: decimals() }}
@@ -31,7 +32,7 @@
           </span>
         } -->
         
-        @if (data()) {
+        @if (data() && mode() !== 'legend') {
           <span class="status-progress__status">
             {{ data() }}
           </span>
@@ -49,6 +50,12 @@
       >
         <div class="status-progress__fill" [style.width.%]="value()"></div>
       </div>
+
+      @if (data() && mode() === 'legend') {
+          <span class="status-progress__legend">
+            {{ data() }}
+          </span>
+      }
     
     } @else if (mode() === 'horizontal') {
     

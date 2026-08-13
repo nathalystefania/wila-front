@@ -17,6 +17,7 @@ import { MotorDetailService } from '@services/motor-detail.service';
 import { MotorDetalle } from '@models/catalogo.models';
 
 import { StatusProgress } from '@shared/components/status-progress/status-progress';
+import { BreadcrumbStateService } from '@core/state/breadcrumb-state.service';
 
 @Component({
   selector: 'app-motor-detail',
@@ -33,6 +34,8 @@ import { StatusProgress } from '@shared/components/status-progress/status-progre
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MotorDetail implements OnInit, OnDestroy {
+  private readonly breadcrumbState = inject(BreadcrumbStateService);
+
   private readonly route = inject(ActivatedRoute);
 
   private readonly location = inject(Location);
@@ -69,18 +72,28 @@ export class MotorDetail implements OnInit, OnDestroy {
     this.errorMessage = '';
 
     this.motorDetailService
-      .getMotorDetalle(motorId)
+      .getMotorDetalleTiempoReal(motorId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (detalle) => {
+          /*
+           * Loading solo debería desaparecer
+           * en la primera respuesta.
+           */
           this.loading = false;
+
           this.detalle = detalle;
 
           if (!detalle) {
             this.errorMessage = 'No se encontró el motor solicitado.';
-          }
 
-          console.log('DETALLE MOTOR', detalle);
+            this.breadcrumbState.clear();
+
+            return;
+          }
+          this.breadcrumbState.setDetalle(`${detalle.motor.codigo} · ${detalle.motor.nombre}`);
+
+          this.errorMessage = '';
 
           this.cdr.markForCheck();
         },
@@ -102,6 +115,8 @@ export class MotorDetail implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.breadcrumbState.clear();
+    
     this.destroy$.next();
     this.destroy$.complete();
   }

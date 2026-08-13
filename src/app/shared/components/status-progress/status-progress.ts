@@ -26,7 +26,9 @@ export class StatusProgress {
 
   decimals = input<string>('1.0-1');
 
-  mode = input<'horizontal' | 'full'>('horizontal');
+  mode = input<'horizontal' | 'full' | 'legend'>('horizontal');
 
   data = input<any>(null);
+
+  size = input<'small' | 'medium' | 'large'>('medium');
 }

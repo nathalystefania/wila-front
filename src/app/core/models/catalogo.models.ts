@@ -233,9 +233,9 @@ export interface DashboardHomeData {
 export interface CarbonTelemetriaDetalle {
     carbon: CarbonResponse;
 
-    ultimaTelemetria: TelemetriaApi | null;
+    sensor: SensorApi | null;
 
-    cantidadLecturas: number;
+    ultimaTelemetria: TelemetriaApi | null;
 
     promedioLongitud: number | null;
     porcentajeDesgaste: number | null;
