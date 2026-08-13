@@ -49,7 +49,9 @@
 
   --color-normal: #9aa3ad;
   --color-warning: #f2b705;
+  --color-on-warning: #4d2e00;
   --color-critical: #d25855;
+  --color-on-critical: #723600;
   
   /* Modern font settings synced with Material Typography */
   --font-sans: "Inter", sans-serif;

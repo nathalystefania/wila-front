@@ -6,7 +6,11 @@
       </button>
 
       <div>
-        <p class="text-sm text-on-surface-variant">Detalle provisional</p>
+        <p class="text-sm text-on-surface-variant">
+          @if (detalle) {
+            {{ detalle.motor.empresa_nombre }}
+          }
+        </p>
 
         <h1 class="text-2xl font-semibold">
           @if (detalle) {
@@ -36,124 +40,175 @@
       {{ errorMessage }}
     </section>
   } @else if (detalle) {
-    <!-- Datos estructurales del motor -->
-    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <article class="rounded-lg border border-outline/20 bg-surface-container p-4">
-        <span class="text-sm text-on-surface-variant"> Empresa </span>
+    <section class="motor-detail flex gap-4">
+      <!-- Resumen calculado -->
+      <article class="flex-1 rounded-lg border border-outline/20 bg-surface-container p-5">
+        <span class="text-base text-on-surface-variant"> Promedio mm </span>
 
-        <strong class="block mt-1">
-          {{ detalle.motor.empresa_nombre }}
-        </strong>
-      </article>
-
-      <article class="rounded-lg border border-outline/20 bg-surface-container p-4">
-        <span class="text-sm text-on-surface-variant"> División </span>
-
-        <strong class="block mt-1">
-          {{ detalle.motor.division_nombre }}
-        </strong>
-      </article>
-
-      <article class="rounded-lg border border-outline/20 bg-surface-container p-4">
-        <span class="text-sm text-on-surface-variant"> Área </span>
-
-        <strong class="block mt-1">
-          {{ detalle.motor.area_nombre }}
-        </strong>
-      </article>
-
-      <article class="rounded-lg border border-outline/20 bg-surface-container p-4">
-        <span class="text-sm text-on-surface-variant"> Equipo </span>
-
-        <strong class="block mt-1">
-          {{ detalle.motor.equipo_nombre }}
-        </strong>
-      </article>
-    </section>
-
-    <!-- Resumen calculado -->
-    <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-      <article class="rounded-lg border border-outline/20 bg-surface-container p-5">
-        <span class="text-sm text-on-surface-variant"> Promedio mm </span>
-
-        <strong class="block mt-2 text-2xl">
+        <p class="flex-nowrap flex items-baseline gap-1">
           @if (detalle.promedioLongitud !== null) {
-            {{ detalle.promedioLongitud | number: '1.1-2' }}
-            mm
+            <strong class="block mt-2 text-2xl">
+              {{ detalle.promedioLongitud | number: '1.1-2' }}
+            </strong>
+            <span> mm </span>
           } @else {
             —
           }
-        </strong>
+        </p>
       </article>
 
-      <article class="rounded-lg border border-outline/20 bg-surface-container p-5">
-        <span class="text-sm text-on-surface-variant"> Desgaste </span>
+      <article class="flex-1 rounded-lg border border-outline/20 bg-surface-container p-5">
+        <span class="text-base text-on-surface-variant"> Desgaste promedio </span>
 
-        <strong class="block mt-2 text-2xl">
-          @if (detalle.promedioDesgaste !== null) {
-            {{ detalle.promedioDesgaste | number: '1.1-2' }}
-            mm
-          } @else {
-            —
-          }
-        </strong>
+        @if (detalle.porcentajeDesgaste !== null) {
+          <app-status-progress
+            [value]="detalle.porcentajeDesgaste"
+            [state]="detalle.estadoDesgaste"
+            size="small"
+            label="Porcentaje promedio de desgaste del motor"
+          />
+        } @else {
+          <strong class="block mt-2 text-2xl"> — </strong>
+        }
       </article>
 
-      <article class="rounded-lg border border-outline/20 bg-surface-container p-5">
-        <span class="text-sm text-on-surface-variant"> Temperatura máxima </span>
+      <article class="flex-1 rounded-lg border border-outline/20 bg-surface-container p-5">
+        <span class="text-base text-on-surface-variant"> Temperatura máxima </span>
 
-        <strong class="block mt-2 text-2xl">
+        <p class="flex-nowrap flex items-baseline gap-1">
           @if (detalle.temperaturaMaxima !== null) {
-            {{ detalle.temperaturaMaxima | number: '1.0-1' }}
-            °C
+            <strong class="block mt-2 text-2xl">
+              {{ detalle.temperaturaMaxima | number: '1.0-1' }}
+            </strong>
+            <span>°C</span>
           } @else {
             —
           }
-        </strong>
+        </p>
       </article>
 
-      <article class="rounded-lg border border-outline/20 bg-surface-container p-5">
-        <span class="text-sm text-on-surface-variant"> Batería mínima </span>
+      <article class="flex-1 rounded-lg border border-outline/20 bg-surface-container p-5">
+        <span class="text-base text-on-surface-variant"> Batería mínima </span>
+        @if (detalle.bateriaMinima !== null) {
+          <app-status-progress
+            [value]="detalle.bateriaMinima"
+            [state]="detalle.estadoBateria"
+            size="small"
+            label="Batería mínima del motor"
+          />
+        }
+      </article>
+      <!-- </section> -->
 
-        <strong class="block mt-2 text-2xl">
-          @if (detalle.bateriaMinima !== null) {
-            {{ detalle.bateriaMinima | number: '1.0-1' }}
-            %
-          } @else {
-            —
-          }
-        </strong>
+      <!-- Conteos -->
+      <!-- <section class="flex flex-wrap gap-3"> -->
+      <!-- <article class="flex-1 rounded-lg border border-outline/20 bg-surface-container p-5">
+      <span class="text-base text-on-surface-variant"> Anillos </span>
+      <strong class="block mt-2 text-2xl">{{ detalle.totalAnillos }}</strong>
+    </article>
+
+    <article class="flex-1 rounded-lg border border-outline/20 bg-surface-container p-5">
+      <span class="text-base text-on-surface-variant"> Carbones </span>
+      <strong class="block mt-2 text-2xl">{{ detalle.totalCarbones }}</strong>
+    </article> -->
+
+      <article class="flex-1 rounded-lg border border-outline/20 bg-surface-container p-5">
+        <span class="text-base text-on-surface-variant"> Asignados </span>
+        <strong class="block mt-2 text-2xl">{{ detalle.carbonesConTelemetria }}</strong>
       </article>
     </section>
 
-    <!-- Conteos -->
-    <section class="flex flex-wrap gap-3">
-      <span class="tag">
-        {{ detalle.totalAnillos }}
-        anillos
-      </span>
+    <section>
+      <div class="grid gap-4 grid-cols-[repeat(auto-fit,minmax(min(500px,100%),1fr))]">
+        @for (item of detalle.anillos; track item.anillo.id; let index = $index) {
+          <div class="rounded-lg border border-outline/20 bg-surface-container p-4">
+            <header class="flex items-center justify-between mb-4">
+              <h3 class="text-2xl font-semibold">{{ item.anillo.identificador }}</h3>
+              <span class="text-lg text-on-surface-variant">
+                {{ item.carbones.length }}
+                @if (item.carbones.length === 1) { carbón } @else { carbones }
+              </span>
+            </header>
 
-      <span class="tag">
-        {{ detalle.totalCarbones }}
-        carbones
-      </span>
+            <div>
+              @if (item.carbones.length === 0) {
+                <div class="p-6 text-center text-on-surface-variant">
+                  Este anillo no tiene carbones asociados.
+                </div>
+              } @else {
+                @for (carbon of item.carbones; track carbon.carbon.id) {
+                  <div class="w-full rounded-lg border border-outline/50 p-6 mb-4 last:mb-0">
+                    <div class="flex flex-col items-start justify-between">
+                      <h4 class="text-3xl font-semibold">
+                        {{ carbon.carbon.identificador }}
+                      </h4>
 
-      <span class="tag">
-        {{ detalle.carbonesConTelemetria }}
-        con telemetría
-      </span>
+                      @if (carbon.sensor?.id_hardware) {
+                        <span class="text-lg text-on-surface-variant">
+                          Sensor:
+                          {{ carbon.sensor?.id_hardware }}
+                        </span>
+                      } @else {
+                        <span class="text-lg text-on-surface-variant"> Sin sensor asociado </span>
+                      }
+                    </div>
+
+                    <div class="mt-6">
+                      <p class="text-xl mb-2">Desgaste</p>
+
+                      @if (carbon.porcentajeDesgaste !== null) {
+                        <app-status-progress
+                          [value]="carbon.porcentajeDesgaste"
+                          [state]="carbon.estadoDesgaste"
+                          [label]="'Desgaste del carbón ' + carbon.carbon.identificador"
+                          [mode]="'legend'"
+                          size="large"
+                          [data]="
+                            'Tamaño inicial: ' +
+                            (carbon.ultimaTelemetria?.longitud | number: '1.1-2') +
+                            ' mm'
+                          "
+                        />
+                      } @else {
+                        —
+                      }
+                    </div>
+
+                    <div class="mt-8 grid grid-cols-[1fr_1.4fr] items-end gap-8">
+                      <div>
+                        <p class="text-xl">Temp</p>
+                        <p class="mt-1 text-3xl font-bold">16°C</p>
+                      </div>
+
+                      <div>
+                        <p class="text-xl">Batería</p>
+
+                        @if (
+                          carbon.ultimaTelemetria?.porcentaje_bateria !== null &&
+                          carbon.ultimaTelemetria?.porcentaje_bateria !== undefined
+                        ) {
+                          <app-status-progress
+                            [value]="carbon.ultimaTelemetria?.porcentaje_bateria ?? null"
+                            [state]="carbon.estadoBateria"
+                            [label]="'Batería del carbón ' + carbon.carbon.identificador"
+                            [mode]="'horizontal'"
+                          />
+                        } @else {
+                          —
+                        }
+                      </div>
+                    </div>
+                  </div>
+                }
+              }
+            </div>
+          </div>
+        }
+      </div>
     </section>
 
     <!-- Anillos -->
-    <section class="flex flex-col gap-4">
-      <div>
-        <h2 class="text-xl font-semibold">Anillos y carbones</h2>
-
-        <p class="mt-1 text-sm text-on-surface-variant">
-          La tabla muestra la última lectura disponible de cada carbón.
-        </p>
-      </div>
-
+    <!-- <section class="flex flex-col gap-4">
       <mat-accordion multi>
         @for (item of detalle.anillos; track item.anillo.id; let index = $index) {
           <mat-expansion-panel [expanded]="index === 0">
@@ -179,29 +234,30 @@
                   [dataSource]="item.carbones"
                   class="table-default w-full min-w-[1000px]"
                 >
-                  <!-- Carbón -->
                   <ng-container matColumnDef="carbon">
                     <th mat-header-cell *matHeaderCellDef>Carbón</th>
 
-                    <td mat-cell *matCellDef="let item">
+                    <td
+                      mat-cell
+                      *matCellDef="let item"
+                      [class.text-outline]="!item.ultimaTelemetria"
+                    >
                       <div class="flex flex-col">
                         <strong>
                           {{ item.carbon.identificador }}
                         </strong>
-
-                        <span class="text-xs text-on-surface-variant">
-                          {{ item.cantidadLecturas }}
-                          lecturas
-                        </span>
                       </div>
                     </td>
                   </ng-container>
 
-                  <!-- Longitud -->
                   <ng-container matColumnDef="longitud">
                     <th mat-header-cell *matHeaderCellDef>Longitud actual</th>
 
-                    <td mat-cell *matCellDef="let item">
+                    <td
+                      mat-cell
+                      *matCellDef="let item"
+                      [class.text-outline]="!item.ultimaTelemetria"
+                    >
                       @if (
                         item.ultimaTelemetria?.longitud !== null &&
                         item.ultimaTelemetria?.longitud !== undefined
@@ -214,28 +270,35 @@
                     </td>
                   </ng-container>
 
-                  <!-- Desgaste -->
                   <ng-container matColumnDef="desgaste">
-                    <th mat-header-cell *matHeaderCellDef>Desgaste actual</th>
+                    <th mat-header-cell *matHeaderCellDef>Desgaste</th>
 
-                    <td mat-cell *matCellDef="let item">
-                      @if (
-                        item.ultimaTelemetria?.desgaste !== null &&
-                        item.ultimaTelemetria?.desgaste !== undefined
-                      ) {
-                        {{ item.ultimaTelemetria.desgaste | number: '1.1-2' }}
-                        mm
+                    <td
+                      mat-cell
+                      *matCellDef="let item"
+                      [class.text-outline]="item.porcentajeDesgaste === null"
+                    >
+                      @if (item.porcentajeDesgaste !== null) {
+                        <app-status-progress
+                          [value]="item.porcentajeDesgaste"
+                          [state]="item.estadoDesgaste"
+                          [label]="'Desgaste del carbón ' + item.carbon.identificador"
+                          [compact]="true"
+                        />
                       } @else {
                         —
                       }
                     </td>
                   </ng-container>
 
-                  <!-- Temperatura -->
                   <ng-container matColumnDef="temperatura">
                     <th mat-header-cell *matHeaderCellDef>Temperatura</th>
 
-                    <td mat-cell *matCellDef="let item">
+                    <td
+                      mat-cell
+                      *matCellDef="let item"
+                      [class.text-outline]="!item.ultimaTelemetria"
+                    >
                       @if (
                         item.ultimaTelemetria?.temperatura !== null &&
                         item.ultimaTelemetria?.temperatura !== undefined
@@ -248,32 +311,42 @@
                     </td>
                   </ng-container>
 
-                  <!-- Batería -->
                   <ng-container matColumnDef="bateria">
                     <th mat-header-cell *matHeaderCellDef>Batería</th>
 
-                    <td mat-cell *matCellDef="let item">
+                    <td
+                      mat-cell
+                      *matCellDef="let item"
+                      [class.text-outline]="!item.ultimaTelemetria"
+                    >
                       @if (
                         item.ultimaTelemetria?.porcentaje_bateria !== null &&
                         item.ultimaTelemetria?.porcentaje_bateria !== undefined
                       ) {
-                        {{ item.ultimaTelemetria.porcentaje_bateria | number: '1.0-1' }}
-                        %
+                        <app-status-progress
+                          [value]="item.ultimaTelemetria?.porcentaje_bateria ?? null"
+                          [state]="item.estadoBateria"
+                          [label]="'Batería del carbón ' + item.carbon.identificador"
+                          [compact]="true"
+                        />
                       } @else {
                         —
                       }
                     </td>
                   </ng-container>
 
-                  <!-- Fecha -->
                   <ng-container matColumnDef="fecha">
                     <th mat-header-cell *matHeaderCellDef>Última medición</th>
 
-                    <td mat-cell *matCellDef="let item">
+                    <td
+                      mat-cell
+                      *matCellDef="let item"
+                      [class.text-outline]="!item.ultimaTelemetria"
+                    >
                       @if (item.ultimaTelemetria) {
                         {{ item.ultimaTelemetria.fecha_medicion | date: 'dd/MM/yyyy HH:mm:ss' }}
                       } @else {
-                        Sin telemetría
+                        Sin datos
                       }
                     </td>
                   </ng-container>
@@ -284,7 +357,6 @@
                 </table>
               </div>
 
-              <!-- Parámetros configurados -->
               <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 mt-5">
                 @for (item of item.carbones; track item.carbon.id) {
                   <article class="rounded-lg border border-outline/20 p-4">
@@ -314,6 +386,20 @@
                         mm
                       </dd>
 
+                      <dt class="font-medium">Longitud actual</dt>
+
+                      <dd class="font-medium">
+                        @if (
+                          item.ultimaTelemetria?.longitud !== null &&
+                          item.ultimaTelemetria?.longitud !== undefined
+                        ) {
+                          {{ item.ultimaTelemetria!.longitud | number: '1.1-2' }}
+                          mm
+                        } @else {
+                          —
+                        }
+                      </dd>
+
                       <dt class="text-on-surface-variant">Batería aviso</dt>
 
                       <dd>
@@ -327,6 +413,20 @@
                         {{ item.carbon.nivel_bateria_minimo }}
                         %
                       </dd>
+
+                      <dt class="font-medium">Batería actual</dt>
+
+                      <dd class="font-medium">
+                        @if (
+                          item.ultimaTelemetria?.porcentaje_bateria !== null &&
+                          item.ultimaTelemetria?.porcentaje_bateria !== undefined
+                        ) {
+                          {{ item.ultimaTelemetria!.porcentaje_bateria | number: '1.0-1' }}
+                          %
+                        } @else {
+                          —
+                        }
+                      </dd>
                     </dl>
                   </article>
                 }
@@ -335,15 +435,15 @@
           </mat-expansion-panel>
         }
       </mat-accordion>
-    </section>
+    </section> -->
 
     <!-- Datos crudos provisionales -->
-    <details class="rounded-lg border border-outline/20 bg-surface-container p-4">
-      <summary class="cursor-pointer font-semibold">Ver respuesta procesada</summary>
+    <!-- <details class="rounded-lg border border-outline/20 bg-surface-container p-4">
+    <summary class="cursor-pointer font-semibold">Ver respuesta procesada</summary>
 
-      <pre class="overflow-auto mt-4 p-4 rounded-md bg-surface-container-high text-xs">{{
+    <pre class="overflow-auto mt-4 p-4 rounded-md bg-surface-container-high text-xs">{{
         detalle | json
       }}</pre>
-    </details>
+  </details> -->
   }
 </div>

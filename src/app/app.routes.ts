@@ -19,12 +19,18 @@ export const routes: Routes = [
       },
       {
         path: 'dashboard',
+        data: {
+          breadcrumb: 'Inicio',
+        },
         loadChildren: () =>
           import('./features/dashboard/dashboard.routes')
             .then(m => m.DASHBOARD_ROUTES)
       },
       {
         path: 'settings',
+        data: {
+          breadcrumb: 'Configuración',
+        },
         loadChildren: () =>
           import('./features/settings/settings.routes')
             .then(m => m.SETTINGS_ROUTES)

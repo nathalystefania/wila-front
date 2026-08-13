@@ -64,13 +64,30 @@ export class EmpresaStepComponent implements OnInit, OnDestroy, OnboardingStep {
 
     this.loadEmpresas();
 
-    this.empresaSub = this.form.get('empresaId')?.valueChanges.subscribe(
-      empresaId => {
-        this.updateDivisionesByEmpresa(
-          empresaId ?? ''
-        );
-      }
-    );
+    this.empresaSub =
+      this.form
+        .get('empresaId')
+        ?.valueChanges
+        .subscribe(empresaId => {
+          this.form
+            .get('divisionId')
+            ?.setValue(
+              '',
+              {
+                emitEvent: false,
+              }
+            );
+
+          this.state.setEmpresaDraft({
+            empresaId:
+              (empresaId ?? '').trim(),
+            divisionId: null,
+          });
+
+          this.updateDivisionesByEmpresa(
+            empresaId ?? ''
+          );
+        });
 
     this.sub = this.form.valueChanges.subscribe(v => {
       const empresaId = (v.empresaId ?? '').trim();
@@ -142,15 +159,22 @@ export class EmpresaStepComponent implements OnInit, OnDestroy, OnboardingStep {
           ) {
             divisionControl?.setValue(
               '',
-              { emitEvent: false }
+              {
+                emitEvent: false,
+              }
             );
+
+            this.state.setEmpresaDraft({
+              empresaId,
+              divisionId: null,
+            });
           }
         },
         error: () => {
           this.divisiones = [];
         }
       });
-    
+
     this.divisionesSub?.add(() => {
       this.loadingDivisiones = false;
       this.stateChange.emit();

@@ -89,35 +89,142 @@ export class CatalogoService {
     empresaId: string,
     soloPendientes = false,
   ): Observable<DivisionApi[]> {
-    if (!empresaId) return of([]);
+    if (!empresaId) {
+      return of([]);
+    }
 
     return forkJoin({
-      divisiones: soloPendientes ? this.getDivisionesCompletas() : this.getDivisiones(),
-      areas: this.getAreas(),
-      equipos: this.getEquipos(),
-      motores: this.getMotores(),
+      divisiones:
+        this.getDivisiones(),
+
+      divisionesCompletas:
+        soloPendientes
+          ? this.getDivisionesCompletas()
+          : of([] as DivisionApi[]),
+
+      areas:
+        this.getAreas(),
+
+      equipos:
+        this.getEquipos(),
+
+      motores:
+        this.getMotores(),
     }).pipe(
-      map(({ divisiones, areas, equipos, motores }) => {
-        const areasById = new Map(areas.map((a) => [a.id, a]));
+      map(({
+        divisiones,
+        divisionesCompletas,
+        areas,
+        equipos,
+        motores,
+      }) => {
+        const areasById =
+          new Map(
+            areas.map(area => [
+              area.id,
+              area,
+            ])
+          );
 
-        const equiposById = new Map(equipos.map((e) => [e.id, e]));
+        const equiposById =
+          new Map(
+            equipos.map(equipo => [
+              equipo.id,
+              equipo,
+            ])
+          );
 
-        const divisionesConMotores = new Set<string>();
+        /*
+         * Divisiones que efectivamente tienen
+         * motores disponibles.
+         */
+        const divisionesConMotores =
+          new Set<string>();
 
-        motores.forEach((motor) => {
-          const equipo = equiposById.get(motor.equipo_id);
-          if (!equipo) return;
+        for (const motor of motores) {
+          const equipo =
+            equiposById.get(
+              motor.equipo_id
+            );
 
-          const area = areasById.get(equipo.area_id);
-          if (!area) return;
+          if (!equipo) {
+            continue;
+          }
 
-          divisionesConMotores.add(area.division_id);
-        });
+          const area =
+            areasById.get(
+              equipo.area_id
+            );
+
+          if (!area) {
+            continue;
+          }
+
+          divisionesConMotores.add(
+            area.division_id
+          );
+        }
+
+        /*
+         * IDs que backend considera ya
+         * completamente configurados.
+         */
+        const idsDivisionesCompletas =
+          new Set(
+            divisionesCompletas.map(
+              division =>
+                division.id
+            )
+          );
 
         return divisiones
-          .filter((d) => d.empresa_id === empresaId && divisionesConMotores.has(d.id))
-          .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
-      }),
+          .filter(division => {
+            /*
+             * Primero: debe pertenecer a
+             * la empresa elegida.
+             */
+            if (
+              division.empresa_id !==
+              empresaId
+            ) {
+              return false;
+            }
+
+            /*
+             * Segundo: debe tener motores.
+             */
+            if (
+              !divisionesConMotores.has(
+                division.id
+              )
+            ) {
+              return false;
+            }
+
+            /*
+             * Tercero:
+             * si estamos en onboarding,
+             * excluimos las completas.
+             */
+            if (
+              soloPendientes &&
+              idsDivisionesCompletas.has(
+                division.id
+              )
+            ) {
+              return false;
+            }
+
+            return true;
+          })
+          .sort(
+            (a, b) =>
+              a.nombre.localeCompare(
+                b.nombre,
+                'es'
+              )
+          );
+      })
     );
   }
 
@@ -300,7 +407,14 @@ export class CatalogoService {
   }
 
   getAlarmasActivas(): Observable<AlarmaApi[]> {
-    return this.api.get<AlarmaApi[]>('/api/alarmas?estado=Activa');
+    return this.api.get<AlarmaApi[]>('/api/alarmas?estado=Activa').pipe(
+      map((alarmas) =>
+        alarmas.map((alarma) => ({
+          ...alarma,
+          severidad: this.normalizarSeveridad(alarma.severidad),
+        })),
+      ),
+    );
   }
 
   private normalizarSeveridad(severidad: string): 'Critica' | 'Advertencia' {

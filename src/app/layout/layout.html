@@ -1,72 +1,95 @@
 <div class="flex">
-    <div
-        class="sidebar flex flex-col h-screen w-1/8 bg-sys-surface-dim border-r-1 border-outline/30">
-        <div class="p-4">
-            <img src="../assets/images/logo-wila.svg" alt="Logo Wila" class="logo-wila h-8 mx-auto" />
-            <img src="assets/images/isotipo-wila-light.svg" alt="Logo Wila" class="isotipo-wila block mx-auto w-10" />
-        </div>
-        <ul class="sidebar--menu flex-1">
-            <li class="company-selector-container">
-                <app-company-selector />
-            </li>
-            <li>
-                <a routerLink="/dashboard" routerLinkActive="active" class="flex items-center gap-2">
-                    <span class="material-symbols-outlined">dashboard</span>
-                    <span>Dashboard</span>
-                </a>
-            </li>
-            <!-- <li>
+  <div class="sidebar flex flex-col h-screen w-1/8 bg-sys-surface-dim border-r-1 border-outline/30">
+    <div class="p-4">
+      <a href="/">
+        <img src="../assets/images/logo-wila.svg" alt="Logo Wila" class="logo-wila h-8 mx-auto" />
+        <img
+          src="assets/images/isotipo-wila-light.svg"
+          alt="Logo Wila"
+          class="isotipo-wila block mx-auto w-10"
+        />
+      </a>
+    </div>
+    <ul class="sidebar--menu flex-1">
+      <li class="company-selector-container">
+        <app-company-selector />
+      </li>
+      <li>
+        <a routerLink="/dashboard" routerLinkActive="active" class="flex items-center gap-2">
+          <span class="material-symbols-outlined">dashboard</span>
+          <span>Dashboard</span>
+        </a>
+      </li>
+      <!-- <li>
                 <a routerLink="/settings" routerLinkActive="active" class="flex items-center gap-2">
                     <span class="material-symbols-outlined">build_circle</span>
                     <span>Configuración</span>
                 </a>
             </li> -->
-            <li>
-                <a routerLink="/onboarding" routerLinkActive="active" class="flex items-center gap-2">
-                    <span class="material-symbols-outlined">rocket_launch</span>
-                    <span>Puesta en marcha</span>
-                </a>
-            </li>
-        </ul>
+      <li>
+        <a routerLink="/onboarding" routerLinkActive="active" class="flex items-center gap-2">
+          <span class="material-symbols-outlined">rocket_launch</span>
+          <span>Puesta en marcha</span>
+        </a>
+      </li>
+    </ul>
 
-        <ul class="sidebar--menu border-t-1 border-outline/30">
-            <li>
-                <a href="javascript:void(0)" (click)="collapseSidebar($event)">
-                    <span class="material-symbols-outlined">{{ isCollapsed ? 'right_panel_close' : 'left_panel_close' }}</span>
-                    <span>Colapsar</span>
-                </a>
-            </li>
-        </ul>
-    </div>
+    <ul class="sidebar--menu border-t-1 border-outline/30">
+      <li>
+        <a href="javascript:void(0)" (click)="collapseSidebar($event)">
+          <span class="material-symbols-outlined">{{
+            isCollapsed ? 'right_panel_close' : 'left_panel_close'
+          }}</span>
+          <span>Colapsar</span>
+        </a>
+      </li>
+    </ul>
+  </div>
 
-    <div class="px-8 py-4 flex flex-col flex-1 ml-auto min-h-screen relative layout-wide" [class.collapsed]="isCollapsed">
-        <header class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-4">
-            <!-- breadcrumbs -->
-            <div class="flex items-center gap-2">
-                <h1 class="font-semibold text-on-background">Dashboard</h1>
-                <span class="material-symbols-outlined text-on-background/50">chevron_right</span>
-                <h2 class="font-semibold text-on-background/50">Mediciones</h2>
-            </div>
-            
-            <div class="flex flex-wrap items-center gap-4 text-sm font-semibold">
-                <div
-                    class="flex items-center gap-2 text-on-background bg-background px-3 py-1.5 rounded-lg border border-white/10">
-                    <span class="material-symbols-outlined">timelapse</span>
-                    <span>Próx. medición</span>
-                    <div class="w-16 bg-on-background rounded-full h-1.5 overflow-hidden">
-                        <div id="SPF" class="bg-primary h-1.5 rounded-full transition-all duration-300"
-                            style="width: 0%">
-                        </div>
-                    </div>
-                    <span id="SCD" class="font-mono text-on-background">--:--</span>
-                    <button extended matButton="tonal">
-                        <mat-icon fontSet="material-symbols-outlined">pause_circle</mat-icon>
-                        Pausar
-                    </button>
-                </div>
-            </div>
-        </header>
+  <div
+    class="px-8 py-6 flex flex-col flex-1 ml-auto min-h-screen relative layout-wide"
+    [class.collapsed]="isCollapsed"
+  >
+    <header class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6">
+      <!-- breadcrumbs -->
+      <nav class="flex items-center gap-2" aria-label="Breadcrumb">
+        @for (item of breadcrumbs(); track item.url; let last = $last) {
+          @if (!last) {
+            <a [routerLink]="item.url" class="font-semibold text-on-background hover:underline">
+              {{ item.label }}
+            </a>
 
-        <router-outlet></router-outlet>
-    </div>
+            <span class="material-symbols-outlined text-on-background/50" aria-hidden="true">
+              chevron_right
+            </span>
+          } @else {
+            <span class="font-semibold text-on-background/50" aria-current="page">
+              @if (item.label === 'Detalle de motor' && breadcrumbDetalle()) {
+                {{ breadcrumbDetalle() }}
+              } @else {
+                {{ item.label }}
+              }
+            </span>
+          }
+        }
+      </nav>
+
+      <div class="flex items-center gap-2 text-sm text-on-background/70">
+        <span class="material-symbols-outlined text-base"> schedule </span>
+
+        @if (ultimaMedicion()) {
+          <span>
+            Última medición:
+            <strong class="text-on-background">
+              {{ ultimaMedicion() | date: 'dd/MM/yyyy HH:mm:ss' }}
+            </strong>
+          </span>
+        } @else {
+          <span> Sin mediciones disponibles </span>
+        }
+      </div>
+    </header>
+
+    <router-outlet></router-outlet>
+  </div>
 </div>
