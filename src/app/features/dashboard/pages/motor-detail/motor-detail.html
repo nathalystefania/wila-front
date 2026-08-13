@@ -167,13 +167,21 @@
                           size="large"
                           [data]="
                             'Tamaño inicial: ' +
-                            (carbon.ultimaTelemetria?.longitud | number: '1.1-2') +
+                            (carbon.carbon.largo_inicial | number: '1.1-2') +
                             ' mm'
                           "
                         />
                       } @else {
                         —
                       }
+                      <span class="text-xs text-on-surface-variant">
+    Actual:
+    {{
+      carbon.ultimaTelemetria?.longitud
+        | number:'1.0-2'
+    }}
+    mm
+  </span>
                     </div>
 
                     <div class="mt-8 grid grid-cols-[1fr_1.4fr] items-end gap-8">

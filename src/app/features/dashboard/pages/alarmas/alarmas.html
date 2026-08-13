@@ -1,18 +1,20 @@
 <section class="flex flex-col gap-6">
-    <header class="flex items-center justify-between gap-4">
-        <div>
-            <h1 class="text-2xl font-bold">
-                Alarmas
-            </h1>
+    <header class="flex flex-wrap items-start justify-between gap-4">
+        <div class="flex items-start gap-3">
+            <button mat-icon-button type="button" aria-label="Volver al dashboard" (click)="volverDashboard()">
+                <span class="material-symbols-outlined"> arrow_back </span>
+            </button>
 
-            <p class="text-on-surface-variant">
-                Historial de alarmas de la empresa seleccionada
-            </p>
+            <div>
+                <p class="text-sm text-on-surface-variant">
+                    Empresa
+                </p>
+
+                <h1 class="text-2xl font-semibold">
+                    Alarmas
+                </h1>
+            </div>
         </div>
-
-        <button matButton="outlined" type="button" (click)="volverDashboard()">
-            Volver al dashboard
-        </button>
     </header>
 
     @if (loading) {

@@ -146,7 +146,7 @@ export class RingWearChart {
             label: 'Desgaste promedio',
             data: values,
             backgroundColor: colors,
-            borderRadius: 6,
+            borderRadius: 0,
             borderSkipped: false,
             maxBarThickness: 72,
           },

@@ -256,7 +256,8 @@ export class MotorDetailService {
     sensor: SensorApi | null,
     ultimaTelemetria: TelemetriaApi | null,
   ): CarbonTelemetriaDetalle {
-    const desgasteActual = this.calcularDesgasteCarbon(carbon, ultimaTelemetria?.longitud);
+    // const desgasteActual = this.calcularDesgasteCarbon(carbon, ultimaTelemetria?.longitud);
+    const desgasteActual = this.calcularDesgasteCarbon(carbon, ultimaTelemetria?.desgaste);
 
     const estadoBateria = this.obtenerEstadoBateria(carbon, ultimaTelemetria?.porcentaje_bateria);
 
@@ -431,9 +432,59 @@ export class MotorDetailService {
     return String(valor ?? '').trim();
   }
 
+  // private calcularDesgasteCarbon(
+  //   carbon: CarbonResponse,
+  //   desgasteActual: ValorNumerico,
+  // ): DesgasteCalculado | null {
+  //   const largoInicial = this.convertirNumero(carbon.largo_inicial);
+
+  //   const largoPrealarma = this.convertirNumero(carbon.largo_prealarma);
+
+  //   const largoAlarma = this.convertirNumero(carbon.largo_alarma);
+
+  //   const desgaste = this.convertirNumero(desgasteActual);
+
+  //   if (largoInicial === null || largoInicial <= 0 || desgaste === null) {
+  //     return null;
+  //   }
+
+  //   /*
+  //    * Una medición negativa significa que
+  //    * la lectura actual supera el largo inicial.
+  //    *
+  //    * Para desgaste físico mostramos 0,
+  //    * pero no perdemos el valor original
+  //    * entregado por telemetría.
+  //    */
+  //   const porcentaje = this.limitarPorcentaje((desgaste / largoInicial) * 100);
+
+  //   const porcentajeAdvertencia =
+  //     largoPrealarma === null
+  //       ? null
+  //       : this.limitarPorcentaje(((largoInicial - largoPrealarma) / largoInicial) * 100);
+
+  //   const porcentajeCritico =
+  //     largoAlarma === null
+  //       ? null
+  //       : this.limitarPorcentaje(((largoInicial - largoAlarma) / largoInicial) * 100);
+
+  //   let estado: DesgasteCalculado['estado'] = 'normal';
+
+  //   if (porcentajeCritico !== null && porcentaje >= porcentajeCritico) {
+  //     estado = 'critico';
+  //   } else if (porcentajeAdvertencia !== null && porcentaje >= porcentajeAdvertencia) {
+  //     estado = 'advertencia';
+  //   }
+
+  //   return {
+  //     porcentaje,
+  //     estado,
+  //   };
+  // }
+
   private calcularDesgasteCarbon(
     carbon: CarbonResponse,
-    longitudActual: ValorNumerico,
+    desgasteActual: ValorNumerico,
   ): DesgasteCalculado | null {
     const largoInicial = this.convertirNumero(carbon.largo_inicial);
 
@@ -441,14 +492,37 @@ export class MotorDetailService {
 
     const largoAlarma = this.convertirNumero(carbon.largo_alarma);
 
-    const longitud = this.convertirNumero(longitudActual);
+    // const desgaste = this.convertirNumero(desgasteActual);
+    const desgasteOriginal = this.convertirNumero(desgasteActual);
 
-    if (largoInicial === null || largoInicial <= 0 || longitud === null) {
+    if (largoInicial === null || largoInicial <= 0 || desgasteOriginal === null) {
       return null;
     }
 
-    const porcentaje = this.limitarPorcentaje(((largoInicial - longitud) / largoInicial) * 100);
+    /*
+     * PARCHE TEMPORAL:
+     * el simulador/backend está entregando
+     * desgaste con signo negativo.
+     */
+    const desgaste = Math.abs(desgasteOriginal);
 
+    if (largoInicial === null || largoInicial <= 0 || desgaste === null) {
+      return null;
+    }
+
+    /*
+     * PARCHE TEMPORAL:
+     * mientras backend no tenga la fórmula definitiva,
+     * usamos telemetria.desgaste como mm desgastados
+     * respecto al largo inicial del carbón.
+     */
+    // const porcentaje = this.limitarPorcentaje((Math.abs(desgaste) / largoInicial) * 100);
+    const porcentaje = this.limitarPorcentaje((desgaste / largoInicial) * 100);
+
+    /*
+     * Convertimos los umbrales de largo
+     * a porcentaje de desgaste.
+     */
     const porcentajeAdvertencia =
       largoPrealarma === null
         ? null
