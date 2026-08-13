@@ -35,7 +35,7 @@
   </section>
   } @else if (detalle) {
 
-  <section class="motor-detail grid grid-cols-1 sm:grid-cols-4 lg:grid-cols-7 gap-4">
+  <section class="motor-detail grid auto-cols-max grid-flow-col gap-4">
     <!-- Resumen calculado -->
     <article class="rounded-lg border border-outline/20 bg-surface-container p-5">
       <span class="text-sm text-on-surface-variant"> Promedio mm </span>
@@ -94,7 +94,7 @@
 
     <!-- Conteos -->
     <!-- <section class="flex flex-wrap gap-3"> -->
-    <article class="rounded-lg border border-outline/20 bg-surface-container p-5">
+    <!-- <article class="rounded-lg border border-outline/20 bg-surface-container p-5">
       <span class="text-sm text-on-surface-variant"> Anillos </span>
       <strong class="block mt-2 text-2xl">{{ detalle.totalAnillos }}</strong>
     </article>
@@ -102,7 +102,7 @@
     <article class="rounded-lg border border-outline/20 bg-surface-container p-5">
       <span class="text-sm text-on-surface-variant"> Carbones </span>
       <strong class="block mt-2 text-2xl">{{ detalle.totalCarbones }}</strong>
-    </article>
+    </article> -->
 
     <article class="rounded-lg border border-outline/20 bg-surface-container p-5">
       <span class="text-sm text-on-surface-variant"> Asignados </span>
@@ -111,32 +111,91 @@
   </section>
 
   <section>
-    <div class="flex gap-4">
+    <div class="grid gap-4 grid-cols-[repeat(auto-fit,minmax(min(500px,100%),1fr))]">
       @for (item of detalle.anillos; track item.anillo.id; let index = $index) {
-        <div class="flex-auto border">
-          <header>
-            {{ item.anillo.identificador }}
-            {{ item.carbones.length }} @if (item.carbones.length === 1) { carbón } @else { carbones }
-          </header>
-          
-          <div>
-            @if (item.carbones.length === 0) {
-            <div class="p-6 text-center text-on-surface-variant">
-              Este anillo no tiene carbones asociados.
-            </div>
-            } @else {
-              @for(carbon of item.carbones; track carbon.carbon.id) {
-              <div class="flex items-center justify-between gap-4 p-4 border-b last:border-b-0">
-                <div class="flex flex-col">
-                  <strong>
-                    {{ carbon.carbon.identificador }}
-                  </strong>
-                </div>
-              </div>
-              }
-            }
+      <div class="border p-4">
+        <header>
+          {{ item.anillo.identificador }}
+          {{ item.carbones.length }} @if (item.carbones.length === 1) { carbón } @else { carbones }
+        </header>
+
+        <div>
+          @if (item.carbones.length === 0) {
+          <div class="p-6 text-center text-on-surface-variant">
+            Este anillo no tiene carbones asociados.
           </div>
+          } @else {
+          @for(carbon of item.carbones; track carbon.carbon.id) {
+
+
+          <div class="w-full rounded-2xl border p-8">
+
+            <div class="flex items-center justify-between">
+              <h3 class="text-3xl font-bold">
+                {{ carbon.carbon.identificador }}
+              </h3>
+
+              <span class="h-6 w-6 rounded-full"></span>
+            </div>
+
+            <div class="mt-6">
+              @if (carbon.porcentajeDesgaste !== null) {
+              <app-status-progress 
+                [value]="carbon.porcentajeDesgaste" 
+                [state]="carbon.estadoDesgaste"
+                [label]="'Desgaste del carbón ' + carbon.carbon.identificador" 
+                [mode]="'full'"
+                [data]="(carbon.ultimaTelemetria?.longitud | number: '1.1-2') + ' mm'" />
+              } @else {
+              —
+              }
+            </div>
+
+            <div class="mt-8 grid grid-cols-[1fr_1.4fr] items-end gap-8">
+
+              <div>
+                <p class="text-2xl">
+                  Temp
+                </p>
+
+                <p class="mt-1 text-3xl font-bold">
+                  16°C
+                </p>
+              </div>
+
+              <div>
+                @if (
+                  carbon.ultimaTelemetria?.porcentaje_bateria !== null &&
+                  carbon.ultimaTelemetria?.porcentaje_bateria !== undefined
+                ) {
+                <app-status-progress 
+                  [value]="carbon.ultimaTelemetria?.porcentaje_bateria ?? null" 
+                  [state]="carbon.estadoBateria"
+                  [label]="'Batería del carbón ' + carbon.carbon.identificador" 
+                  [mode]="'full'" />
+                } @else {
+                —
+                }
+                <!-- <p class="text-2xl">
+                  Batería
+                </p>
+
+                <p class="mt-1 text-3xl font-bold">
+                  30.0%
+                </p>
+
+                <div class="mt-4 h-5 w-full rounded-full">
+                  <div class="h-full rounded-full" style="width: 30%"></div>
+                </div> -->
+              </div>
+
+            </div>
+
+          </div>
+          }
+          }
         </div>
+      </div>
       }
     </div>
   </section>

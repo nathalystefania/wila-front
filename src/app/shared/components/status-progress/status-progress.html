@@ -13,7 +13,7 @@
           {{ unit() }}
         </span>
 
-        @if (showStatus()) {
+        <!-- @if (showStatus()) {
           <span class="status-progress__status">
             @switch (state()) {
               @case ('critico') {
@@ -28,6 +28,12 @@
                 Normal
               }
             }
+          </span>
+        } -->
+        
+        @if (data()) {
+          <span class="status-progress__status">
+            {{ data() }}
           </span>
         }
       </div>
