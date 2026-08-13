@@ -1,0 +1,22 @@
+<section class="rounded-lg border border-outline/20 bg-surface-container p-5">
+  <header class="mb-5">
+    <h2 class="text-2xl font-semibold text-on-surface">Temperatura por anillo</h2>
+
+    <p class="mt-1 text-base text-on-surface-variant">
+      Comparación entre la temperatura promedio y máxima registrada en los carbones de cada anillo.
+    </p>
+  </header>
+
+  @if (hasData()) {
+    <div class="chart-container">
+      <canvas
+        #chartCanvas
+        aria-label="Gráfico de temperatura promedio y máxima por anillo"
+      ></canvas>
+    </div>
+  } @else {
+    <div class="flex items-center justify-center min-h-72 text-base text-on-surface-variant">
+      No hay datos de temperatura disponibles.
+    </div>
+  }
+</section>

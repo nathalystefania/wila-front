@@ -18,6 +18,8 @@ import { MotorDetalle } from '@models/catalogo.models';
 
 import { StatusProgress } from '@shared/components/status-progress/status-progress';
 import { BreadcrumbStateService } from '@core/state/breadcrumb-state.service';
+import { RingWearChart } from '../../components/ring-wear-chart/ring-wear-chart';
+import { RingTemperatureChart } from '../../components/ring-temperature-chart/ring-temperature-chart';
 
 @Component({
   selector: 'app-motor-detail',
@@ -28,6 +30,8 @@ import { BreadcrumbStateService } from '@core/state/breadcrumb-state.service';
     MatProgressSpinnerModule,
     MatTableModule,
     StatusProgress,
+    RingWearChart,
+    RingTemperatureChart,
   ],
   templateUrl: './motor-detail.html',
   styleUrl: './motor-detail.scss',
