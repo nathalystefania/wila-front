@@ -356,12 +356,15 @@ export class OnboardingComponent implements OnInit, AfterViewInit {
           );
         }
 
+        const empresa = this.empresaStep?.empresas.find(
+          empresa => empresa.id === empresaDraft.empresaId
+        );
+
         this.companyContext.setContext({
           empresaId: empresaDraft.empresaId,
-
-          // El dashboard será por empresa completa,
-          // no solamente por la división del onboarding.
           divisionId: null,
+          empresaNombre: empresa?.nombre ?? '',
+          divisionNombre: null,
         });
 
         await this.router.navigate([

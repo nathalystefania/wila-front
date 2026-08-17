@@ -7,7 +7,7 @@
 
             <div>
                 <p class="text-sm text-on-surface-variant">
-                    Empresa
+                    {{ empresaNombre() }}
                 </p>
 
                 <h1 class="text-2xl font-semibold">
@@ -17,67 +17,166 @@
         </div>
     </header>
 
+    <section class="flex flex-wrap items-center justify-between gap-4">
+        <mat-button-toggle-group 
+            [value]="filtroEstado" (change)="
+            cambiarFiltroEstado($event.value)"
+            appearance="legacy">
+            <mat-button-toggle value="all">
+                Todas
+            </mat-button-toggle>
+    
+            <mat-button-toggle value="Activa">
+                Activas
+            </mat-button-toggle>
+
+            <mat-button-toggle value="Reconocida">
+                Reconocidas
+            </mat-button-toggle>
+    
+            <mat-button-toggle value="Resuelta">
+                Resueltas
+            </mat-button-toggle>
+        </mat-button-toggle-group>
+
+        <div class="flex gap-4 items-center flex-wrap">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-64">
+                <mat-label>
+                    Ordenar por fecha
+                </mat-label>
+                <mat-select
+                    [value]="ordenFecha"
+                    (selectionChange)="cambiarOrdenFecha($event.value)">
+                    <mat-option value="desc">
+                        Más recientes
+                    </mat-option>
+                    <mat-option value="asc">
+                        Más antiguas
+                    </mat-option>
+                </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-64">
+                <mat-label>Motor</mat-label>
+                <mat-select
+                    [value]="motorSeleccionado"
+                    (selectionChange)="cambiarFiltroMotor($event.value)">
+                    <mat-option value="all">
+                        Todos los motores
+                    </mat-option>
+                    @for (motor of motoresDisponibles; track motor.id) {
+                        <mat-option [value]="motor.id">
+                            {{ motor.nombre || motor.codigo }}
+                        </mat-option>
+                    }
+                </mat-select>
+            </mat-form-field>
+        </div>
+    </section>
+
     @if (loading) {
-    <div class="flex justify-center py-12">
-        <mat-spinner diameter="36" />
-    </div>
+        <div class="flex justify-center py-12">
+            <mat-spinner diameter="36" />
+        </div>
     } @else if (error) {
-    <div class="py-12 text-center text-error">
-        {{ error }}
-    </div>
-    } @else if (
-    alarmas.length === 0
-    ) {
-    <div class="bg-surface-container rounded-lg p-8 text-center">
-        No hay alarmas registradas.
-    </div>
+        <div class="py-12 text-center text-error">
+            {{ error }}
+        </div>
+    } @else if (alarmas.length === 0) {
+        <div class="bg-surface-container rounded-lg p-8 text-center">
+            No hay alarmas que coincidan con los filtros seleccionados.
+        </div>
     } @else {
     <div class="flex flex-col gap-4">
-        @for (
-        alarma of alarmas;
-        track alarma.id
-        ) {
+        @for (alarma of alarmas; track alarma.id) {
         <article class="bg-surface-container rounded-lg border border-outline/20 border-l-[6px] p-5"
-            [class.border-l-state-critical]="
-            alarma.severidad === 'Critica'
-          " [class.border-l-state-warning]="
-            alarma.severidad === 'Advertencia'
-          ">
-            <div class="flex justify-between gap-4">
-                <div>
-                    <div class="flex gap-2 items-center flex-wrap">
-                        <span class="tag" [class.tag-critical]="
-                    alarma.severidad === 'Critica'
-                  " [class.tag-warning]="
-                    alarma.severidad === 'Advertencia'
-                  ">
-                            {{ alarma.severidad }}
+            [class.border-l-state-critical]="alarma.severidad === 'Critica'"
+            [class.border-l-state-warning]="alarma.severidad === 'Advertencia'">
+            <div class="flex flex-col gap-4">
+                <div class="flex gap-2 items-center justify-between flex-nowrap">
+                    <div class="flex gap-2 items-center">
+                        <span
+                            class="tag"
+                            [class.tag-critical]="alarma.severidad === 'Critica'"
+                            [class.tag-warning]="alarma.severidad === 'Advertencia'">
+                            @if(alarma.severidad === 'Critica') {
+                                P2
+                            } @else if (alarma.severidad === 'Advertencia') {
+                                P1
+                            }
                         </span>
-
-                        <span class="tag">
-                            {{ alarma.estado }}
-                        </span>
-
-                        <span class="text-sm text-on-surface-variant">
-                            {{
-                            alarma.fecha_creacion
-                            | date:'dd/MM/yyyy HH:mm'
-                            }}
-                        </span>
+                        <h2 class="text-2xl font-semibold">
+                            {{ alarma.titulo }}
+                        </h2>
                     </div>
 
-                    <h2 class="text-lg font-bold mt-3">
-                        {{ alarma.titulo }}
-                    </h2>
 
-                    <p class="text-on-surface-variant mt-1">
-                        {{ alarma.descripcion }}
-                    </p>
+                    <div class="flex flex-col items-end gap-1">
+                        <span class="text-lg text-on-surface-variant">
+                            Activada: <strong>{{ alarma.fecha_creacion | date:'HH:mm dd/MM/yyyy' }}</strong>
+                        </span>
+                        @if(alarma.estado !== null && alarma.estado !== 'Activa') {
+                            <span class="text-lg text-on-surface-variant">
+                                {{alarma.estado}} <strong>{{alarma.reconocida_en | date:'HH:mm dd/MM/yyyy'}}</strong>
+                            </span>
+                        } @else if(alarma.estado === 'Activa') {
+                            <span class="text-lg text-on-surface-variant uppercase font-semibold">
+                                {{alarma.estado}}
+                            </span>
+                        }
+                    </div>
                 </div>
+                
+                <div class="flex items-center justify-between gap-4">
+                    <div class="flex flex-col flex-wrap gap-x-6 gap-y-2 text-lg">
+                        <div class="flex flex-row gap-4">
+                            <div>
+                                <span class="text-on-surface-variant">Anillo: </span>
+                                <strong>{{ alarma.anilloIdentificador ?? '—' }}</strong>
+                            </div>
+                            <div>
+                                <span class="text-on-surface-variant">Carbón: </span>
+                                <strong>{{ alarma.carbonIdentificador ?? '—' }}</strong>
+                            </div>
+                            <div>
+                                <span class="text-on-surface-variant">Sensor: </span>
+                                <strong>{{ alarma.sensorHardwareId ?? '—' }}</strong>
+                            </div>
+                        </div>
+                        
+                        <p class="text-on-surface-variant">
+                            {{ alarma.descripcion }}
+                        </p>
+                    </div>
 
-                <button matButton="outlined" type="button" (click)="verMotor(alarma)">
-                    Ver motor
-                </button>
+                    <div class="flex items-center gap-4">
+                        @if (!alarma.reconocida_por) {
+                            <button type="button" class="btn btn--primary" (click)="reconocerAlarma(alarma)">
+                                RECONOCER
+                            </button>
+                        }
+
+                        @if (alarma.estado !== 'Resuelta') {
+                            <button 
+                                class="btn btn--secondary"
+                                type="button"
+                                [attr.aria-label]="'Resolver alarma ' + alarma.titulo"
+                                (click)="resolverAlarma(alarma)">
+                                RESOLVER
+                            </button>
+                        } @else {
+                            <span class="flex items-center gap-1 text-sm text-on-surface-variant">
+                                <span class="material-symbols-outlined text-base">
+                                    check_circle
+                                </span>
+                                Resuelta
+                            </span>
+                        }
+                    
+                        <button matButton="outlined" type="button" class="btn whitespace-nowrap" (click)="verMotor(alarma)">
+                            VER MOTOR
+                        </button>
+                    </div>
+                </div>
             </div>
         </article>
         }

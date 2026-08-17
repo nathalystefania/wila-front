@@ -1,5 +1,4 @@
 @use '@angular/material' as mat;
-
 @use "tailwindcss";
 
 h1,
@@ -10,15 +9,6 @@ h5,
 h6 {
   font-family: "Work Sans", sans-serif;
 }
-
-// h1 {
-//   @apply text-3xl font-semibold;
-// }
-
-// h2 {
-//   @apply text-2xl font-medium;
-// }
-
 
 .btn-icon-right {
   display: inline-flex;
@@ -119,5 +109,34 @@ $icon-sizes: (
   &-warning {
     background-color: var(--color-warning);
     color: var(--mat-sys-on-secondary);
+  }
+}
+
+input[type='number'] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button {
+    appearance: none;
+    margin: 0;
+  }
+}
+
+.btn{
+  font-size: 1.2rem;
+  font-weight: 500;
+  padding: 8px;
+  text-align: center;
+  width: 100%;
+
+  &--primary {
+    background: var(--mat-sys-surface-variant);
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  &--secondary {
+    background: var(--mat-sys-primary-container);
+    color: var(--mat-sys-on-surface-variant);
   }
 }

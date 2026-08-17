@@ -1,8 +1,8 @@
 @use '@angular/material' as mat;
 
-@use './assets/themes/light.css' as light;
-@use './assets/themes/light-mc.css' as light-medium-contrast;
-@use './assets/themes/light-hc.css' as light-high-contrast;
+// @use './assets/themes/light.css' as light;
+@use './assets/themes/light-mc.css' as light;
+// @use './assets/themes/light-hc.css' as light-high-contrast;
 
 // @use './assets/themes/dark.css' as dark;
 // @use './assets/themes/dark-mc.css' as dark-medium-contrast;
@@ -61,9 +61,12 @@ html {
 
   --color-normal: #9aa3ad;
   --color-warning: #f2b705;
+  --color-on-warning: #4d2e00;
   --color-critical: #d25855;
+  --color-on-critical: #723600;
 
-  // @include mat.all-component-themes($app-theme);
+  --mat-sys-corner-full: 9999px;
+  
   @include mat.theme-overrides((corner-small: 4px,
       corner-medium: 6px,
       corner-large: 8px,
@@ -87,7 +90,8 @@ html {
       header-done-state-icon-background-color: var(--mat-sys-primary),
       header-done-state-icon-foreground-color: var(--mat-sys-on-primary),
     ));
-  @include mat.button-overrides((filled-container-shape: 4px,
+  @include mat.button-overrides((
+      filled-container-shape: 4px,
       filled-disabled-label-text-color: var(--color-disabled-textos),
       filled-disabled-container-color: var(--color-disabled-base),
       filled-label-text-size: 1rem,
@@ -95,6 +99,9 @@ html {
       outlined-outline-width: 2px,
       outlined-label-text-size: 1rem,
       protected-container-elevation-shadow: var(--mat-sys-level0),
+      protected-container-shape: 4px,
+      text-container-shape: 4px,
+      tonal-container-shape: 4px,
     ));
   @include mat.fab-overrides((extended-container-elevation-shadow: var(--mat-sys-level0),
       extended-container-height: 40px,
@@ -131,6 +138,16 @@ html {
   @include mat.paginator-overrides((
     container-text-size: 1.1rem,
   ));
+
+  .secondary-button {
+    @include mat.button-color($custom-dark-theme,
+      $color-variant: secondary);
+  }
+
+  .tertiary-button {
+    @include mat.button-color($custom-dark-theme,
+      $color-variant: tertiary);
+  }
 }
 
 // Apply light theme overrides
@@ -155,10 +172,6 @@ body {
   margin: 0;
   min-height: 100vh;
 }
-
-// .mat-mdc-text-field-wrapper{
-//   background: var(--color-cards);
-// }
 
 .mat-stepper-vertical-line::before {
   top: calc(8px - calc((var(--mat-stepper-header-height, 72px)) / 2)) !important;
@@ -231,7 +244,7 @@ body {
 }
 
 .cdk-overlay-dark-backdrop {
-  background: light-dark(rgba(0, 0, 0, 0.32), rgba(255, 255, 255, 0.32));
+  background: light-dark(rgba(0, 0, 0, 0.32), rgba(0, 0, 0, 0.7));
 }
 
 .mat-mdc-option.mdc-list-item {

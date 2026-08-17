@@ -14,6 +14,7 @@ import {
 } from '../models/catalogo.models';
 import { POLLING_CONFIG } from '@core/config/polling.config';
 import { TelemetryStateService } from '@core/state/telemetry-state.service';
+import { calcularDesgasteCarbon, obtenerEstadoDesgaste } from '@core/utils/wear-calculator.util';
 
 type ValorNumerico = number | string | null | undefined;
 
@@ -29,72 +30,6 @@ export class MotorDetailService {
   private readonly catalogoService = inject(CatalogoService);
   private readonly pollingConfig = inject(POLLING_CONFIG);
   private readonly telemetryState = inject(TelemetryStateService);
-
-  // getMotorDetalle(motorId: string): Observable<MotorDetalle | null> {
-  //   const motorIdNormalizado = this.normalizarId(motorId);
-
-  //   if (!motorIdNormalizado) {
-  //     return of(null);
-  //   }
-
-  //   /*
-  //    * Primera etapa:
-  //    * obtenemos el motor, sus anillos y sus carbones.
-  //    */
-  //   return forkJoin({
-  //     motores: this.catalogoService.getMotoresCatalogo(),
-
-  //     anillos: this.catalogoService.getAnillos(),
-
-  //     carbones: this.catalogoService.getCarbones(),
-  //   }).pipe(
-  //     switchMap(({ motores, anillos, carbones }) => {
-  //       const motor = motores.find((item) => this.normalizarId(item.id) === motorIdNormalizado);
-
-  //       if (!motor) {
-  //         return of(null);
-  //       }
-
-  //       const anillosMotor = anillos.filter(
-  //         (anillo) => this.normalizarId(anillo.motor_id) === motorIdNormalizado,
-  //       );
-
-  //       const idsAnillosMotor = new Set(anillosMotor.map((anillo) => this.normalizarId(anillo.id)));
-
-  //       const carbonesMotor = carbones.filter((carbon) =>
-  //         idsAnillosMotor.has(this.normalizarId(carbon.anillo_id)),
-  //       );
-
-  //       /*
-  //        * Si el motor no tiene carbones, devolvemos
-  //        * el detalle estructural sin realizar
-  //        * consultas innecesarias de telemetría.
-  //        */
-  //       if (carbonesMotor.length === 0) {
-  //         return of(this.construirMotorDetalle(motor, anillosMotor, []));
-  //       }
-
-  //       /*
-  //        * Segunda etapa:
-  //        * una consulta de telemetría por carbón.
-  //        *
-  //        * Esta versión es deliberadamente sencilla
-  //        * para validar el endpoint y los cálculos.
-  //        */
-  //       const consultasTelemetria = carbonesMotor.map((carbon) =>
-  //         this.catalogoService
-  //           .getTelemetriaByCarbon(carbon.id)
-  //           .pipe(map((telemetria) => this.construirCarbonDetalle(carbon, telemetria))),
-  //       );
-
-  //       return forkJoin(consultasTelemetria).pipe(
-  //         map((carbonesDetalle) =>
-  //           this.construirMotorDetalle(motor, anillosMotor, carbonesDetalle),
-  //         ),
-  //       );
-  //     }),
-  //   );
-  // }
 
   getMotorDetalleTiempoReal(
     motorId: string,
@@ -170,11 +105,13 @@ export class MotorDetailService {
           ),
 
           map((telemetria) => {
+            /* Estado global: última medición de todo el sistema. */
+            this.telemetryState.actualizarDesdeTelemetria(telemetria);
+
+            /* Después filtramos únicamente para construir el detalle del motor. */
             const telemetriaMotor = telemetria.filter((lectura) =>
               idsCarbonesMotor.has(this.normalizarId(lectura.carbon_id)),
             );
-
-            this.telemetryState.actualizarDesdeTelemetria(telemetriaMotor);
 
             const ultimaPorCarbon = this.obtenerUltimaLecturaPorCarbon(telemetriaMotor);
 
@@ -217,47 +154,13 @@ export class MotorDetailService {
     return resultado;
   }
 
-  // private construirCarbonDetalle(
-  //   carbon: CarbonResponse,
-  //   telemetria: TelemetriaApi[],
-  // ): CarbonTelemetriaDetalle {
-  //   const lecturasOrdenadas = [...telemetria].sort(
-  //     (a, b) => this.obtenerTimestamp(b.fecha_medicion) - this.obtenerTimestamp(a.fecha_medicion),
-  //   );
-
-  //   const ultimaTelemetria = lecturasOrdenadas[0] ?? null;
-
-  //   const desgasteActual = this.calcularDesgasteCarbon(carbon, ultimaTelemetria?.longitud);
-
-  //   const estadoBateria = this.obtenerEstadoBateria(carbon, ultimaTelemetria?.porcentaje_bateria);
-
-  //   return {
-  //     carbon,
-  //     ultimaTelemetria,
-
-  //     cantidadLecturas: telemetria.length,
-
-  //     promedioLongitud: this.calcularPromedio(telemetria.map((lectura) => lectura.longitud)),
-
-  //     porcentajeDesgaste: desgasteActual?.porcentaje ?? null,
-
-  //     estadoDesgaste: desgasteActual?.estado ?? 'sin-datos',
-
-  //     temperaturaMaxima: this.calcularMaximo(telemetria.map((lectura) => lectura.temperatura)),
-
-  //     bateriaMinima: this.calcularMinimo(telemetria.map((lectura) => lectura.porcentaje_bateria)),
-
-  //     estadoBateria,
-  //   };
-  // }
-
   private construirCarbonDetalleDesdeUltima(
     carbon: CarbonResponse,
     sensor: SensorApi | null,
     ultimaTelemetria: TelemetriaApi | null,
   ): CarbonTelemetriaDetalle {
     // const desgasteActual = this.calcularDesgasteCarbon(carbon, ultimaTelemetria?.longitud);
-    const desgasteActual = this.calcularDesgasteCarbon(carbon, ultimaTelemetria?.desgaste);
+    const desgasteActual = calcularDesgasteCarbon(carbon, ultimaTelemetria?.desgaste);
 
     const estadoBateria = this.obtenerEstadoBateria(carbon, ultimaTelemetria?.porcentaje_bateria);
 
@@ -313,7 +216,7 @@ export class MotorDetailService {
       desgastesActuales.map((desgaste) => desgaste.porcentaje),
     );
 
-    const estadoDesgaste = this.obtenerEstadoDesgasteMotor(desgastesActuales);
+    const estadoDesgaste = obtenerEstadoDesgaste(desgastesActuales);
 
     const carbonesConBateria = carbonesDetalle.filter(
       (item) =>
@@ -432,142 +335,6 @@ export class MotorDetailService {
     return String(valor ?? '').trim();
   }
 
-  // private calcularDesgasteCarbon(
-  //   carbon: CarbonResponse,
-  //   desgasteActual: ValorNumerico,
-  // ): DesgasteCalculado | null {
-  //   const largoInicial = this.convertirNumero(carbon.largo_inicial);
-
-  //   const largoPrealarma = this.convertirNumero(carbon.largo_prealarma);
-
-  //   const largoAlarma = this.convertirNumero(carbon.largo_alarma);
-
-  //   const desgaste = this.convertirNumero(desgasteActual);
-
-  //   if (largoInicial === null || largoInicial <= 0 || desgaste === null) {
-  //     return null;
-  //   }
-
-  //   /*
-  //    * Una medición negativa significa que
-  //    * la lectura actual supera el largo inicial.
-  //    *
-  //    * Para desgaste físico mostramos 0,
-  //    * pero no perdemos el valor original
-  //    * entregado por telemetría.
-  //    */
-  //   const porcentaje = this.limitarPorcentaje((desgaste / largoInicial) * 100);
-
-  //   const porcentajeAdvertencia =
-  //     largoPrealarma === null
-  //       ? null
-  //       : this.limitarPorcentaje(((largoInicial - largoPrealarma) / largoInicial) * 100);
-
-  //   const porcentajeCritico =
-  //     largoAlarma === null
-  //       ? null
-  //       : this.limitarPorcentaje(((largoInicial - largoAlarma) / largoInicial) * 100);
-
-  //   let estado: DesgasteCalculado['estado'] = 'normal';
-
-  //   if (porcentajeCritico !== null && porcentaje >= porcentajeCritico) {
-  //     estado = 'critico';
-  //   } else if (porcentajeAdvertencia !== null && porcentaje >= porcentajeAdvertencia) {
-  //     estado = 'advertencia';
-  //   }
-
-  //   return {
-  //     porcentaje,
-  //     estado,
-  //   };
-  // }
-
-  private calcularDesgasteCarbon(
-    carbon: CarbonResponse,
-    desgasteActual: ValorNumerico,
-  ): DesgasteCalculado | null {
-    const largoInicial = this.convertirNumero(carbon.largo_inicial);
-
-    const largoPrealarma = this.convertirNumero(carbon.largo_prealarma);
-
-    const largoAlarma = this.convertirNumero(carbon.largo_alarma);
-
-    // const desgaste = this.convertirNumero(desgasteActual);
-    const desgasteOriginal = this.convertirNumero(desgasteActual);
-
-    if (largoInicial === null || largoInicial <= 0 || desgasteOriginal === null) {
-      return null;
-    }
-
-    /*
-     * PARCHE TEMPORAL:
-     * el simulador/backend está entregando
-     * desgaste con signo negativo.
-     */
-    const desgaste = Math.abs(desgasteOriginal);
-
-    if (largoInicial === null || largoInicial <= 0 || desgaste === null) {
-      return null;
-    }
-
-    /*
-     * PARCHE TEMPORAL:
-     * mientras backend no tenga la fórmula definitiva,
-     * usamos telemetria.desgaste como mm desgastados
-     * respecto al largo inicial del carbón.
-     */
-    // const porcentaje = this.limitarPorcentaje((Math.abs(desgaste) / largoInicial) * 100);
-    const porcentaje = this.limitarPorcentaje((desgaste / largoInicial) * 100);
-
-    /*
-     * Convertimos los umbrales de largo
-     * a porcentaje de desgaste.
-     */
-    const porcentajeAdvertencia =
-      largoPrealarma === null
-        ? null
-        : this.limitarPorcentaje(((largoInicial - largoPrealarma) / largoInicial) * 100);
-
-    const porcentajeCritico =
-      largoAlarma === null
-        ? null
-        : this.limitarPorcentaje(((largoInicial - largoAlarma) / largoInicial) * 100);
-
-    let estado: DesgasteCalculado['estado'] = 'normal';
-
-    if (porcentajeCritico !== null && porcentaje >= porcentajeCritico) {
-      estado = 'critico';
-    } else if (porcentajeAdvertencia !== null && porcentaje >= porcentajeAdvertencia) {
-      estado = 'advertencia';
-    }
-
-    return {
-      porcentaje,
-      estado,
-    };
-  }
-
-  private obtenerEstadoDesgasteMotor(
-    desgastes: Array<{
-      porcentaje: number;
-      estado: EstadoDesgaste;
-    }>,
-  ): EstadoDesgaste {
-    if (desgastes.length === 0) {
-      return 'sin-datos';
-    }
-
-    if (desgastes.some((desgaste) => desgaste.estado === 'critico')) {
-      return 'critico';
-    }
-
-    if (desgastes.some((desgaste) => desgaste.estado === 'advertencia')) {
-      return 'advertencia';
-    }
-
-    return 'normal';
-  }
-
   private convertirNumero(valor: ValorNumerico): number | null {
     if (valor === null || valor === undefined || valor === '') {
       return null;
@@ -577,10 +344,6 @@ export class MotorDetailService {
       typeof valor === 'number' ? valor : Number(String(valor).trim().replace(',', '.'));
 
     return Number.isFinite(numero) ? numero : null;
-  }
-
-  private limitarPorcentaje(porcentaje: number): number {
-    return Math.min(100, Math.max(0, porcentaje));
   }
 
   private obtenerEstadoBateria(

@@ -7,7 +7,7 @@
   <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
     <!-- Card 1: Total -->
     <div
-      class="bg-surface-container text-normal rounded-lg border-1 border-outline/20 border-l-6 border-l-state-critical p-5 flex justify-between items-stretch"
+      class="bg-surface-container text-normal rounded-lg border-1 border-outline/20 border-l-6 border-l-state-normal p-5 flex justify-between items-stretch"
     >
       <div class="flex flex-col flex-1">
         <div class="flex flex-row">
@@ -29,7 +29,7 @@
 
     <!-- Card 2: Sincronizados -->
     <div
-      class="bg-surface-container text-normal rounded-lg border-1 border-outline/20 border-l-6 border-l-state-critical p-5 flex justify-between items-stretch"
+      class="bg-surface-container text-normal rounded-lg border-1 border-outline/20 border-l-6 border-l-state-normal p-5 flex justify-between items-stretch"
     >
       <div class="flex flex-col flex-1">
         <div class="flex flex-row">
@@ -51,7 +51,8 @@
 
     <!-- Card 3: Warning P1 -->
     <div
-      class="state--warning bg-surface-container text-normal rounded-lg border-1 border-outline/20 border-l-6 border-l-state-warning p-5 flex justify-between items-stretch"
+      class="bg-surface-container text-normal rounded-lg border-1 border-outline/20 border-l-6 p-5 flex border-l-state-normal justify-between items-stretch"
+      [class.state--warning.border-l-state-warning]="totalAdvertencias > 0"
     >
       <div class="flex flex-col flex-1">
         <div class="flex flex-row">
@@ -65,15 +66,13 @@
             <span class="material-symbols-outlined !text-[3.5rem]">warning</span>
           </div>
         </div>
-        <!-- <div class="flex flex-row">
-                    <span class="text-lg font-regular uppercase tracking-wide mt-1">Configuradas</span>
-                </div> -->
       </div>
     </div>
 
     <!-- Card 4: Critical P2 -->
     <div
-      class="state--critical bg-surface-container text-normal rounded-lg border-1 border-outline/20 border-l-6 border-l-state-critical p-5 flex justify-between items-stretch"
+      class="bg-surface-container text-normal rounded-lg border-1 border-outline/20 border-l-6 p-5 flex border-l-state-normal justify-between items-stretch"
+      [class.state--critical.border-l-state-critical]="totalCriticos > 0"
     >
       <div class="flex flex-col flex-1">
         <div class="flex flex-row">
@@ -87,21 +86,18 @@
             <span class="material-symbols-outlined !text-[3.5rem]">error</span>
           </div>
         </div>
-        <!-- <div class="flex flex-row">
-                    <span class="text-lg font-regular uppercase tracking-wide mt-1">Configuradas</span>
-                </div> -->
       </div>
     </div>
   </section>
 
   <!-- TWO-COLUMN LAYOUT -->
-  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-8">
+  <div class="grid grid-cols-1 lg:grid-cols-12 items-start gap-6 mt-8">
     <!-- LEFT COLUMN: Estado de motores -->
     <section
       class="lg:col-span-7 xl:col-span-8 bg-surface-container rounded-lg border border-outline/20 flex flex-col"
     >
       <div class="flex items-center justify-between gap-4 p-4 border-b border-outline/20">
-        <h2 class="text-xl font-semibold">Estado de motores</h2>
+        <h2 class="text-on-surface font-medium text-xl">ESTADO DE MOTORES</h2>
         <mat-button-toggle-group
           [value]="currentFilter"
           (change)="setFilter($event.value)"
@@ -138,11 +134,11 @@
             <td mat-cell *matCellDef="let motor">
               <div class="flex flex-col">
                 <strong>
-                  {{ motor.codigo }}
+                  {{ motor.nombre || motor.codigo }}
                 </strong>
 
                 <span class="text-sm text-on-surface-variant">
-                  {{ motor.nombre }}
+                  {{ motor.divisionNombre }}
                 </span>
               </div>
             </td>
@@ -265,17 +261,15 @@
         [showFirstLastButtons]="true"
         aria-label="Paginación de motores"
       />
-
-      <!-- <mat-paginator [pageSize]="10" [pageSizeOptions]="[5, 10]" [showFirstLastButtons]="true"
-                aria-label="Paginación de motores">
-            </mat-paginator> -->
     </section>
+
+    <!-- RIGHT COLUMN: Alarmas recientes -->
     <div class="lg:col-span-5 xl:col-span-4 flex flex-col gap-6">
       <!-- Alertas recientes -->
       <section class="bg-surface-container rounded-lg flex flex-col">
         <div class="flex justify-between items-center p-4 border-b border-outline/20">
           <div class="flex items-center gap-2 text-on-surface font-medium text-xl">
-            Alarmas recientes
+            ALARMAS RECIENTES
           </div>
         </div>
 
@@ -286,11 +280,11 @@
             </div>
           } @else if (alarmasRecientes.length === 0) {
             <div class="py-8 text-center text-on-surface-variant">
-              No hay alarmas registradas para esta empresa.
+              No hay alarmas registradas para este cliente.
             </div>
           } @else {
             @for (alarma of alarmasRecientes; track alarma.id) {
-              <article class="flex items-center justify-between p-4 border-b border-outline gap-4">
+              <article class="flex-row items-center justify-between p-4 border-b border-outline gap-4">
                 <div class="flex-grow min-w-0">
                   <div class="flex items-center justify-between gap-2 flex-nowrap">
                     <div class="flex gap-2 items-center text-lg font-bold leading-tight uppercase">
@@ -304,8 +298,8 @@
                       {{ alarma.titulo }}
                     </div>
 
-                    <span class="text-base text-on-surface-variant">
-                      {{ alarma.fecha_creacion | date: 'dd/MM/yyyy HH:mm' }}
+                    <span class="text-base text-on-surface-variant text-right">
+                      {{ alarma.fecha_creacion | date: 'HH:mm dd/MM/yyyy' }}
                     </span>
 
                     @if (alarma.estado === 'Resuelta') {
@@ -320,22 +314,43 @@
                   }
                 </div>
 
-                <!-- <button mat-icon-button type="button" [attr.aria-label]="
-                            'Ver motor relacionado con ' +
-                            alarma.titulo
-                            " (click)="verMotorAlarma(alarma)">
-                                <span class="material-symbols-outlined">
-                                    arrow_forward
-                                </span>
-                            </button> -->
+                @if (!alarma.reconocida_por) {
+                  <button 
+                    class="btn btn--primary mt-3"
+                    type="button"
+                    [attr.aria-label]="'Reconocer alarma ' + alarma.titulo"
+                    (click)="reconocerAlarma(alarma)"
+                    >
+                      RECONOCER
+                  </button>
+                
+                } @else {
+
+                  <div class="flex flex-1 items-center justify-center gap-1 mt-3 text-base text-on-surface-variant p-3 border">
+                    <span class="material-symbols-outlined">
+                      check_circle
+                    </span>
+                    RECONOCIDA
+                  </div>
+
+                  <button 
+                    class="btn btn--secondary mt-3"
+                    type="button"
+                    [attr.aria-label]="'Reconocer alarma ' + alarma.titulo"
+                    (click)="resolverAlarma(alarma)"
+                    >
+                      RESOLVER
+                  </button>
+                
+                }
               </article>
             }
           }
         </div>
         @if (!loadingMotores) {
-          <button matButton="outlined" type="button" (click)="verTodasLasAlarmas()">
-            Ver todas
-          </button>
+          <div class="btn btn--tertiary my-3" (click)="verTodasLasAlarmas()">
+            VER TODAS LAS ALARMAS ({{ totalAlarmas() }})
+          </div>
         }
       </section>
     </div>

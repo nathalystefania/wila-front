@@ -26,14 +26,26 @@ export const routes: Routes = [
           import('./features/dashboard/dashboard.routes')
             .then(m => m.DASHBOARD_ROUTES)
       },
+      // {
+      //   path: 'settings',
+      //   data: {
+      //     breadcrumb: 'Configuración',
+      //   },
+      //   loadChildren: () =>
+      //     import('./features/settings/settings.routes')
+      //       .then(m => m.SETTINGS_ROUTES)
+      // },
       {
-        path: 'settings',
+        path: 'alarmas',
         data: {
-          breadcrumb: 'Configuración',
+          breadcrumb: 'Alarmas',
         },
-        loadChildren: () =>
-          import('./features/settings/settings.routes')
-            .then(m => m.SETTINGS_ROUTES)
+        loadComponent: () =>
+          import(
+            './features/dashboard/pages/alarmas/alarmas'
+          ).then(
+            m => m.Alarmas
+          ),
       },
     ]
   },

@@ -52,6 +52,9 @@
   --color-on-warning: #4d2e00;
   --color-critical: #d25855;
   --color-on-critical: #723600;
+
+  --color-state-critical: var(--color-critical);
+  --color-state-warning: var(--color-warning);
   
   /* Modern font settings synced with Material Typography */
   --font-sans: "Inter", sans-serif;

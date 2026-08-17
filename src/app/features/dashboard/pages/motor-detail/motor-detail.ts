@@ -20,6 +20,7 @@ import { StatusProgress } from '@shared/components/status-progress/status-progre
 import { BreadcrumbStateService } from '@core/state/breadcrumb-state.service';
 import { RingWearChart } from '../../components/ring-wear-chart/ring-wear-chart';
 import { RingTemperatureChart } from '../../components/ring-temperature-chart/ring-temperature-chart';
+import { CompanyContextService } from '@core/state/company-context.service';
 
 @Component({
   selector: 'app-motor-detail',
@@ -49,6 +50,10 @@ export class MotorDetail implements OnInit, OnDestroy {
   private readonly cdr = inject(ChangeDetectorRef);
 
   private readonly destroy$ = new Subject<void>();
+
+  private readonly companyContext = inject(CompanyContextService);
+
+  readonly empresaNombre = this.companyContext.empresaNombre;
 
   readonly columnasCarbones = ['carbon', 'longitud', 'desgaste', 'temperatura', 'bateria', 'fecha'];
 
@@ -95,7 +100,7 @@ export class MotorDetail implements OnInit, OnDestroy {
 
             return;
           }
-          this.breadcrumbState.setDetalle(`${detalle.motor.codigo} · ${detalle.motor.nombre}`);
+          this.breadcrumbState.setDetalle(`Detalle ${detalle.motor.nombre}`);
 
           this.errorMessage = '';
 
@@ -120,7 +125,7 @@ export class MotorDetail implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.breadcrumbState.clear();
-    
+
     this.destroy$.next();
     this.destroy$.complete();
   }
