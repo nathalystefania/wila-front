@@ -7,7 +7,7 @@
     "build": "npm run generate-version && ng build",
     "watch": "npm run generate-version && ng build --watch --configuration development",
     "test": "npm run generate-version && ng test",
-    "local": "npm run generate-version && ng serve --open --port 3600",
+    "local": "npm run generate-version && ng serve  --host 0.0.0.0 --open --port 3600",
     "generate-version": "node src/scripts/version.js"
   },
   "private": true,

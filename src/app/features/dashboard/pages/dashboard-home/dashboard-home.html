@@ -138,11 +138,11 @@
             <td mat-cell *matCellDef="let motor">
               <div class="flex flex-col">
                 <strong>
-                  {{ motor.codigo }}
+                  {{ motor.nombre || motor.codigo }}
                 </strong>
 
                 <span class="text-sm text-on-surface-variant">
-                  {{ motor.nombre }}
+                  {{ motor.divisionNombre }}
                 </span>
               </div>
             </td>
@@ -265,11 +265,9 @@
         [showFirstLastButtons]="true"
         aria-label="Paginación de motores"
       />
-
-      <!-- <mat-paginator [pageSize]="10" [pageSizeOptions]="[5, 10]" [showFirstLastButtons]="true"
-                aria-label="Paginación de motores">
-            </mat-paginator> -->
     </section>
+
+    <!-- RIGHT COLUMN: Alarmas recientes -->
     <div class="lg:col-span-5 xl:col-span-4 flex flex-col gap-6">
       <!-- Alertas recientes -->
       <section class="bg-surface-container rounded-lg flex flex-col">
@@ -286,11 +284,11 @@
             </div>
           } @else if (alarmasRecientes.length === 0) {
             <div class="py-8 text-center text-on-surface-variant">
-              No hay alarmas registradas para esta empresa.
+              No hay alarmas registradas para este cliente.
             </div>
           } @else {
             @for (alarma of alarmasRecientes; track alarma.id) {
-              <article class="flex items-center justify-between p-4 border-b border-outline gap-4">
+              <article class="flex-row items-center justify-between p-4 border-b border-outline gap-4">
                 <div class="flex-grow min-w-0">
                   <div class="flex items-center justify-between gap-2 flex-nowrap">
                     <div class="flex gap-2 items-center text-lg font-bold leading-tight uppercase">
@@ -304,8 +302,8 @@
                       {{ alarma.titulo }}
                     </div>
 
-                    <span class="text-base text-on-surface-variant">
-                      {{ alarma.fecha_creacion | date: 'dd/MM/yyyy HH:mm' }}
+                    <span class="text-base text-on-surface-variant text-right">
+                      {{ alarma.fecha_creacion | date: 'HH:mm dd/MM/yyyy' }}
                     </span>
 
                     @if (alarma.estado === 'Resuelta') {
@@ -320,22 +318,21 @@
                   }
                 </div>
 
-                <!-- <button mat-icon-button type="button" [attr.aria-label]="
-                            'Ver motor relacionado con ' +
-                            alarma.titulo
-                            " (click)="verMotorAlarma(alarma)">
-                                <span class="material-symbols-outlined">
-                                    arrow_forward
-                                </span>
-                            </button> -->
+                <button 
+                  class="btn btn--primary mt-3"
+                  type="button"
+                  [attr.aria-label]="'Reconocer alarma ' + alarma.titulo"
+                  >
+                    RECONOCER
+                </button>
               </article>
             }
           }
         </div>
         @if (!loadingMotores) {
-          <button matButton="outlined" type="button" (click)="verTodasLasAlarmas()">
-            Ver todas
-          </button>
+          <div class="btn btn--tertiary my-3" (click)="verTodasLasAlarmas()">
+            TODAS LAS ALARMAS
+          </div>
         }
       </section>
     </div>

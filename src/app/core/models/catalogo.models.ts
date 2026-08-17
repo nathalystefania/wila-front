@@ -177,6 +177,7 @@ export interface MotorDashboardRow {
   motorId: string;
   codigo: string;
   nombre: string;
+  divisionNombre: string;
 
   promedioLongitud: number | null;
   porcentajeDesgaste: number | null;

@@ -203,7 +203,7 @@ export class DashboardHome implements OnInit, AfterViewInit, OnDestroy {
     ): string | number => {
       switch (columna) {
         case 'motor':
-          return (motor.codigo || motor.nombre).toLowerCase();
+          return (motor.nombre || motor.divisionNombre).toLowerCase();
 
         case 'promedioLongitud':
           return this.valorOrdenable(motor.promedioLongitud);
@@ -285,6 +285,6 @@ export class DashboardHome implements OnInit, AfterViewInit, OnDestroy {
   }
 
   verTodasLasAlarmas(): void {
-    this.router.navigate(['/dashboard/alarmas']);
+    this.router.navigate(['/alarmas']);
   }
 }

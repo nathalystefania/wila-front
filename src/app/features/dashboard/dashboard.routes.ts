@@ -19,16 +19,4 @@ export const DASHBOARD_ROUTES: Routes = [
       import('./pages/motor-detail/motor-detail')
         .then(m => m.MotorDetail)
   },
-  {
-    path: 'alarmas',
-    data: {
-      breadcrumb: 'Alarmas',
-    },
-    loadComponent: () =>
-      import(
-        './pages/alarmas/alarmas'
-      ).then(
-        m => m.Alarmas
-      ),
-  },
 ];

@@ -17,6 +17,7 @@ import {
 
 import { POLLING_CONFIG } from '@core/config/polling.config';
 import { TelemetryStateService } from '@core/state/telemetry-state.service';
+import { calcularDesgasteCarbon, obtenerEstadoDesgaste, WearCalculation, } from '@core/utils/wear-calculator.util';
 
 interface DashboardApiData {
   motores: MotorCatalogo[];
@@ -25,11 +26,6 @@ interface DashboardApiData {
   sensores: SensorApi[];
   telemetria: TelemetriaApi[];
   alarmas: AlarmaApi[];
-}
-
-interface DesgasteCarbonCalculado {
-  porcentaje: number;
-  estado: Exclude<EstadoDesgaste, 'sin-datos'>;
 }
 
 type ValorNumerico = number | string | null | undefined;
@@ -60,6 +56,8 @@ export class DashboardService {
     return forkJoin({
       motores: this.catalogoService.getMotoresByEmpresaDivision(empresaId),
 
+      divisiones: this.catalogoService.getDivisiones(),
+
       anillos: this.catalogoService.getAnillos(),
 
       carbones: this.catalogoService.getCarbones(),
@@ -89,22 +87,6 @@ export class DashboardService {
         ),
       ),
     );
-  }
-
-  getDashboard(empresaId: string): Observable<DashboardHomeData> {
-    return forkJoin({
-      motores: this.catalogoService.getMotoresByEmpresaDivision(empresaId),
-
-      anillos: this.catalogoService.getAnillos(),
-
-      carbones: this.catalogoService.getCarbones(),
-
-      sensores: this.catalogoService.getSensores(),
-
-      telemetria: this.catalogoService.getTelemetria(),
-
-      alarmas: this.catalogoService.getAlarmasActivas(),
-    }).pipe(map((data) => this.construirDashboard(empresaId, data)));
   }
 
   private construirDashboard(empresaId: string, data: DashboardApiData): DashboardHomeData {
@@ -193,27 +175,17 @@ export class DashboardService {
               return null;
             }
 
-            return this.calcularDesgasteCarbon(carbon, lectura.longitud);
+            return calcularDesgasteCarbon(carbon, lectura.desgaste);
           })
-          .filter((desgaste): desgaste is DesgasteCarbonCalculado => desgaste !== null);
-
+          .filter(
+            (desgaste): desgaste is WearCalculation => desgaste !== null
+          );
+        
         const porcentajeDesgaste = this.calcularPromedio(
           desgastesMotor.map((desgaste) => desgaste.porcentaje),
         );
 
-        const estadoDesgaste = this.obtenerEstadoDesgasteMotor(desgastesMotor);
-
-        const porcentajesDesgasteMotor = lecturasMotor
-          .map((lectura) => {
-            const carbon = carbonPorId.get(this.normalizarId(lectura.carbon_id));
-
-            if (!carbon) {
-              return null;
-            }
-
-            return this.calcularPorcentajeDesgaste(carbon.largo_inicial, lectura.longitud);
-          })
-          .filter((porcentaje): porcentaje is number => porcentaje !== null);
+        const estadoDesgaste = obtenerEstadoDesgaste(desgastesMotor);
 
         const alarmasMotor = alarmasEmpresa.filter((alarma) =>
           carbonIdsMotor.has(this.normalizarId(alarma.carbon_id)),
@@ -233,6 +205,8 @@ export class DashboardService {
           codigo: motor.codigo,
 
           nombre: motor.nombre,
+
+          divisionNombre: motor.division_nombre,
 
           promedioLongitud: this.calcularPromedio(lecturasMotor.map((lectura) => lectura.longitud)),
 
@@ -469,69 +443,6 @@ export class DashboardService {
       .toLowerCase();
   }
 
-  private calcularPorcentajeDesgaste(
-    largoInicial: number | string | null | undefined,
-    longitudActual: number | string | null | undefined,
-  ): number | null {
-    const inicial = this.convertirNumero(largoInicial);
-
-    const actual = this.convertirNumero(longitudActual);
-
-    if (inicial === null || actual === null || inicial <= 0) {
-      return null;
-    }
-
-    const porcentaje = ((inicial - actual) / inicial) * 100;
-
-    /*
-     * Evita valores menores que 0 o mayores
-     * que 100 por mediciones anómalas.
-     */
-    return Math.min(100, Math.max(0, porcentaje));
-  }
-
-  private calcularDesgasteCarbon(
-    carbon: CarbonResponse,
-    longitudActual: number | string | null | undefined,
-  ): DesgasteCarbonCalculado | null {
-    const largoInicial = this.convertirNumero(carbon.largo_inicial);
-
-    const largoPrealarma = this.convertirNumero(carbon.largo_prealarma);
-
-    const largoAlarma = this.convertirNumero(carbon.largo_alarma);
-
-    const longitud = this.convertirNumero(longitudActual);
-
-    if (largoInicial === null || largoInicial <= 0 || longitud === null) {
-      return null;
-    }
-
-    const porcentaje = this.limitarPorcentaje(((largoInicial - longitud) / largoInicial) * 100);
-
-    const porcentajeAdvertencia =
-      largoPrealarma === null
-        ? null
-        : this.limitarPorcentaje(((largoInicial - largoPrealarma) / largoInicial) * 100);
-
-    const porcentajeCritico =
-      largoAlarma === null
-        ? null
-        : this.limitarPorcentaje(((largoInicial - largoAlarma) / largoInicial) * 100);
-
-    let estado: DesgasteCarbonCalculado['estado'] = 'normal';
-
-    if (porcentajeCritico !== null && porcentaje >= porcentajeCritico) {
-      estado = 'critico';
-    } else if (porcentajeAdvertencia !== null && porcentaje >= porcentajeAdvertencia) {
-      estado = 'advertencia';
-    }
-
-    return {
-      porcentaje,
-      estado,
-    };
-  }
-
   private convertirNumero(valor: number | string | null | undefined): number | null {
     if (valor === null || valor === undefined || valor === '') {
       return null;
@@ -543,23 +454,4 @@ export class DashboardService {
     return Number.isFinite(numero) ? numero : null;
   }
 
-  private limitarPorcentaje(porcentaje: number): number {
-    return Math.min(100, Math.max(0, porcentaje));
-  }
-
-  private obtenerEstadoDesgasteMotor(desgastes: DesgasteCarbonCalculado[]): EstadoDesgaste {
-    if (desgastes.length === 0) {
-      return 'sin-datos';
-    }
-
-    if (desgastes.some((desgaste) => desgaste.estado === 'critico')) {
-      return 'critico';
-    }
-
-    if (desgastes.some((desgaste) => desgaste.estado === 'advertencia')) {
-      return 'advertencia';
-    }
-
-    return 'normal';
-  }
 }

@@ -8,7 +8,7 @@
             class="block tablet:hidden mx-auto mt-5 mb-4 w-10" />
         </a>
         <!-- ONLY FOR DEVELOPMENT -->
-        <small class="text-gray-400 block text-center">V.{{ versionService.version().commit }}</small>
+        <!-- <small class="text-gray-400 block text-center">V.{{ versionService.version().commit }}</small> -->
         <!-- ONLY FOR DEVELOPMENT -->
         <mat-vertical-stepper #stepper [selectedIndex]="currentStep" [linear]="true"
           (selectionChange)="onStepChange($event)">
