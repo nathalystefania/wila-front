@@ -153,7 +153,10 @@ export interface AsignacionDraft {
 
 export interface CompanyContext {
   empresaId: string;
+  empresaNombre: string;
+
   divisionId: string | null;
+  divisionNombre: string | null;
 }
 
 export interface TelemetriaApi {
@@ -222,10 +225,19 @@ export interface AlarmaApi {
   reconocida_en: string | null;
   reconocida_por: string | null;
 }
+
+export interface AlarmaDetalle extends AlarmaApi {
+  anilloIdentificador: string | null;
+  carbonIdentificador: string | null;
+  sensorHardwareId: string | null;
+  motorNombre: string | null;
+  motorCodigo: string | null;
+}
+
 export interface DashboardHomeData {
   motores: MotorDashboardRow[];
 
-  alarmasRecientes: AlarmaApi[];
+  alarmasRecientes: AlarmaDetalle[];
 
   totalAlarmasP1: number;
   totalAlarmasP2: number;

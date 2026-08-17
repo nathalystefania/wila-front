@@ -4,7 +4,7 @@ import { Observable, forkJoin, map, switchMap, timer, exhaustMap } from 'rxjs';
 import { CatalogoService } from '@services/catalogo.service';
 
 import {
-  AlarmaApi,
+  AlarmaDetalle,
   AnilloResponse,
   CarbonResponse,
   DashboardHomeData,
@@ -25,7 +25,7 @@ interface DashboardApiData {
   carbones: CarbonResponse[];
   sensores: SensorApi[];
   telemetria: TelemetriaApi[];
-  alarmas: AlarmaApi[];
+  alarmas: AlarmaDetalle[];
 }
 
 type ValorNumerico = number | string | null | undefined;
@@ -141,9 +141,33 @@ export class DashboardService {
      * las empresas, conservamos solo las asociadas
      * a los carbones de la empresa seleccionada.
      */
-    const alarmasEmpresa = alarmas.filter((alarma) =>
+    const anilloPorId = new Map(anillos.map((anillo) => [this.normalizarId(anillo.id), anillo]));
+
+    const sensorPorId = new Map(sensores.map((sensor) => [this.normalizarId(sensor.id), sensor]));
+
+    const alarmasEmpresa: AlarmaDetalle[] = alarmas
+      .filter((alarma) =>
       idsCarbonesEmpresa.has(this.normalizarId(alarma.carbon_id)),
-    );
+      )
+      .map((alarma) => {
+        const carbon = carbonPorId.get(this.normalizarId(alarma.carbon_id));
+        const anillo = carbon
+          ? anilloPorId.get(this.normalizarId(carbon.anillo_id))
+          : undefined;
+        const sensor = sensorPorId.get(this.normalizarId(alarma.sensor_id));
+        const motor = motores.find(
+          (item) => this.normalizarId(item.id) === this.normalizarId(alarma.motor_id),
+        );
+
+        return {
+          ...alarma,
+          anilloIdentificador: anillo?.identificador ?? null,
+          carbonIdentificador: carbon?.identificador ?? null,
+          sensorHardwareId: sensor?.id_hardware ?? null,
+          motorNombre: motor?.nombre ?? null,
+          motorCodigo: motor?.codigo ?? null,
+        };
+      });
 
     const totalAlarmasP2 = alarmasEmpresa.filter(
       (alarma) => this.normalizarSeveridad(alarma.severidad) === 'critica',

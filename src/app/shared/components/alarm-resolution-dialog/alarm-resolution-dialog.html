@@ -1,0 +1,50 @@
+<h2 mat-dialog-title class="text-xl font-semibold text-center">¿Confirmas que deseas marcar esta alarma como <strong>resuelta</strong>?</h2>
+
+<mat-dialog-content>
+<div class="py-4">
+        <div class="text-lg rounded-lg bg-surface-container-high p-4">
+            <div class="flex items-center gap-2">
+                <span
+                    class="tag"
+                    [class.tag-critical]="data.severidad === 'Critica'"
+                    [class.tag-warning]="data.severidad === 'Advertencia'">
+                    {{ data.severidad === 'Critica' ? 'P2' : 'P1' }}
+                </span>
+                <strong> {{ data.titulo }} </strong>
+            </div>
+
+            <div class="mt-3 text-base text-on-surface-variant">
+                Anillo: <strong>{{ data.anilloIdentificador ?? '—' }}</strong>
+                ·
+                Carbón: <strong>{{ data.carbonIdentificador ?? '—' }}</strong>
+                ·
+                Sensor: <strong>{{ data.sensorHardwareId ?? '—' }}</strong>
+            </div>
+
+            @if (data.descripcion) {
+                <ng-container>
+                    <p class="mt-2 text-base text-on-surface-variant">
+                        {{ data.descripcion }}
+                    </p>
+                </ng-container>
+            }
+        </div>
+
+        <div class="p-4 flex flex-row items-center justify-center gap-3">
+            <span class="material-symbols-outlined">warning</span>
+            <p class="text-base text-on-surface-variant">
+                Una vez resuelta, la alarma dejará de considerarse activa.
+            </p>
+        </div>
+    </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <button matButton type="button" class="flex-1" (click)="cancelar()">
+        Cancelar
+    </button>
+
+    <button matButton="filled" type="button" class="flex-1" (click)="confirmar()">
+        Resolver alarma
+    </button>
+</mat-dialog-actions>

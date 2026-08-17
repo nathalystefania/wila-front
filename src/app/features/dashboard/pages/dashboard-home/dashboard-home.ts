@@ -18,12 +18,16 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatPaginator, MatPaginatorIntl, MatPaginatorModule } from '@angular/material/paginator';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatDialog } from '@angular/material/dialog';
 
 import { CompanyContextService } from '@core/state/company-context.service';
 import { DashboardService } from '@services/dashboard.service';
-import { MotorDashboardRow, AlarmaApi } from '@models/catalogo.models';
+import { MotorDashboardRow, AlarmaDetalle } from '@models/catalogo.models';
 import { CustomPaginatorIntl } from '@shared/classes/custom-paginator-intl';
 import { StatusProgress } from '@shared/components/status-progress/status-progress';
+import { AlarmRecognitionDialog } from '@shared/components/alarm-recognition-dialog/alarm-recognition-dialog';
+import { CatalogoService } from '@services/catalogo.service';
+import { AlarmResolutionDialog } from '@shared/components/alarm-resolution-dialog/alarm-resolution-dialog';
 
 export type DashboardFilter = 'all' | 'critical' | 'warning' | 'no-alarms';
 
@@ -45,11 +49,15 @@ export type DashboardFilter = 'all' | 'critical' | 'warning' | 'no-alarms';
   providers: [{ provide: MatPaginatorIntl, useClass: CustomPaginatorIntl }],
 })
 export class DashboardHome implements OnInit, AfterViewInit, OnDestroy {
+[x: string]: any;
   private readonly companyContext = inject(CompanyContextService);
   private readonly dashboardService = inject(DashboardService);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroy$ = new Subject<void>();
+  private readonly dialog = inject(MatDialog);
+
+  private readonly catalogoService = inject(CatalogoService);
 
   private dashboardSubscription?: Subscription;
 
@@ -96,7 +104,7 @@ export class DashboardHome implements OnInit, AfterViewInit, OnDestroy {
   motoresCriticos = 0;
   motoresConAdvertencias = 0;
 
-  alarmasRecientes: AlarmaApi[] = [];
+  alarmasRecientes: AlarmaDetalle[] = [];
 
   loadingMotores = false;
   errorMotores = '';
@@ -142,6 +150,11 @@ export class DashboardHome implements OnInit, AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     this.configurarOrdenamiento();
     this.configurarFiltro();
+  }
+
+
+  totalAlarmas(): number {
+    return this.totalCriticos + this.totalAdvertencias;
   }
 
   private cargarDashboard(empresaId: string): void {
@@ -286,5 +299,101 @@ export class DashboardHome implements OnInit, AfterViewInit, OnDestroy {
 
   verTodasLasAlarmas(): void {
     this.router.navigate(['/alarmas']);
+  }
+
+  reconocerAlarma(alarma: AlarmaDetalle): void {
+    const dialogRef = this.dialog.open(AlarmRecognitionDialog, {
+      width: '50vw',
+      maxWidth: 'calc(100vw - 32px)',
+      data: alarma,
+      autoFocus: 'first-tabbable',
+      restoreFocus: true,
+    });
+
+    dialogRef
+      .afterClosed()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((confirmado) => {
+        if (!confirmado) {
+          return;
+        }
+
+        this.confirmarReconocimiento(alarma);
+      });
+  }
+
+  private confirmarReconocimiento(alarma: AlarmaDetalle): void {
+    this.catalogoService
+      .reconocerAlarma(alarma.id, 'usuario_admin')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          /*
+           * Actualización inmediata de UI.
+           * El próximo ciclo de polling
+           * traerá el dato definitivo.
+           */
+          this.alarmasRecientes = this.alarmasRecientes.map((item) =>
+            item.id === alarma.id
+              ? {
+                  ...item,
+                  reconocida_por: 'usuario_admin',
+                }
+              : item,
+          );
+
+          this.cdr.markForCheck();
+        },
+
+        error: (error) => {
+          console.error('Error reconociendo alarma', error);
+        },
+      });
+  }
+
+  resolverAlarma(alarma: AlarmaDetalle): void {
+    const dialogRef = this.dialog.open(AlarmResolutionDialog, {
+      width: '50vw',
+      maxWidth: 'calc(100vw - 32px)',
+      data: alarma,
+    });
+
+    dialogRef
+      .afterClosed()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((confirmado) => {
+        if (!confirmado) {
+          return;
+        }
+
+        this.confirmarResolucion(alarma);
+      });
+  }
+
+  private confirmarResolucion(alarma: AlarmaDetalle): void {
+    this.catalogoService
+      .resolverAlarma(alarma.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          const fechaResolucion = new Date().toISOString();
+
+          this.alarmasRecientes = this.alarmasRecientes.map((item) =>
+            item.id === alarma.id
+              ? {
+                  ...item,
+                  estado: 'Resuelta',
+                  fecha_resolucion: fechaResolucion,
+                }
+              : item,
+          );
+
+          this.cdr.markForCheck();
+        },
+
+        error: (error) => {
+          console.error('Error resolviendo alarma', error);
+        },
+      });
   }
 }

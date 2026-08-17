@@ -105,11 +105,13 @@ export class MotorDetailService {
           ),
 
           map((telemetria) => {
+            /* Estado global: última medición de todo el sistema. */
+            this.telemetryState.actualizarDesdeTelemetria(telemetria);
+
+            /* Después filtramos únicamente para construir el detalle del motor. */
             const telemetriaMotor = telemetria.filter((lectura) =>
               idsCarbonesMotor.has(this.normalizarId(lectura.carbon_id)),
             );
-
-            this.telemetryState.actualizarDesdeTelemetria(telemetriaMotor);
 
             const ultimaPorCarbon = this.obtenerUltimaLecturaPorCarbon(telemetriaMotor);
 

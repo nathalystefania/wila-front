@@ -17,6 +17,7 @@ import {
   CarbonesDraft,
   TelemetriaApi,
   AlarmaApi,
+  AlarmaDetalle,
 } from '../models/catalogo.models';
 import { ApiService } from './api.service';
 export interface OnboardingPersistenceData {
@@ -94,110 +95,63 @@ export class CatalogoService {
     }
 
     return forkJoin({
-      divisiones:
-        this.getDivisiones(),
+      divisiones: this.getDivisiones(),
 
-      divisionesCompletas:
-        soloPendientes
-          ? this.getDivisionesCompletas()
-          : of([] as DivisionApi[]),
+      divisionesCompletas: soloPendientes ? this.getDivisionesCompletas() : of([] as DivisionApi[]),
 
-      areas:
-        this.getAreas(),
+      areas: this.getAreas(),
 
-      equipos:
-        this.getEquipos(),
+      equipos: this.getEquipos(),
 
-      motores:
-        this.getMotores(),
+      motores: this.getMotores(),
     }).pipe(
-      map(({
-        divisiones,
-        divisionesCompletas,
-        areas,
-        equipos,
-        motores,
-      }) => {
-        const areasById =
-          new Map(
-            areas.map(area => [
-              area.id,
-              area,
-            ])
-          );
+      map(({ divisiones, divisionesCompletas, areas, equipos, motores }) => {
+        const areasById = new Map(areas.map((area) => [area.id, area]));
 
-        const equiposById =
-          new Map(
-            equipos.map(equipo => [
-              equipo.id,
-              equipo,
-            ])
-          );
+        const equiposById = new Map(equipos.map((equipo) => [equipo.id, equipo]));
 
         /*
          * Divisiones que efectivamente tienen
          * motores disponibles.
          */
-        const divisionesConMotores =
-          new Set<string>();
+        const divisionesConMotores = new Set<string>();
 
         for (const motor of motores) {
-          const equipo =
-            equiposById.get(
-              motor.equipo_id
-            );
+          const equipo = equiposById.get(motor.equipo_id);
 
           if (!equipo) {
             continue;
           }
 
-          const area =
-            areasById.get(
-              equipo.area_id
-            );
+          const area = areasById.get(equipo.area_id);
 
           if (!area) {
             continue;
           }
 
-          divisionesConMotores.add(
-            area.division_id
-          );
+          divisionesConMotores.add(area.division_id);
         }
 
         /*
          * IDs que backend considera ya
          * completamente configurados.
          */
-        const idsDivisionesCompletas =
-          new Set(
-            divisionesCompletas.map(
-              division =>
-                division.id
-            )
-          );
+        const idsDivisionesCompletas = new Set(divisionesCompletas.map((division) => division.id));
 
         return divisiones
-          .filter(division => {
+          .filter((division) => {
             /*
              * Primero: debe pertenecer a
              * la empresa elegida.
              */
-            if (
-              division.empresa_id !==
-              empresaId
-            ) {
+            if (division.empresa_id !== empresaId) {
               return false;
             }
 
             /*
              * Segundo: debe tener motores.
              */
-            if (
-              !divisionesConMotores.has(
-                division.id
-              )
-            ) {
+            if (!divisionesConMotores.has(division.id)) {
               return false;
             }
 
@@ -206,25 +160,14 @@ export class CatalogoService {
              * si estamos en onboarding,
              * excluimos las completas.
              */
-            if (
-              soloPendientes &&
-              idsDivisionesCompletas.has(
-                division.id
-              )
-            ) {
+            if (soloPendientes && idsDivisionesCompletas.has(division.id)) {
               return false;
             }
 
             return true;
           })
-          .sort(
-            (a, b) =>
-              a.nombre.localeCompare(
-                b.nombre,
-                'es'
-              )
-          );
-      })
+          .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+      }),
     );
   }
 
@@ -395,8 +338,8 @@ export class CatalogoService {
     );
   }
 
-  getAlarmas(): Observable<AlarmaApi[]> {
-    return this.api.get<AlarmaApi[]>('/api/alarmas').pipe(
+  getAlarmas(): Observable<AlarmaDetalle[]> {
+    return this.api.get<AlarmaDetalle[]>('/api/alarmas').pipe(
       map((alarmas) =>
         alarmas.map((alarma) => ({
           ...alarma,
@@ -406,8 +349,8 @@ export class CatalogoService {
     );
   }
 
-  getAlarmasActivas(): Observable<AlarmaApi[]> {
-    return this.api.get<AlarmaApi[]>('/api/alarmas?estado=Activa').pipe(
+  getAlarmasActivas(): Observable<AlarmaDetalle[]> {
+    return this.api.get<AlarmaDetalle[]>('/api/alarmas?estado=Activa').pipe(
       map((alarmas) =>
         alarmas.map((alarma) => ({
           ...alarma,
@@ -440,5 +383,54 @@ export class CatalogoService {
       default:
         return 'Advertencia';
     }
+  }
+
+  reconocerAlarma(alarmaId: string, reconocidaPor: string): Observable<unknown> {
+    return this.api.put(`/api/alarmas/${encodeURIComponent(alarmaId)}/reconocer`, {
+      reconocida_por: reconocidaPor,
+    });
+  }
+
+  resolverAlarma(alarmaId: string): Observable<unknown> {
+    return this.api.put(`/api/alarmas/${encodeURIComponent(alarmaId)}/resolver`, {});
+  }
+
+  getAlarmasDetalle(): Observable<AlarmaDetalle[]> {
+    return forkJoin({
+      alarmas: this.getAlarmas(),
+      carbones: this.getCarbones(),
+      anillos: this.getAnillos(),
+      sensores: this.getSensores(),
+      motores: this.getMotores(),
+    }).pipe(
+      map(({ alarmas, carbones, anillos, sensores, motores }) => {
+        const carbonPorId = new Map(carbones.map((carbon) => [carbon.id, carbon]));
+
+        const anilloPorId = new Map(anillos.map((anillo) => [anillo.id, anillo]));
+
+        const sensorPorId = new Map(sensores.map((sensor) => [sensor.id, sensor]));
+
+        const motorPorId = new Map(motores.map((motor) => [motor.id, motor]));
+
+        return alarmas.map((alarma) => {
+          const carbon = carbonPorId.get(alarma.carbon_id);
+
+          const anillo = carbon ? anilloPorId.get(carbon.anillo_id) : undefined;
+
+          const sensor = sensorPorId.get(alarma.sensor_id);
+
+          const motor = motorPorId.get(alarma.motor_id);
+
+          return {
+            ...alarma,
+            anilloIdentificador: anillo?.identificador ?? null,
+            carbonIdentificador: carbon?.identificador ?? null,
+            sensorHardwareId: sensor?.id_hardware ?? null,
+            motorNombre: motor?.nombre ?? null,
+            motorCodigo: motor?.codigo ?? null,
+          };
+        });
+      }),
+    );
   }
 }

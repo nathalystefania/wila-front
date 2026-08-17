@@ -6,17 +6,16 @@
       </button>
 
       <div>
-        <p class="text-sm text-on-surface-variant">
+        <p class="text-base text-on-surface-variant">
+          <!-- {{ empresaNombre() }} — -->
           @if (detalle) {
-            {{ detalle.motor.empresa_nombre }}
+            <span class="font-normal">{{ detalle.motor.division_nombre }}</span>
           }
         </p>
 
-        <h1 class="text-2xl font-semibold">
+        <h1 class="text-3xl font-semibold">
           @if (detalle) {
-            {{ detalle.motor.codigo }}
-            ·
-            {{ detalle.motor.nombre }}
+            {{ detalle.motor.nombre || detalle.motor.codigo }}
           } @else {
             Detalle de motor
           }
@@ -42,8 +41,8 @@
   } @else if (detalle) {
     <section class="motor-detail flex gap-4">
       <!-- Resumen calculado -->
-      <article class="flex-1 rounded-lg border border-outline/20 bg-surface-container p-5">
-        <span class="text-base text-on-surface-variant"> Promedio mm </span>
+      <article class="flex flex-col justify-between flex-1 rounded-lg border border-outline/20 bg-surface-container p-5">
+        <span class="text-lg font-semibold text-on-surface-variant"> Promedio mm </span>
 
         <p class="flex-nowrap flex items-baseline gap-1">
           @if (detalle.promedioLongitud !== null) {
@@ -57,8 +56,8 @@
         </p>
       </article>
 
-      <article class="flex-1 rounded-lg border border-outline/20 bg-surface-container p-5">
-        <span class="text-base text-on-surface-variant"> Desgaste promedio </span>
+      <article class="flex flex-col justify-between flex-1 rounded-lg border border-outline/20 bg-surface-container p-5">
+        <span class="text-lg font-semibold text-on-surface-variant"> Desgaste promedio </span>
 
         @if (detalle.porcentajeDesgaste !== null) {
           <app-status-progress
@@ -72,8 +71,8 @@
         }
       </article>
 
-      <article class="flex-1 rounded-lg border border-outline/20 bg-surface-container p-5">
-        <span class="text-base text-on-surface-variant"> Temperatura máxima </span>
+      <article class="flex flex-col justify-between flex-1 rounded-lg border border-outline/20 bg-surface-container p-5">
+        <span class="text-lg font-semibold text-on-surface-variant"> Temperatura máxima </span>
 
         <p class="flex-nowrap flex items-baseline gap-1">
           @if (detalle.temperaturaMaxima !== null) {
@@ -87,8 +86,8 @@
         </p>
       </article>
 
-      <article class="flex-1 rounded-lg border border-outline/20 bg-surface-container p-5">
-        <span class="text-base text-on-surface-variant"> Batería mínima </span>
+      <article class="flex flex-col justify-between flex-1 rounded-lg border border-outline/20 bg-surface-container p-5">
+        <span class="text-lg font-semibold text-on-surface-variant"> Batería mínima </span>
         @if (detalle.bateriaMinima !== null) {
           <app-status-progress
             [value]="detalle.bateriaMinima"
@@ -99,14 +98,16 @@
         }
       </article>
 
-      <article class="flex-1 rounded-lg border border-outline/20 bg-surface-container p-5">
-        <span class="text-base text-on-surface-variant"> Asignados </span>
+      <article class="flex flex-col justify-between flex-1 rounded-lg border border-outline/20 bg-surface-container p-5">
+        <span class="text-lg font-semibold text-on-surface-variant"> Asignados </span>
         <strong class="block mt-2 text-2xl">{{ detalle.carbonesConTelemetria }}</strong>
       </article>
     </section>
 
     <section>
-      <div class="grid gap-4 grid-cols-[repeat(auto-fit,minmax(min(500px,100%),1fr))]">
+      <div 
+        class="grid gap-4"
+        [class]="detalle.anillos.length >= 1 ? 'grid-cols-[repeat(auto-fit,minmax(min(500px,100%),1fr))]' : ''">
         @for (item of detalle.anillos; track item.anillo.id; let index = $index) {
           <div class="rounded-lg border border-outline/20 bg-surface-container p-4">
             <header class="flex items-center justify-between mb-4">
@@ -117,7 +118,8 @@
               </span>
             </header>
 
-            <div>
+            <div
+              [class]="item.carbones.length > 1 ? 'flex flex-wrap items-stretch gap-4' : 'grid gap-4'">
               @if (item.carbones.length === 0) {
                 <div class="p-6 text-center text-on-surface-variant">
                   Este anillo no tiene carbones asociados.
@@ -125,8 +127,8 @@
               } @else {
                 @for (carbon of item.carbones; track carbon.carbon.id) {
                   <div 
-                    class="w-full rounded-lg border border-outline/50 p-6 mb-4 last:mb-0"
-                    [class]="carbon.sensor?.id_hardware ? 'state-enabled' : 'state-disabled'">
+                    class="rounded-lg border border-outline/50 p-6 mb-4 last:mb-0"
+                    [class]="(item.carbones.length > 1 && detalle.anillos.length <= 1 ? 'flex-1 min-w-[380px] max-w-[390px]' : 'w-full') + ' ' + (carbon.sensor?.id_hardware ? 'state-enabled' : 'state-disabled')">
                     <div class="flex flex-col items-start justify-between">
                       <h4 class="text-3xl font-semibold">
                         {{ carbon.carbon.identificador }}

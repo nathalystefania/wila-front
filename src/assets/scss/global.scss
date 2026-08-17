@@ -134,4 +134,9 @@ input[type='number'] {
     background: var(--mat-sys-surface-variant);
     color: var(--mat-sys-on-surface-variant);
   }
+
+  &--secondary {
+    background: var(--mat-sys-primary-container);
+    color: var(--mat-sys-on-surface-variant);
+  }
 }

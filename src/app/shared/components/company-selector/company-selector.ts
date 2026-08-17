@@ -15,26 +15,17 @@ import { CompanyContextService } from '@core/state/company-context.service';
 @Component({
   selector: 'app-company-selector',
   standalone: true,
-  imports: [
-    MatFormFieldModule,
-    MatSelectModule,
-  ],
+  imports: [MatFormFieldModule, MatSelectModule],
   templateUrl: './company-selector.html',
   styleUrls: ['./company-selector.scss'],
-  changeDetection:
-    ChangeDetectionStrategy.OnPush,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CompanySelectorComponent
-  implements OnInit {
+export class CompanySelectorComponent implements OnInit {
+  private readonly catalogoService = inject(CatalogoService);
 
-  private readonly catalogoService =
-    inject(CatalogoService);
+  private readonly companyContext = inject(CompanyContextService);
 
-  private readonly companyContext =
-    inject(CompanyContextService);
-
-  private readonly cdr =
-    inject(ChangeDetectorRef);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   empresas: EmpresaApi[] = [];
 
@@ -44,8 +35,7 @@ export class CompanySelectorComponent
   error = '';
 
   ngOnInit(): void {
-    this.empresaIdSeleccionada =
-      this.companyContext.empresaId();
+    this.empresaIdSeleccionada = this.companyContext.empresaId();
 
     this.cargarEmpresasConfiguradas();
   }
@@ -55,44 +45,25 @@ export class CompanySelectorComponent
     this.error = '';
 
     forkJoin({
-      empresas:
-        this.catalogoService.getEmpresas(),
-
-      divisionesCompletas:
-        this.catalogoService
-          .getDivisionesCompletas(),
+      empresas: this.catalogoService.getEmpresas(),
+      divisionesCompletas: this.catalogoService.getDivisionesCompletas(),
     })
       .pipe(
         finalize(() => {
           this.loading = false;
           this.cdr.markForCheck();
-        })
+        }),
       )
       .subscribe({
-        next: ({
-          empresas,
-          divisionesCompletas,
-        }) => {
-          this.empresas =
-            this.filtrarEmpresasConfiguradas(
-              empresas,
-              divisionesCompletas
-            );
-
+        next: ({ empresas, divisionesCompletas }) => {
+          this.empresas = this.filtrarEmpresasConfiguradas(empresas, divisionesCompletas);
           this.validarEmpresaSeleccionada();
-
           this.cdr.markForCheck();
         },
 
-        error: error => {
-          console.error(
-            'Error cargando empresas configuradas',
-            error
-          );
-
-          this.error =
-            'No se pudieron cargar las empresas.';
-
+        error: (error) => {
+          console.error('Error cargando empresas configuradas', error);
+          this.error = 'No se pudieron cargar las empresas.';
           this.cdr.markForCheck();
         },
       });
@@ -100,37 +71,25 @@ export class CompanySelectorComponent
 
   private filtrarEmpresasConfiguradas(
     empresas: EmpresaApi[],
-    divisionesCompletas: DivisionApi[]
+    divisionesCompletas: DivisionApi[],
   ): EmpresaApi[] {
-    const empresasConfiguradasIds =
-      new Set(
-        divisionesCompletas.map(
-          division => division.empresa_id
-        )
-      );
+    const empresasConfiguradasIds = new Set(
+      divisionesCompletas.map((division) => division.empresa_id),
+    );
 
     return empresas
-      .filter(empresa =>
-        empresasConfiguradasIds.has(empresa.id)
-      )
+      .filter((empresa) => empresasConfiguradasIds.has(empresa.id))
       .sort((a, b) =>
-        a.nombre.localeCompare(
-          b.nombre,
-          'es',
-          {
-            sensitivity: 'base',
-          }
-        )
+        a.nombre.localeCompare(b.nombre, 'es', {
+          sensitivity: 'base',
+        }),
       );
   }
 
   private validarEmpresaSeleccionada(): void {
-    const seleccionActualExiste =
-      this.empresas.some(
-        empresa =>
-          empresa.id ===
-          this.empresaIdSeleccionada
-      );
+    const seleccionActualExiste = this.empresas.some(
+      (empresa) => empresa.id === this.empresaIdSeleccionada,
+    );
 
     if (seleccionActualExiste) {
       return;
@@ -148,7 +107,9 @@ export class CompanySelectorComponent
 
     this.companyContext.setContext({
       empresaId: primeraEmpresa.id,
+      empresaNombre: primeraEmpresa.nombre,
       divisionId: null,
+      divisionNombre: null,
     });
   }
 
@@ -157,7 +118,10 @@ export class CompanySelectorComponent
 
     this.companyContext.setContext({
       empresaId,
+      empresaNombre: this.empresas.find((empresa) => empresa.id === empresaId)?.nombre ?? '',
+
       divisionId: null,
+      divisionNombre: null,
     });
   }
 }

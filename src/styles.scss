@@ -64,6 +64,8 @@ html {
   --color-on-warning: #4d2e00;
   --color-critical: #d25855;
   --color-on-critical: #723600;
+
+  --mat-sys-corner-full: 9999px;
   
   @include mat.theme-overrides((corner-small: 4px,
       corner-medium: 6px,
@@ -88,7 +90,8 @@ html {
       header-done-state-icon-background-color: var(--mat-sys-primary),
       header-done-state-icon-foreground-color: var(--mat-sys-on-primary),
     ));
-  @include mat.button-overrides((filled-container-shape: 4px,
+  @include mat.button-overrides((
+      filled-container-shape: 4px,
       filled-disabled-label-text-color: var(--color-disabled-textos),
       filled-disabled-container-color: var(--color-disabled-base),
       filled-label-text-size: 1rem,
@@ -96,6 +99,9 @@ html {
       outlined-outline-width: 2px,
       outlined-label-text-size: 1rem,
       protected-container-elevation-shadow: var(--mat-sys-level0),
+      protected-container-shape: 4px,
+      text-container-shape: 4px,
+      tonal-container-shape: 4px,
     ));
   @include mat.fab-overrides((extended-container-elevation-shadow: var(--mat-sys-level0),
       extended-container-height: 40px,
@@ -238,7 +244,7 @@ body {
 }
 
 .cdk-overlay-dark-backdrop {
-  background: light-dark(rgba(0, 0, 0, 0.32), rgba(255, 255, 255, 0.32));
+  background: light-dark(rgba(0, 0, 0, 0.32), rgba(0, 0, 0, 0.7));
 }
 
 .mat-mdc-option.mdc-list-item {
