@@ -89,15 +89,15 @@
     <div class="flex flex-col gap-4">
         @for (alarma of alarmas; track alarma.id) {
         <article class="bg-surface-container rounded-lg border border-outline/20 border-l-[6px] p-5"
-            [class.border-l-state-critical]="alarma.severidad === 'Critica'"
-            [class.border-l-state-warning]="alarma.severidad === 'Advertencia'">
+            [class.border-l-state-critical]="alarma.severidad === 'Critica' && alarma.estado !== 'Resuelta'"
+            [class.border-l-state-warning]="alarma.severidad === 'Advertencia' && alarma.estado !== 'Resuelta'">
             <div class="flex flex-col gap-4">
                 <div class="flex gap-2 items-center justify-between flex-nowrap">
                     <div class="flex gap-2 items-center">
                         <span
                             class="tag"
-                            [class.tag-critical]="alarma.severidad === 'Critica'"
-                            [class.tag-warning]="alarma.severidad === 'Advertencia'">
+                            [class.tag-critical]="alarma.severidad === 'Critica' && alarma.estado !== 'Resuelta'"
+                            [class.tag-warning]="alarma.severidad === 'Advertencia' && alarma.estado !== 'Resuelta'">
                             @if(alarma.severidad === 'Critica') {
                                 P2
                             } @else if (alarma.severidad === 'Advertencia') {
@@ -164,8 +164,8 @@
                                 RESOLVER
                             </button>
                         } @else {
-                            <span class="flex items-center gap-1 text-sm text-on-surface-variant">
-                                <span class="material-symbols-outlined text-base">
+                            <span class="flex items-center gap-1 text-lg text-on-surface-variant">
+                                <span class="material-symbols-outlined">
                                     check_circle
                                 </span>
                                 Resuelta
