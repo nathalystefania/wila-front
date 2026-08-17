@@ -147,7 +147,8 @@ export class DashboardService {
 
     const alarmasEmpresa: AlarmaDetalle[] = alarmas
       .filter((alarma) =>
-      idsCarbonesEmpresa.has(this.normalizarId(alarma.carbon_id)),
+        alarma.estado !== 'Resuelta' &&
+        idsCarbonesEmpresa.has(this.normalizarId(alarma.carbon_id)),
       )
       .map((alarma) => {
         const carbon = carbonPorId.get(this.normalizarId(alarma.carbon_id));
